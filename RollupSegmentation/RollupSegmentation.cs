@@ -287,7 +287,7 @@ namespace RollupSegmentation
 				}
 				else
 				{
-					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarChar(-1), true));
+					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarChar(4000), true));
 				}
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MINX", DataType.Float, true));
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MAXX", DataType.Float, true));
@@ -366,7 +366,7 @@ namespace RollupSegmentation
 			
 			//Store the SECTION_networkid since it needs to be iterated MANY times.  Once for each year for each variable.
 			List<DataPoint> listSections = new List<DataPoint>();
-			String strOutFile;// = strMyDocumentsFolder + "\\sectionLRS.txt";
+			String strOutFile = strMyDocumentsFolder + "\\sectionLRS.txt";
 			TextWriter tw;// = new StreamWriter(strOutFile);
 
 			if (DBMgr.NativeConnectionParameters.Provider == "ORACLE")
@@ -497,8 +497,57 @@ namespace RollupSegmentation
 			dr.Close();
 			drGeometry.Close();
 
-			// Handle the SRS based Section next, so we can loop tables.
-			List<DataPoint> listSectionSRS = new List<DataPoint>();
+		    //foreach (var section in listSections)
+		    //{
+		    //    double area = Math.Abs(Convert.ToDouble(section.m_strEnd) - Convert.ToDouble(section.m_strBegin));
+		    //    strRow = section.m_nSection + "\t" + section.m_strRoutes + "\t" + section.m_strBegin + "\t" + section.m_strEnd +
+		    //             "\t" + section.m_strDirection
+		    //             + "\t\t" + area
+		    //             + "\t\t" + section.m_strGeometry
+		    //             + "\t" + section.m_strMinX
+		    //             + "\t" + section.m_strMaxX
+		    //             + "\t" + section.m_strMinY
+		    //             + "\t" + section.m_strMaxY;
+      //          tw.WriteLine(strRow);
+		    //}
+      //      tw.Close();
+            List<string> columnNames = new List<string>();
+
+
+      //      if (listSections.Count > 0)
+      //      {
+      //          switch (DBMgr.NativeConnectionParameters.Provider)
+      //          {
+      //              case "MSSQL":
+      //                  DBMgr.SQLBulkLoad("SECTION_" + strNetworkID.ToString(), strOutFile, '\t');
+      //                  break;
+      //              case "ORACLE":
+      //                  columnNames.Clear();
+      //                  columnNames.Add("SECTIONID");
+      //                  columnNames.Add("FACILITY");
+      //                  columnNames.Add("BEGIN_STATION");
+      //                  columnNames.Add("END_STATION");
+      //                  columnNames.Add("DIRECTION");
+      //                  columnNames.Add("SECTION");
+      //                  columnNames.Add("AREA");
+      //                  columnNames.Add("UNITS");
+      //                  columnNames.Add("GEOMETRY");
+      //                  columnNames.Add("ENVELOPE_MINX");
+      //                  columnNames.Add("ENVELOPE_MAXX");
+      //                  columnNames.Add("ENVELOPE_MINY");
+      //                  columnNames.Add("ENVELOPE_MAXY");
+      //                  DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, "SECTION_" + strNetworkID, strOutFile, columnNames, "\\t");
+      //                  break;
+      //              default:
+      //                  throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+      //                  //break;
+      //          }
+      //      }
+           
+
+
+            // Handle the SRS based Section next, so we can loop tables.
+            List<DataPoint> listSectionSRS = new List<DataPoint>();
 			strOutFile = strMyDocumentsFolder + "\\sectionSRS.txt";
 			tw = new StreamWriter( strOutFile );
 
@@ -567,7 +616,7 @@ namespace RollupSegmentation
 			//dsmelser
 			//needed for Oracle
 			RollupMessaging.AddMessge("Bulk loading SECTION_ table.");
-			List<string> columnNames = new List<string>();
+			
 			if (listSectionSRS.Count > 0)
 			{
 				switch (DBMgr.NativeConnectionParameters.Provider)

@@ -131,9 +131,11 @@ namespace DataObjects
             }
             this.Direction = dataRowImage["DIRECTION"].ToString();
             this.Year = int.Parse(dataRowImage["YEAR_"].ToString());
-            this.Latitude = double.Parse(dataRowImage["LATITUDE"].ToString());
-            this.Longitude = double.Parse(dataRowImage["LONGITUDE"].ToString());
-
+            if (!String.IsNullOrWhiteSpace(dataRowImage["LATITUDE"].ToString()))
+            {
+                this.Latitude = double.Parse(dataRowImage["LATITUDE"].ToString());
+                this.Longitude = double.Parse(dataRowImage["LONGITUDE"].ToString());
+            }
             foreach(String view in listViews)
             {
                 if (dataRowImage[view] != null)

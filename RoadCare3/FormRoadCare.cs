@@ -31,14 +31,14 @@ namespace RoadCare3
 		{
 			InitializeComponent();
 			FormLogin formLogin = new FormLogin();
-            if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/31/16")) > 0)
+            if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/31/18")) > 0)
             {
                 MessageBox.Show("License has expired.  Please contact Applied Research Associates to renew.");
                 return;
             }
-            else if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/1/2016")) > 0)
+            else if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/1/2018")) > 0)
             {
-                MessageBox.Show("Warning: License expires 12/31/2015.  Please contact Applied Research Associates to renew.");
+                MessageBox.Show("Warning: License expires 12/31/2018.  Please contact Applied Research Associates to renew.");
             }
 			String strFile = "";
 #if MDSHA
