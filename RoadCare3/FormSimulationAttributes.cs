@@ -1117,8 +1117,9 @@ namespace RoadCare3
         private void dgvAttribute_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (!m_bChange) return;
+            if (e.RowIndex < 0) return;
             DataGridViewRow row = dgvAttribute.Rows[e.RowIndex];
-            if (row == null) return;
+
 
             if (e.ColumnIndex == 0)
             {

@@ -1171,41 +1171,49 @@ namespace Simulation
                 }
                 else
                 {
-                    foreach (Consequences consequence in commit.OMSTreatment.ConsequenceList)
+                    if (commit.OMSTreatment != null)
                     {
-                        AttributeChange change = consequence.AttributeChange.Find((delegate(AttributeChange ac) { return ac.Attribute == key; }));
-
-                        if (change != null && change.Attribute == key)//Adds consequence if matches key
+                        foreach (Consequences consequence in commit.OMSTreatment.ConsequenceList)
                         {
-                            if (change != null && dictionaryCommittedEquation.ContainsKey(change.Change))
+                            AttributeChange change = consequence.AttributeChange.Find((delegate(AttributeChange ac)
                             {
-                                CommittedEquation ce = dictionaryCommittedEquation[change.Change];
-                                if (!ce.HasErrors)
+                                return ac.Attribute == key;
+                            }));
+
+                            if (change != null && change.Attribute == key) //Adds consequence if matches key
+                            {
+                                if (change != null && dictionaryCommittedEquation.ContainsKey(change.Change))
                                 {
-                                    sValue = ce.GetConsequence(this.m_hashNextAttributeValue);
+                                    CommittedEquation ce = dictionaryCommittedEquation[change.Change];
+                                    if (!ce.HasErrors)
+                                    {
+                                        sValue = ce.GetConsequence(this.m_hashNextAttributeValue);
+                                        hashAttributeValue.Add(key, sValue);
+                                    }
+                                    else
+                                    {
+                                        hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
+                                    }
+
+                                }
+                                else if (change != null)
+                                {
+                                    sValue = change.ApplyChange(this.m_hashNextAttributeValue[key]);
+                                    String strPair =
+                                        change.Attribute.ToString() + "\t" + change.Change.ToString() + "\n";
+                                    changeHash += strPair;
                                     hashAttributeValue.Add(key, sValue);
                                 }
-                                else
-                                {
-                                    hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
-                                }
-
-                            }
-                            else if (change != null)
-                            {
-                                sValue = change.ApplyChange(this.m_hashNextAttributeValue[key]);
-                                String strPair = change.Attribute.ToString() + "\t" + change.Change.ToString() + "\n";
-                                changeHash += strPair;
-                                hashAttributeValue.Add(key, sValue);
                             }
                         }
                     }
-                    if(!hashAttributeValue.ContainsKey(key))//No consequence, just keep value
+                    if (!hashAttributeValue.ContainsKey(key)) //No consequence, just keep value
                     {
                         hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
                     }
                 }
             }
+           
 
             this.Treated = true;
 

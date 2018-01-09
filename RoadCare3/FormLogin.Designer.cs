@@ -1110,7 +1110,7 @@
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(156, 13);
             this.label7.TabIndex = 4;
-            this.label7.Text = "Version 3.77    Date:3/15/2017";
+            this.label7.Text = "Version 3.82  Date:01/08/2018";
             this.label7.Click += new System.EventHandler(this.label7_Click);
             // 
             // labelLicenseNumber

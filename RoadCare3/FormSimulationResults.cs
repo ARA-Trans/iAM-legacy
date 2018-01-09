@@ -1817,6 +1817,9 @@ namespace RoadCare3
 				formSimulationAttributes.Show( FormManager.GetDockPanel(), DockState.DockLeft );
             }
 
+            formSimulationAttributes.IsCommitted = m_bCommitted;
+            formSimulationAttributes.InitializeAttributes();
+
             if (!m_bCommitted)
             {
 
