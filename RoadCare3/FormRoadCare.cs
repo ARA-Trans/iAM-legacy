@@ -21,8 +21,6 @@ namespace RoadCare3
         private SolutionExplorer m_solutionExplorer = null;
         private FormOutputWindow m_formOutputWindow = null;
 
-        //private Thread m_simulationThread;
-        //private Simulation.Simulation m_simulation;
         private bool m_bIsCancelled = false;		
 
         private FormSpecialReportConfig specialReportForm;
@@ -30,24 +28,36 @@ namespace RoadCare3
         public FormRoadCare()
         {
             InitializeComponent();
-            FormLogin formLogin = new FormLogin();
-            if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/31/18")) > 0)
+
+            var formLogin = new FormLogin();
+
+            var now = DateTime.Now;
+            if (now >= Global.ExactMomentWhenLicenseExpires)
             {
-                MessageBox.Show("License has expired.  Please contact Applied Research Associates to renew.");
-                return;
+                MessageBox.Show(
+                    "License has expired.  Please contact Applied Research Associates to renew.",
+                    Global.BrandCaptionForMessageBoxes,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                Environment.Exit(0);
             }
-            else if (DateTime.Compare(DateTime.Today, DateTime.Parse("12/1/2018")) > 0)
+
+            if (now >= Global.FirstDayOfLicenseExpirationWarning)
             {
-                MessageBox.Show("Warning: License expires 12/31/2018.  Please contact Applied Research Associates to renew.");
+                MessageBox.Show(
+                    $"Warning: License expires {Global.LastDayOfLicense}.  Please contact Applied Research Associates to renew.",
+                    Global.BrandCaptionForMessageBoxes,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
             }
-            String strFile = "";
+
+            var strFile = "";
 #if MDSHA
             AuthenticationResult loginAttempt = MDSHAAuthentication.Authenticate( Global.SecurityOperations );
             if( loginAttempt.Successful )
-            if (formLogin.ShowDialog() == DialogResult.OK)
-#else
-            if (formLogin.ShowDialog() == DialogResult.OK)
 #endif
+            if (formLogin.ShowDialog() == DialogResult.OK)
             {
                 // DBOps will use the provider to determine SQL syntax.
                 DBOp.Provider = DBMgr.NativeConnectionParameters.Provider;

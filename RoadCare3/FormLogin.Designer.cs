@@ -1,33 +1,33 @@
 ﻿namespace RoadCare3
 {
-	partial class FormLogin
-	{
-		/// <summary>
-		/// Required designer variable.
-		/// </summary>
-		private System.ComponentModel.IContainer components = null;
+    partial class FormLogin
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
 
-		/// <summary>
-		/// Clean up any resources being used.
-		/// </summary>
-		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-		protected override void Dispose(bool disposing)
-		{
-			if (disposing && (components != null))
-			{
-				components.Dispose();
-			}
-			base.Dispose(disposing);
-		}
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
-		#region Windows Form Designer generated code
+        #region Windows Form Designer generated code
 
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormLogin));
             this.gbxSqlServer3 = new System.Windows.Forms.GroupBox();
             this.txtSqlServerInitialCat = new System.Windows.Forms.TextBox();
@@ -1110,7 +1110,7 @@
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(156, 13);
             this.label7.TabIndex = 4;
-            this.label7.Text = "Version 3.74    Date:8/26/2016";
+            this.label7.Text = "Version 3";
             this.label7.Click += new System.EventHandler(this.label7_Click);
             // 
             // labelLicenseNumber
@@ -1199,110 +1199,110 @@
             this.groupBox7.PerformLayout();
             this.ResumeLayout(false);
 
-		}
+        }
 
-		#endregion
+        #endregion
 
-		internal System.Windows.Forms.GroupBox gbxSqlServer3;
-		internal System.Windows.Forms.TextBox txtSqlServerInitialCat;
-		internal System.Windows.Forms.Label lblSqlServerInitialCat;
-		internal System.Windows.Forms.GroupBox gbxSqlServer1;
-		internal System.Windows.Forms.TextBox txtSqlServerProvider;
-		internal System.Windows.Forms.Label lblSqlServerProvider;
-		internal System.Windows.Forms.GroupBox gbxSqlServer5;
-		internal System.Windows.Forms.Button btnSQLserverCancel;
-		internal System.Windows.Forms.Button btnSqlServerTest;
-		internal System.Windows.Forms.Button btnSqlServerOK;
-		internal System.Windows.Forms.GroupBox gbxSqlServer4;
-		private System.Windows.Forms.CheckBox cbxIntegratedSecurity;
-		internal System.Windows.Forms.TextBox txtSqlServerPassword;
-		internal System.Windows.Forms.TextBox txtSqlServerUserID;
-		internal System.Windows.Forms.Label lblSqlServerPassword;
-		internal System.Windows.Forms.Label lblSqlServerUserID;
-		internal System.Windows.Forms.GroupBox gbxSqlServer2;
-		internal System.Windows.Forms.TextBox txtSqlServerDBName;
-		internal System.Windows.Forms.Label lblSqlServerName;
-		internal System.Windows.Forms.GroupBox groupBox1;
-		internal System.Windows.Forms.TextBox textBox1;
-		internal System.Windows.Forms.Label label1;
-		internal System.Windows.Forms.GroupBox groupBox2;
-		internal System.Windows.Forms.TextBox textBox2;
-		internal System.Windows.Forms.Label label2;
-		internal System.Windows.Forms.GroupBox groupBox3;
-		internal System.Windows.Forms.Button button1;
-		internal System.Windows.Forms.Button button2;
-		internal System.Windows.Forms.Button button3;
-		internal System.Windows.Forms.GroupBox groupBox4;
-		private System.Windows.Forms.CheckBox checkBox1;
-		internal System.Windows.Forms.TextBox textBox3;
-		internal System.Windows.Forms.TextBox textBox4;
-		internal System.Windows.Forms.Label label3;
-		internal System.Windows.Forms.Label label4;
-		internal System.Windows.Forms.GroupBox groupBox5;
-		internal System.Windows.Forms.TextBox textBox5;
-		internal System.Windows.Forms.Label label5;
-		internal System.Windows.Forms.TabControl tcLogin;
-		internal System.Windows.Forms.TabPage TabSqlServer;
-		internal System.Windows.Forms.GroupBox groupBox6;
-		internal System.Windows.Forms.TextBox tbMSSQLDatabaseName;
-		internal System.Windows.Forms.Label label6;
-		internal System.Windows.Forms.GroupBox groupBox9;
-		private System.Windows.Forms.CheckBox chkUseIntegratedSecurity;
-		internal System.Windows.Forms.TextBox tbMSSQLPassword;
-		internal System.Windows.Forms.TextBox tbMSSQLUserName;
-		internal System.Windows.Forms.Label label8;
-		internal System.Windows.Forms.Label label9;
-		internal System.Windows.Forms.GroupBox groupBox10;
-		internal System.Windows.Forms.TextBox tbMSSQLServerName;
-		internal System.Windows.Forms.Label label10;
-		internal System.Windows.Forms.TabPage TabAccess;
-		internal System.Windows.Forms.GroupBox gbxAccess3;
-		internal System.Windows.Forms.TextBox txtAccessPassword;
-		internal System.Windows.Forms.TextBox txtAccessUserID;
-		internal System.Windows.Forms.Label lblAccessPassword;
-		internal System.Windows.Forms.Label lblAccessUserID;
-		internal System.Windows.Forms.GroupBox gbxAccess2;
-		internal System.Windows.Forms.Button btnBrowse;
-		internal System.Windows.Forms.TextBox txtAccessDBname;
-		internal System.Windows.Forms.Label lblAccessDBname;
-		internal System.Windows.Forms.TabPage tabOracle;
-		internal System.Windows.Forms.GroupBox gbxOracle3;
-		internal System.Windows.Forms.TextBox txtOraclePassword;
-		internal System.Windows.Forms.TextBox txtOracleUserID;
-		internal System.Windows.Forms.Label lblOraclePassword;
-		internal System.Windows.Forms.Label lblOracleUserID;
-		internal System.Windows.Forms.GroupBox gbxOracle2;
-		internal System.Windows.Forms.TextBox tbSID;
-		private System.Windows.Forms.TabPage tabPageDBF;
-		internal System.Windows.Forms.GroupBox groupBox13;
-		internal System.Windows.Forms.TextBox tbDBFPassword;
-		internal System.Windows.Forms.TextBox tbDBFUserID;
-		internal System.Windows.Forms.Label label12;
-		internal System.Windows.Forms.Label label13;
-		internal System.Windows.Forms.GroupBox groupBox14;
-		private System.Windows.Forms.Button btnDBFBrowse;
-		internal System.Windows.Forms.TextBox tbDBFFilepath;
-		internal System.Windows.Forms.Label label14;
-		private System.Windows.Forms.SplitContainer splitContainer1;
-		private System.Windows.Forms.TextBox tbRoadCarePassword;
-		private System.Windows.Forms.TextBox tbRoadCareUserName;
-		private System.Windows.Forms.GroupBox groupBox15;
-		private System.Windows.Forms.Label label16;
-		private System.Windows.Forms.Label label15;
-		private System.Windows.Forms.GroupBox groupBox16;
-		private System.Windows.Forms.Button btnLogin;
-		internal System.Windows.Forms.TextBox tbPort;
-		internal System.Windows.Forms.Label label11;
-		internal System.Windows.Forms.TextBox tbOracleServerName;
-		internal System.Windows.Forms.Label label17;
-		internal System.Windows.Forms.TextBox tbNetworkAlias;
-		private System.Windows.Forms.RadioButton rbNetworkAlias;
-		private System.Windows.Forms.RadioButton rbSID;
-		private System.Windows.Forms.Button btnCancel;
+        internal System.Windows.Forms.GroupBox gbxSqlServer3;
+        internal System.Windows.Forms.TextBox txtSqlServerInitialCat;
+        internal System.Windows.Forms.Label lblSqlServerInitialCat;
+        internal System.Windows.Forms.GroupBox gbxSqlServer1;
+        internal System.Windows.Forms.TextBox txtSqlServerProvider;
+        internal System.Windows.Forms.Label lblSqlServerProvider;
+        internal System.Windows.Forms.GroupBox gbxSqlServer5;
+        internal System.Windows.Forms.Button btnSQLserverCancel;
+        internal System.Windows.Forms.Button btnSqlServerTest;
+        internal System.Windows.Forms.Button btnSqlServerOK;
+        internal System.Windows.Forms.GroupBox gbxSqlServer4;
+        private System.Windows.Forms.CheckBox cbxIntegratedSecurity;
+        internal System.Windows.Forms.TextBox txtSqlServerPassword;
+        internal System.Windows.Forms.TextBox txtSqlServerUserID;
+        internal System.Windows.Forms.Label lblSqlServerPassword;
+        internal System.Windows.Forms.Label lblSqlServerUserID;
+        internal System.Windows.Forms.GroupBox gbxSqlServer2;
+        internal System.Windows.Forms.TextBox txtSqlServerDBName;
+        internal System.Windows.Forms.Label lblSqlServerName;
+        internal System.Windows.Forms.GroupBox groupBox1;
+        internal System.Windows.Forms.TextBox textBox1;
+        internal System.Windows.Forms.Label label1;
+        internal System.Windows.Forms.GroupBox groupBox2;
+        internal System.Windows.Forms.TextBox textBox2;
+        internal System.Windows.Forms.Label label2;
+        internal System.Windows.Forms.GroupBox groupBox3;
+        internal System.Windows.Forms.Button button1;
+        internal System.Windows.Forms.Button button2;
+        internal System.Windows.Forms.Button button3;
+        internal System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.CheckBox checkBox1;
+        internal System.Windows.Forms.TextBox textBox3;
+        internal System.Windows.Forms.TextBox textBox4;
+        internal System.Windows.Forms.Label label3;
+        internal System.Windows.Forms.Label label4;
+        internal System.Windows.Forms.GroupBox groupBox5;
+        internal System.Windows.Forms.TextBox textBox5;
+        internal System.Windows.Forms.Label label5;
+        internal System.Windows.Forms.TabControl tcLogin;
+        internal System.Windows.Forms.TabPage TabSqlServer;
+        internal System.Windows.Forms.GroupBox groupBox6;
+        internal System.Windows.Forms.TextBox tbMSSQLDatabaseName;
+        internal System.Windows.Forms.Label label6;
+        internal System.Windows.Forms.GroupBox groupBox9;
+        private System.Windows.Forms.CheckBox chkUseIntegratedSecurity;
+        internal System.Windows.Forms.TextBox tbMSSQLPassword;
+        internal System.Windows.Forms.TextBox tbMSSQLUserName;
+        internal System.Windows.Forms.Label label8;
+        internal System.Windows.Forms.Label label9;
+        internal System.Windows.Forms.GroupBox groupBox10;
+        internal System.Windows.Forms.TextBox tbMSSQLServerName;
+        internal System.Windows.Forms.Label label10;
+        internal System.Windows.Forms.TabPage TabAccess;
+        internal System.Windows.Forms.GroupBox gbxAccess3;
+        internal System.Windows.Forms.TextBox txtAccessPassword;
+        internal System.Windows.Forms.TextBox txtAccessUserID;
+        internal System.Windows.Forms.Label lblAccessPassword;
+        internal System.Windows.Forms.Label lblAccessUserID;
+        internal System.Windows.Forms.GroupBox gbxAccess2;
+        internal System.Windows.Forms.Button btnBrowse;
+        internal System.Windows.Forms.TextBox txtAccessDBname;
+        internal System.Windows.Forms.Label lblAccessDBname;
+        internal System.Windows.Forms.TabPage tabOracle;
+        internal System.Windows.Forms.GroupBox gbxOracle3;
+        internal System.Windows.Forms.TextBox txtOraclePassword;
+        internal System.Windows.Forms.TextBox txtOracleUserID;
+        internal System.Windows.Forms.Label lblOraclePassword;
+        internal System.Windows.Forms.Label lblOracleUserID;
+        internal System.Windows.Forms.GroupBox gbxOracle2;
+        internal System.Windows.Forms.TextBox tbSID;
+        private System.Windows.Forms.TabPage tabPageDBF;
+        internal System.Windows.Forms.GroupBox groupBox13;
+        internal System.Windows.Forms.TextBox tbDBFPassword;
+        internal System.Windows.Forms.TextBox tbDBFUserID;
+        internal System.Windows.Forms.Label label12;
+        internal System.Windows.Forms.Label label13;
+        internal System.Windows.Forms.GroupBox groupBox14;
+        private System.Windows.Forms.Button btnDBFBrowse;
+        internal System.Windows.Forms.TextBox tbDBFFilepath;
+        internal System.Windows.Forms.Label label14;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.TextBox tbRoadCarePassword;
+        private System.Windows.Forms.TextBox tbRoadCareUserName;
+        private System.Windows.Forms.GroupBox groupBox15;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.GroupBox groupBox16;
+        private System.Windows.Forms.Button btnLogin;
+        internal System.Windows.Forms.TextBox tbPort;
+        internal System.Windows.Forms.Label label11;
+        internal System.Windows.Forms.TextBox tbOracleServerName;
+        internal System.Windows.Forms.Label label17;
+        internal System.Windows.Forms.TextBox tbNetworkAlias;
+        private System.Windows.Forms.RadioButton rbNetworkAlias;
+        private System.Windows.Forms.RadioButton rbSID;
+        private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label label7;
-		private System.Windows.Forms.GroupBox groupBox7;
-		private System.Windows.Forms.Button btnActivate;
-		private System.Windows.Forms.Label labelLicenseNumber;
-		private System.Windows.Forms.Label labelLicense;
-	}
+        private System.Windows.Forms.GroupBox groupBox7;
+        private System.Windows.Forms.Button btnActivate;
+        private System.Windows.Forms.Label labelLicenseNumber;
+        private System.Windows.Forms.Label labelLicense;
+    }
 }
