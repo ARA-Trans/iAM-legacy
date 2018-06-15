@@ -11,221 +11,221 @@
     using Simulation;
 
     public static class DBOp
-	{
-		private static readonly TimeSpan LockTimeout = new TimeSpan( 1, 0, 0 );
+    {
+        private static readonly TimeSpan LockTimeout = new TimeSpan( 1, 0, 0 );
 
-		private static String m_provider = "MSSQL";
+        private static String m_provider = "MSSQL";
 
-		public static String Provider
-		{
-			set { m_provider = value; }
-		}
+        public static String Provider
+        {
+            set { m_provider = value; }
+        }
 
-		#region Generic SQL Statements
-		/// <summary>
-		/// Calls the DBMgr ExecuteNonQuery operation to execute an INSERT operation on the database.
-		/// </summary>
-		/// <param name="strTableName">Name of the table to insert the data.</param>
-		/// <param name="dictFieldsToValues">A hash of insert fields and value pairs</param>
-		/// <returns>The number of rows inserted.</returns>
-		public static int Insert(String strTableName, Dictionary<String, String> dictFieldsToValues)
-		{
-			int iRowsInserted = 0;
-			String strInsert = "INSERT INTO " + strTableName;
-			String strFieldList = "(";
-			String strValueList = " VALUES(";
-			foreach (String key in dictFieldsToValues.Keys)
-			{
-				if (!String.IsNullOrEmpty(dictFieldsToValues[key]))
-				{
-					String strValue = dictFieldsToValues[key].ToString();
-					strFieldList += key + ",";
-					strValueList += "'" + strValue + "',";
-				}
-			}
-			if (strFieldList.Contains(','))
-			{
-				strFieldList = strFieldList.Substring(0, strFieldList.Length - 1) + ")";
-				strValueList = strValueList.Substring(0, strValueList.Length - 1) + ")";
-				strInsert += strFieldList + strValueList;
-				try
-				{
-					iRowsInserted = DBMgr.ExecuteNonQuery(strInsert);
-				}
-				catch (Exception exc)
-				{
-					throw exc;
-				}
-			}
-			return iRowsInserted;
-		}
+        #region Generic SQL Statements
+        /// <summary>
+        /// Calls the DBMgr ExecuteNonQuery operation to execute an INSERT operation on the database.
+        /// </summary>
+        /// <param name="strTableName">Name of the table to insert the data.</param>
+        /// <param name="dictFieldsToValues">A hash of insert fields and value pairs</param>
+        /// <returns>The number of rows inserted.</returns>
+        public static int Insert(String strTableName, Dictionary<String, String> dictFieldsToValues)
+        {
+            int iRowsInserted = 0;
+            String strInsert = "INSERT INTO " + strTableName;
+            String strFieldList = "(";
+            String strValueList = " VALUES(";
+            foreach (String key in dictFieldsToValues.Keys)
+            {
+                if (!String.IsNullOrEmpty(dictFieldsToValues[key]))
+                {
+                    String strValue = dictFieldsToValues[key].ToString();
+                    strFieldList += key + ",";
+                    strValueList += "'" + strValue + "',";
+                }
+            }
+            if (strFieldList.Contains(','))
+            {
+                strFieldList = strFieldList.Substring(0, strFieldList.Length - 1) + ")";
+                strValueList = strValueList.Substring(0, strValueList.Length - 1) + ")";
+                strInsert += strFieldList + strValueList;
+                try
+                {
+                    iRowsInserted = DBMgr.ExecuteNonQuery(strInsert);
+                }
+                catch (Exception exc)
+                {
+                    throw exc;
+                }
+            }
+            return iRowsInserted;
+        }
 
-		/// <summary>
-		/// Creates an insert string for use in a transaction to be performed by the DBMgr
-		/// </summary>
-		/// <param name="strTableName">The table to perform the insert on.</param>
-		/// <param name="dictFieldsToValues">The hash of field to values pairs</param>
-		/// <returns>A string to be used in a DBMgr transaction command.</returns>
-		public static String TransactionInsert(String strTableName, Dictionary<String, String> dictFieldsToValues)
-		{
-			String strInsert = "INSERT INTO " + strTableName;
-			String strFieldList = "(";
-			String strValueList = " VALUES(";
-			foreach (String key in dictFieldsToValues.Keys)
-			{
-				if (dictFieldsToValues[key] != null)
-				{
-					String strValue = dictFieldsToValues[key].ToString();
-					strFieldList += key + ",";
-					strValueList += strValue + ",";
-				}
-			}
-			if (strFieldList.Contains(','))
-			{
-				strFieldList = strFieldList.Substring(0, strFieldList.Length - 1) + ")";
-				strValueList = strValueList.Substring(0, strValueList.Length - 1) + ")";
-				strInsert += strFieldList + strValueList;
-			}
-			else
-			{
-				strInsert = "";
-			}
-			return strInsert;
-		}
-		#endregion
+        /// <summary>
+        /// Creates an insert string for use in a transaction to be performed by the DBMgr
+        /// </summary>
+        /// <param name="strTableName">The table to perform the insert on.</param>
+        /// <param name="dictFieldsToValues">The hash of field to values pairs</param>
+        /// <returns>A string to be used in a DBMgr transaction command.</returns>
+        public static String TransactionInsert(String strTableName, Dictionary<String, String> dictFieldsToValues)
+        {
+            String strInsert = "INSERT INTO " + strTableName;
+            String strFieldList = "(";
+            String strValueList = " VALUES(";
+            foreach (String key in dictFieldsToValues.Keys)
+            {
+                if (dictFieldsToValues[key] != null)
+                {
+                    String strValue = dictFieldsToValues[key].ToString();
+                    strFieldList += key + ",";
+                    strValueList += strValue + ",";
+                }
+            }
+            if (strFieldList.Contains(','))
+            {
+                strFieldList = strFieldList.Substring(0, strFieldList.Length - 1) + ")";
+                strValueList = strValueList.Substring(0, strValueList.Length - 1) + ")";
+                strInsert += strFieldList + strValueList;
+            }
+            else
+            {
+                strInsert = "";
+            }
+            return strInsert;
+        }
+        #endregion
 
-		#region Asset SQL Statements
-		/// <summary>
-		/// Given an asset table name, and a dictionary hash of field keys to value pairs, updates the asset table with the values in the dictionary.
-		/// Calls InsertIntoAssetChangeLog to perform the necessary ChangeLog entry.
-		/// </summary>
-		/// <param name="fieldName">Name of the column type being modified</param>
-		/// <param name="oldValue">The value before the user entered value in the field.</param>
-		/// <param name="strAssetName">The name of the asset being modified</param>
-		/// <param name="strGeoID">The ID of the asset being modified</param>
-		/// <param name="value">The new user entered value.</param>
-		public static void UpdateAssetTable(String strAssetName, String strGeoID, String fieldName, String value, String oldValue, String strWorkActivity)
-		{
-			String strUpdate = "UPDATE " + strAssetName + " SET " + fieldName + " = " + "'" + value + "' WHERE GEO_ID = " + strGeoID;
-			try
-			{
-				DBMgr.ExecuteNonQuery(strUpdate);
-				InsertIntoAssetChangeLog(strAssetName, strGeoID, fieldName, oldValue, null, null, strWorkActivity);
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-		}
+        #region Asset SQL Statements
+        /// <summary>
+        /// Given an asset table name, and a dictionary hash of field keys to value pairs, updates the asset table with the values in the dictionary.
+        /// Calls InsertIntoAssetChangeLog to perform the necessary ChangeLog entry.
+        /// </summary>
+        /// <param name="fieldName">Name of the column type being modified</param>
+        /// <param name="oldValue">The value before the user entered value in the field.</param>
+        /// <param name="strAssetName">The name of the asset being modified</param>
+        /// <param name="strGeoID">The ID of the asset being modified</param>
+        /// <param name="value">The new user entered value.</param>
+        public static void UpdateAssetTable(String strAssetName, String strGeoID, String fieldName, String value, String oldValue, String strWorkActivity)
+        {
+            String strUpdate = "UPDATE " + strAssetName + " SET " + fieldName + " = " + "'" + value + "' WHERE GEO_ID = " + strGeoID;
+            try
+            {
+                DBMgr.ExecuteNonQuery(strUpdate);
+                InsertIntoAssetChangeLog(strAssetName, strGeoID, fieldName, oldValue, null, null, strWorkActivity);
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+        }
 
-		/// <summary>
-		/// Inserts a new row into the asset_CHANGELOG table.
-		/// </summary>
-		/// <param name="strAssetName">Name of the table_CHANGELOG to insert into</param>
-		/// <param name="strGeoID">The ID of the asset</param>
-		/// <param name="strAssetAttribute">The field name of the asset being modified</param>
-		/// <param name="strAssetValue">The value of the field being modified</param>
-		private static void InsertIntoAssetChangeLog(String strAssetName, String strGeoID, String strAssetAttribute, String strAssetValue, String strUserID, String strWorkActivityID, String strWorkActivity)
-		{
-			Dictionary<String, String> dictFieldToValues = new Dictionary<String, String>();
-			dictFieldToValues.Add("GEO_ID", strGeoID);
-			dictFieldToValues.Add("FIELD", strAssetAttribute);
-			dictFieldToValues.Add("VALUE", strAssetValue);
-			dictFieldToValues.Add("USER_ID", strUserID);
-			dictFieldToValues.Add("WORKACTIVITY", strWorkActivity);
-			dictFieldToValues.Add("WORKACTIVITY_ID", strWorkActivityID);
-			dictFieldToValues.Add("DATE_MODIFIED", DateTime.Now.ToString());
-			try
-			{
-				DBOp.Insert(strAssetName + "_CHANGELOG", dictFieldToValues);
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-		}
+        /// <summary>
+        /// Inserts a new row into the asset_CHANGELOG table.
+        /// </summary>
+        /// <param name="strAssetName">Name of the table_CHANGELOG to insert into</param>
+        /// <param name="strGeoID">The ID of the asset</param>
+        /// <param name="strAssetAttribute">The field name of the asset being modified</param>
+        /// <param name="strAssetValue">The value of the field being modified</param>
+        private static void InsertIntoAssetChangeLog(String strAssetName, String strGeoID, String strAssetAttribute, String strAssetValue, String strUserID, String strWorkActivityID, String strWorkActivity)
+        {
+            Dictionary<String, String> dictFieldToValues = new Dictionary<String, String>();
+            dictFieldToValues.Add("GEO_ID", strGeoID);
+            dictFieldToValues.Add("FIELD", strAssetAttribute);
+            dictFieldToValues.Add("VALUE", strAssetValue);
+            dictFieldToValues.Add("USER_ID", strUserID);
+            dictFieldToValues.Add("WORKACTIVITY", strWorkActivity);
+            dictFieldToValues.Add("WORKACTIVITY_ID", strWorkActivityID);
+            dictFieldToValues.Add("DATE_MODIFIED", DateTime.Now.ToString());
+            try
+            {
+                DBOp.Insert(strAssetName + "_CHANGELOG", dictFieldToValues);
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+        }
 
-		/// <summary>
-		/// Runs a select on a selected assets CHANGELOG table.  The select returns all fields from the CHANGELOG table where the assets GEO_ID matches
-		/// in the CHANGELOG table
-		/// </summary>
-		/// <returns>The results of the query.</returns>
+        /// <summary>
+        /// Runs a select on a selected assets CHANGELOG table.  The select returns all fields from the CHANGELOG table where the assets GEO_ID matches
+        /// in the CHANGELOG table
+        /// </summary>
+        /// <returns>The results of the query.</returns>
         /// 
-		public static DataSet QueryAssetHistory(String strAssetName, String strGeoID)
-		{
-			DataSet dsToReturn = null;
-			String strQuery = "SELECT ID_, GEO_ID, FIELD, VALUE, USER_ID, WORKACTIVITY, WORKACTIVITY_ID, DATE_MODIFIED FROM " + strAssetName +
-										  "_CHANGELOG WHERE GEO_ID = '" + strGeoID + "' ORDER BY DATE_MODIFIED DESC";
-			try
-			{
-				dsToReturn = DBMgr.ExecuteQuery(strQuery);
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-			return dsToReturn;
-		}
+        public static DataSet QueryAssetHistory(String strAssetName, String strGeoID)
+        {
+            DataSet dsToReturn = null;
+            String strQuery = "SELECT ID_, GEO_ID, FIELD, VALUE, USER_ID, WORKACTIVITY, WORKACTIVITY_ID, DATE_MODIFIED FROM " + strAssetName +
+                                          "_CHANGELOG WHERE GEO_ID = '" + strGeoID + "' ORDER BY DATE_MODIFIED DESC";
+            try
+            {
+                dsToReturn = DBMgr.ExecuteQuery(strQuery);
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+            return dsToReturn;
+        }
 
-		/// Created By: CBB - 8/25/2008
-		/// <summary>
-		/// Returns a list of asset names from the ASSETS table.
-		/// </summary>
-		/// <returns></returns>
-		public static List<String> GetRawAssetNames()
-		{
-			List<String> assetNames = new List<String>();
-			try
-			{
-				DataSet ds = DBMgr.ExecuteQuery("SELECT ASSET FROM ASSETS");
-				foreach (DataRow dr in ds.Tables[0].Rows)
-				{
-					assetNames.Add(dr["ASSET"].ToString());
-				}
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-			return assetNames;
-		}
+        /// Created By: CBB - 8/25/2008
+        /// <summary>
+        /// Returns a list of asset names from the ASSETS table.
+        /// </summary>
+        /// <returns></returns>
+        public static List<String> GetRawAssetNames()
+        {
+            List<String> assetNames = new List<String>();
+            try
+            {
+                DataSet ds = DBMgr.ExecuteQuery("SELECT ASSET FROM ASSETS");
+                foreach (DataRow dr in ds.Tables[0].Rows)
+                {
+                    assetNames.Add(dr["ASSET"].ToString());
+                }
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+            return assetNames;
+        }
 
-		public static List<String> GetAssetAttributes(String assetName, ConnectionParameters cp)
-		{
-			List<string> assetColumnNames = DBMgr.GetTableColumns(assetName, cp);
-			assetColumnNames.Remove("GEO_ID");
-			return assetColumnNames;
-		}
+        public static List<String> GetAssetAttributes(String assetName, ConnectionParameters cp)
+        {
+            List<string> assetColumnNames = DBMgr.GetTableColumns(assetName, cp);
+            assetColumnNames.Remove("GEO_ID");
+            return assetColumnNames;
+        }
 
-		/// <summary>
-		/// Gets the asset changelog for the given strGeoID, after the given date.
-		/// </summary>
-		/// <param name="strAssetName">Asset table name</param>
-		/// <param name="strGeoID">Asset ID</param>
-		/// <param name="strDate">Earliest asset action date</param>
-		/// <returns>DataSet with all asset changes before and including the given date.</returns>
-		public static DataSet QueryAssetHistory(String strAssetName, String strGeoID, String strDate)
-		{
-			DataSet dsToReturn = null;
-			String strQuery = "SELECT ID_, GEO_ID, FIELD, VALUE, USER_ID, WORKACTIVITY, WORKACTIVITY_ID, DATE_MODIFIED FROM " + strAssetName +
-										  "_CHANGELOG WHERE GEO_ID = '" + strGeoID + "' AND DATE_MODIFIED > '" + strDate + "' ORDER BY DATE_MODIFIED DESC";
-			try
-			{
-				dsToReturn = DBMgr.ExecuteQuery(strQuery);
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-			return dsToReturn;
-		}
+        /// <summary>
+        /// Gets the asset changelog for the given strGeoID, after the given date.
+        /// </summary>
+        /// <param name="strAssetName">Asset table name</param>
+        /// <param name="strGeoID">Asset ID</param>
+        /// <param name="strDate">Earliest asset action date</param>
+        /// <returns>DataSet with all asset changes before and including the given date.</returns>
+        public static DataSet QueryAssetHistory(String strAssetName, String strGeoID, String strDate)
+        {
+            DataSet dsToReturn = null;
+            String strQuery = "SELECT ID_, GEO_ID, FIELD, VALUE, USER_ID, WORKACTIVITY, WORKACTIVITY_ID, DATE_MODIFIED FROM " + strAssetName +
+                                          "_CHANGELOG WHERE GEO_ID = '" + strGeoID + "' AND DATE_MODIFIED > '" + strDate + "' ORDER BY DATE_MODIFIED DESC";
+            try
+            {
+                dsToReturn = DBMgr.ExecuteQuery(strQuery);
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+            return dsToReturn;
+        }
 
         public static DataSet QueryAttributeGroupNames()
         {
             DataSet dsReturn = null;
-			String strSelect;
+            String strSelect;
 
-			strSelect = "SELECT DISTINCT GROUPING FROM ATTRIBUTES_ ORDER BY 1";			
+            strSelect = "SELECT DISTINCT GROUPING FROM ATTRIBUTES_ ORDER BY 1";			
             try
             {
                 dsReturn = DBMgr.ExecuteQuery(strSelect);
@@ -240,9 +240,9 @@
         public static DataSet QueryAttributeByGroup()
         {
             DataSet dsReturn = null;
-			String strSelect;
+            String strSelect;
 
-			strSelect = "SELECT GROUPING, ATTRIBUTE_ FROM ATTRIBUTES_ ORDER BY GROUPING, ATTRIBUTE_";
+            strSelect = "SELECT GROUPING, ATTRIBUTE_ FROM ATTRIBUTES_ ORDER BY GROUPING, ATTRIBUTE_";
             try
             {
                 dsReturn = DBMgr.ExecuteQuery(strSelect);
@@ -274,8 +274,8 @@
         public static DataSet QueryPageHeader(string strReportName)
         {
             DataSet dsReturn = null;
-			
-			string reportID = DBMgr.ExecuteQuery("SELECT reportID FROM REPORTS WHERE reportName = '" + strReportName + "'").Tables[0].Rows[0].ItemArray[0].ToString();
+            
+            string reportID = DBMgr.ExecuteQuery("SELECT reportID FROM REPORTS WHERE reportName = '" + strReportName + "'").Tables[0].Rows[0].ItemArray[0].ToString();
             string strSelect = "SELECT * FROM PageHeaders, Reports WHERE reportName='" + strReportName + "' AND phReportID = " + reportID + " ORDER BY phLineNum";
             try
             {
@@ -411,8 +411,8 @@
             return dsReturn;
         }
 
-		public static DataSet QueryBudgetYears(string strSimulationID)
-		{
+        public static DataSet QueryBudgetYears(string strSimulationID)
+        {
             DataSet dsReturn = null;
             String strSelect;
 
@@ -545,88 +545,88 @@
         }
 
         public static String GetNetworkName(String networkID)
-		{
-			try
-			{
-				String query = "SELECT NETWORK_NAME FROM NETWORKS WHERE NETWORKID = '" + networkID + "'";
-				DataSet ds = DBMgr.ExecuteQuery(query);
-				String networkName = ds.Tables[0].Rows[0].ItemArray[0].ToString();
-				return networkName;
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-		}
+        {
+            try
+            {
+                String query = "SELECT NETWORK_NAME FROM NETWORKS WHERE NETWORKID = '" + networkID + "'";
+                DataSet ds = DBMgr.ExecuteQuery(query);
+                String networkName = ds.Tables[0].Rows[0].ItemArray[0].ToString();
+                return networkName;
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+        }
 
-		public static bool IsAtEndOfNetwork(String networkID, String sectionID)
-		{
-			bool bEndOfNetwork = false;
-			try
-			{
-				float fMaxEndStation;
-				String query = "SELECT FACILITY, END_STATION FROM SECTION_" + networkID + " WHERE SECTIONID = '" + sectionID + "'";
-				DataSet currentSectionSet = DBMgr.ExecuteQuery(query);
-				String facilityName = currentSectionSet.Tables[0].Rows[0]["FACILITY"].ToString();
-				//if (currentSectionSet.Tables[0].Rows[0]["END_STATION"] == -1)
-				//{
-				//    //this is a test
-				//}
-				float fEndStation = float.Parse(currentSectionSet.Tables[0].Rows[0]["END_STATION"].ToString());
-				
-				query = "SELECT MAX(END_STATION) FROM SECTION_" + networkID + " WHERE FACILITY = '" + facilityName + "'";
-				try
-				{
-					DataSet maxEndStation = DBMgr.ExecuteQuery(query);
-					fMaxEndStation = float.Parse(maxEndStation.Tables[0].Rows[0].ItemArray[0].ToString());
-					bEndOfNetwork = (fMaxEndStation == fEndStation);
-				}
-				catch (Exception exc)
-				{
-					throw exc;
-				}
-			}
-			catch (Exception exc)
-			{
-				throw exc;
-			}
-			return bEndOfNetwork;
-		}
+        public static bool IsAtEndOfNetwork(String networkID, String sectionID)
+        {
+            bool bEndOfNetwork = false;
+            try
+            {
+                float fMaxEndStation;
+                String query = "SELECT FACILITY, END_STATION FROM SECTION_" + networkID + " WHERE SECTIONID = '" + sectionID + "'";
+                DataSet currentSectionSet = DBMgr.ExecuteQuery(query);
+                String facilityName = currentSectionSet.Tables[0].Rows[0]["FACILITY"].ToString();
+                //if (currentSectionSet.Tables[0].Rows[0]["END_STATION"] == -1)
+                //{
+                //    //this is a test
+                //}
+                float fEndStation = float.Parse(currentSectionSet.Tables[0].Rows[0]["END_STATION"].ToString());
+                
+                query = "SELECT MAX(END_STATION) FROM SECTION_" + networkID + " WHERE FACILITY = '" + facilityName + "'";
+                try
+                {
+                    DataSet maxEndStation = DBMgr.ExecuteQuery(query);
+                    fMaxEndStation = float.Parse(maxEndStation.Tables[0].Rows[0].ItemArray[0].ToString());
+                    bEndOfNetwork = (fMaxEndStation == fEndStation);
+                }
+                catch (Exception exc)
+                {
+                    throw exc;
+                }
+            }
+            catch (Exception exc)
+            {
+                throw exc;
+            }
+            return bEndOfNetwork;
+        }
 
         // FIXME: Will this return false when the table exists and is empty?
         // See http://stackoverflow.com/q/167576/402749 and similar.
-		public static bool IsTableInDatabase(String tableName)
-		{
-			try
-			{
-				DBMgr.ExecuteQuery("SELECT TOP(1) * FROM " + tableName);
-				return true;
-			}
-			catch
-			{
-				return false;
-			}
-		}
+        public static bool IsTableInDatabase(String tableName)
+        {
+            try
+            {
+                DBMgr.ExecuteQuery("SELECT TOP(1) * FROM " + tableName);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
-		public static List<String> GetAttributeNames()
-		{
-			String strSelect = "SELECT ATTRIBUTE_ FROM ATTRIBUTES_ ORDER BY ATTRIBUTE_";
+        public static List<String> GetAttributeNames()
+        {
+            String strSelect = "SELECT ATTRIBUTE_ FROM ATTRIBUTES_ ORDER BY ATTRIBUTE_";
             DataSet ds = DBMgr.ExecuteQuery(strSelect);
-			List<String> attributeNames = new List<String>();
-			foreach (DataRow row in ds.Tables[0].Rows)
-			{
-				attributeNames.Add(row["ATTRIBUTE_"].ToString());
-			}
-			return attributeNames;
-		}
+            List<String> attributeNames = new List<String>();
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                attributeNames.Add(row["ATTRIBUTE_"].ToString());
+            }
+            return attributeNames;
+        }
 
-		#endregion
+        #endregion
 
-		/// <summary>
-		/// Returns the connection parameters with a given name ID if it exists.  If it does not exist, then we return null
-		/// </summary>
-		/// <param name="connName"></param>
-		/// <returns></returns>
+        /// <summary>
+        /// Returns the connection parameters with a given name ID if it exists.  If it does not exist, then we return null
+        /// </summary>
+        /// <param name="connName"></param>
+        /// <returns></returns>
         //public static ConnectionParameters GetConnectionParameters(string connName)
         //{
         //    string query = "SELECT CONNECTION_ID, CONNECTION_NAME, SERVER, PROVIDER, NATIVE_, DATABASE_NAME, SERVICE_NAME, SID, PORT, USERID, PASSWORD, INTEGRATED_SEC, VIEW_STATEMENT, IDENTIFIER FROM CONNECTION_PARAMETERS WHERE CONNECTION_NAME = '" + connName + "'";
@@ -1129,7 +1129,7 @@
                 else
                 {
                     if (String.IsNullOrWhiteSpace(strArea)) strArea = "0";
-	                if (String.IsNullOrWhiteSpace(strTotalArea)) strTotalArea = "0";
+                    if (String.IsNullOrWhiteSpace(strTotalArea)) strTotalArea = "0";
                     double dPercentage = (double.Parse(strArea) / double.Parse(strTotalArea)) * 100;
                     hashAttributePercentage.Add("NULL", dPercentage.ToString());
                 }
@@ -1311,365 +1311,365 @@
                 String sSimulation = "SIMULATION_" + strNetworkID + "_" + strSimulationID;
                 String sReport = "REPORT_" + strNetworkID + "_" + strSimulationID;
 
-				if (bShowAll)
-				{
-					strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
-				}
-				else
-				{
-					//strFrom = " FROM " + sSection + " SAMPLE(10) INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
-					strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
-				}
+                if (bShowAll)
+                {
+                    strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
+                }
+                else
+                {
+                    //strFrom = " FROM " + sSection + " SAMPLE(10) INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
+                    strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID "; //INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID";
+                }
             }
 
             return strFrom;
 
         }
 
-		public static String BuildFromStatementWithReport(String strNetworkID, String strSimulationID)
-		{
-			String strFrom = "";
-			if (strSimulationID == "")
-			{
-				return BuildFromStatement(strNetworkID);
-			}
-			else
-			{
-				String sSection = "SECTION_" + strNetworkID;
-				String sSegment = "SEGMENT_" + strNetworkID + "_NS0";
-				String sSimulation = "SIMULATION_" + strNetworkID + "_" + strSimulationID;
-				String sReport = "REPORT_" + strNetworkID + "_" + strSimulationID;
+        public static String BuildFromStatementWithReport(String strNetworkID, String strSimulationID)
+        {
+            String strFrom = "";
+            if (strSimulationID == "")
+            {
+                return BuildFromStatement(strNetworkID);
+            }
+            else
+            {
+                String sSection = "SECTION_" + strNetworkID;
+                String sSegment = "SEGMENT_" + strNetworkID + "_NS0";
+                String sSimulation = "SIMULATION_" + strNetworkID + "_" + strSimulationID;
+                String sReport = "REPORT_" + strNetworkID + "_" + strSimulationID;
 
-				strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID ";
-			}
+                strFrom = " FROM " + sSection + " INNER JOIN " + sSegment + " ON " + sSection + ".SECTIONID=" + sSegment + ".SECTIONID INNER JOIN " + sSimulation + " ON " + sSection + ".SECTIONID=" + sSimulation + ".SECTIONID INNER JOIN " + sReport + " ON " + sSection + ".SECTIONID=" + sReport + ".SECTIONID ";
+            }
 
-			return strFrom;
-		}
+            return strFrom;
+        }
 
-		public static String GetNetworkIDFromName( String strNetworkName )
-		{
-			String query = "SELECT NETWORKID FROM NETWORKS WHERE NETWORK_NAME = '" + strNetworkName + "'";
-			return DBMgr.ExecuteQuery( query ).Tables[0].Rows[0]["NETWORKID"].ToString();
-		}
-		
-		public static DataSet GetDistinctAttributeYears(String attributeName, ConnectionParameters cp)
-		{
-			String query;
-			DataSet distinctAttributeYears;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					query = "Select DISTINCT year(DATE_) AS Years From " + attributeName + " ORDER BY Years";
-					distinctAttributeYears = DBMgr.ExecuteQuery(query, cp);
-					break;
-				case "ORACLE":
-					query = "Select DISTINCT TO_CHAR(DATE_, 'YYYY') AS Years From " + attributeName + " ORDER BY Years";
-					distinctAttributeYears = DBMgr.ExecuteQuery(query, cp);
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Create ANSI implementation for GetDistinctAttributeYears()" );
-					//break;
-			}
-			return distinctAttributeYears;
-		}
+        public static String GetNetworkIDFromName( String strNetworkName )
+        {
+            String query = "SELECT NETWORKID FROM NETWORKS WHERE NETWORK_NAME = '" + strNetworkName + "'";
+            return DBMgr.ExecuteQuery( query ).Tables[0].Rows[0]["NETWORKID"].ToString();
+        }
+        
+        public static DataSet GetDistinctAttributeYears(String attributeName, ConnectionParameters cp)
+        {
+            String query;
+            DataSet distinctAttributeYears;
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    query = "Select DISTINCT year(DATE_) AS Years From " + attributeName + " ORDER BY Years";
+                    distinctAttributeYears = DBMgr.ExecuteQuery(query, cp);
+                    break;
+                case "ORACLE":
+                    query = "Select DISTINCT TO_CHAR(DATE_, 'YYYY') AS Years From " + attributeName + " ORDER BY Years";
+                    distinctAttributeYears = DBMgr.ExecuteQuery(query, cp);
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Create ANSI implementation for GetDistinctAttributeYears()" );
+                    //break;
+            }
+            return distinctAttributeYears;
+        }
 
-		public static DataSet GetValidFacilities(ConnectionParameters cp)
-		{
-			String query;
-			DataSet nonNullFacilities;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY <> '' ORDER BY FACILITY";
-					break;
-				case "ORACLE":
-					query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY LIKE '_%' ORDER BY FACILITY";
-					break;
-				default:
-					query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY <> '' ORDER BY FACILITY";
-					break;
-			}
-			nonNullFacilities = DBMgr.ExecuteQuery(query, cp);
-			return nonNullFacilities;
-		}
+        public static DataSet GetValidFacilities(ConnectionParameters cp)
+        {
+            String query;
+            DataSet nonNullFacilities;
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY <> '' ORDER BY FACILITY";
+                    break;
+                case "ORACLE":
+                    query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY LIKE '_%' ORDER BY FACILITY";
+                    break;
+                default:
+                    query = "Select DISTINCT FACILITY FROM NETWORK_DEFINITION WHERE FACILITY <> '' ORDER BY FACILITY";
+                    break;
+            }
+            nonNullFacilities = DBMgr.ExecuteQuery(query, cp);
+            return nonNullFacilities;
+        }
 
-		public static DataSet GetValidRoutes(ConnectionParameters cp)
-		{
-			String query;
-			DataSet nonNullFacilities;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES <> '' ORDER BY ROUTES";
-					break;
-				case "ORACLE":
-					query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES LIKE '_%' ORDER BY ROUTES";
-					break;
-				default:
-					query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES <> '' ORDER BY ROUTES";
-					break;
-			}
-			nonNullFacilities = DBMgr.ExecuteQuery(query, cp);
-			return nonNullFacilities;
-		}
+        public static DataSet GetValidRoutes(ConnectionParameters cp)
+        {
+            String query;
+            DataSet nonNullFacilities;
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES <> '' ORDER BY ROUTES";
+                    break;
+                case "ORACLE":
+                    query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES LIKE '_%' ORDER BY ROUTES";
+                    break;
+                default:
+                    query = "Select DISTINCT ROUTES FROM NETWORK_DEFINITION WHERE ROUTES <> '' ORDER BY ROUTES";
+                    break;
+            }
+            nonNullFacilities = DBMgr.ExecuteQuery(query, cp);
+            return nonNullFacilities;
+        }
 
-		public static int GetReportID(string reportName)
-		{
-			return DBMgr.ExecuteScalar( "SELECT REPORTID FROM REPORTS WHERE REPORTNAME = '" + reportName + "'" );
-		}
+        public static int GetReportID(string reportName)
+        {
+            return DBMgr.ExecuteScalar( "SELECT REPORTID FROM REPORTS WHERE REPORTNAME = '" + reportName + "'" );
+        }
 
-		public static string GetReportName(int reportID)
-		{
-			return DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE REPORTID = " + reportID).Tables[0].Rows[0]["REPORTNAME"].ToString();
-		}
+        public static string GetReportName(int reportID)
+        {
+            return DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE REPORTID = " + reportID).Tables[0].Rows[0]["REPORTNAME"].ToString();
+        }
 
-		public static string GetReportType(int reportID)
-		{
-			return DBMgr.ExecuteQuery("SELECT ReportType FROM REPORTS WHERE REPORTID = " + reportID).Tables[0].Rows[0]["ReportType"].ToString();
-		}
+        public static string GetReportType(int reportID)
+        {
+            return DBMgr.ExecuteQuery("SELECT ReportType FROM REPORTS WHERE REPORTID = " + reportID).Tables[0].Rows[0]["ReportType"].ToString();
+        }
 
-		public static List<string> GetNetworkReportNames()
-		{
-			List<string> networkReportNames = new List<string>();
-			DataSet networkReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'NETWORK'");
-			if( networkReports.Tables.Count > 0 )
-			{
-				foreach( DataRow networkReportName in networkReports.Tables[0].Rows )
-				{
-					networkReportNames.Add(networkReportName["REPORTNAME"].ToString());
-				}
-			}
-			return networkReportNames;
-		}
+        public static List<string> GetNetworkReportNames()
+        {
+            List<string> networkReportNames = new List<string>();
+            DataSet networkReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'NETWORK'");
+            if( networkReports.Tables.Count > 0 )
+            {
+                foreach( DataRow networkReportName in networkReports.Tables[0].Rows )
+                {
+                    networkReportNames.Add(networkReportName["REPORTNAME"].ToString());
+                }
+            }
+            return networkReportNames;
+        }
 
-		public static List<string> GetSimulationReportNames()
-		{
-			List<string> networkReportNames = new List<string>();
-			DataSet networkReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'SIMULATION'");
-			foreach (DataRow networkReportName in networkReports.Tables[0].Rows)
-			{
-				networkReportNames.Add(networkReportName["REPORTNAME"].ToString());
-			}
-			return networkReportNames;
-		}
+        public static List<string> GetSimulationReportNames()
+        {
+            List<string> networkReportNames = new List<string>();
+            DataSet networkReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'SIMULATION'");
+            foreach (DataRow networkReportName in networkReports.Tables[0].Rows)
+            {
+                networkReportNames.Add(networkReportName["REPORTNAME"].ToString());
+            }
+            return networkReportNames;
+        }
 
-		public static List<string> GetAssetInventoryReportNames()
-		{
-			List<string> assetReportNames = new List<string>();
-			DataSet assetReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'ASSET'");
-			foreach (DataRow assetReport in assetReports.Tables[0].Rows)
-			{
-				assetReportNames.Add(assetReport["REPORTNAME"].ToString());
-			}
-			return assetReportNames;
-		}
+        public static List<string> GetAssetInventoryReportNames()
+        {
+            List<string> assetReportNames = new List<string>();
+            DataSet assetReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'ASSET'");
+            foreach (DataRow assetReport in assetReports.Tables[0].Rows)
+            {
+                assetReportNames.Add(assetReport["REPORTNAME"].ToString());
+            }
+            return assetReportNames;
+        }
 
-		public static List<string> GetAttributeInventoryReportNames()
-		{
-			List<string> attributeReportNames = new List<string>();
-			DataSet attributeReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'ASSET'");
-			foreach (DataRow attributeReport in attributeReports.Tables[0].Rows)
-			{
-				attributeReportNames.Add(attributeReport["REPORTNAME"].ToString());
-			}
-			return attributeReportNames;
-		}
+        public static List<string> GetAttributeInventoryReportNames()
+        {
+            List<string> attributeReportNames = new List<string>();
+            DataSet attributeReports = DBMgr.ExecuteQuery("SELECT REPORTNAME FROM REPORTS WHERE ReportType = 'ASSET'");
+            foreach (DataRow attributeReport in attributeReports.Tables[0].Rows)
+            {
+                attributeReportNames.Add(attributeReport["REPORTNAME"].ToString());
+            }
+            return attributeReportNames;
+        }
 
-		public static bool IsAttributeCalculated(string attribute)
-		{
-			string query = "SELECT * FROM ATTRIBUTES_ WHERE ATTRIBUTE_ = '" + attribute + "'";
-			DataSet attributeData = DBMgr.ExecuteQuery(query);
-			AttributeObject attributeToTest;
-			if (attributeData.Tables[0].Rows.Count == 1)
-			{
-				attributeToTest = new AttributeObject(attributeData.Tables[0].Rows[0]);
-			}
-			else
-			{
-				throw new ArgumentException("Invalid attribute specification for IsAttributeCalculated().");
-			}
-			return attributeToTest.Calculated;
-		}
+        public static bool IsAttributeCalculated(string attribute)
+        {
+            string query = "SELECT * FROM ATTRIBUTES_ WHERE ATTRIBUTE_ = '" + attribute + "'";
+            DataSet attributeData = DBMgr.ExecuteQuery(query);
+            AttributeObject attributeToTest;
+            if (attributeData.Tables[0].Rows.Count == 1)
+            {
+                attributeToTest = new AttributeObject(attributeData.Tables[0].Rows[0]);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid attribute specification for IsAttributeCalculated().");
+            }
+            return attributeToTest.Calculated;
+        }
 
-		public static string GetAdvancedFilterSelectStatement(bool IsLinear, string networkID, string facility, string advancedSearchText, string property, string value)
-		{
-			string select = "";
-			if (IsLinear)
-			{
-				select = "SELECT FACILITY,SECTION,BEGIN_STATION,END_STATION,DIRECTION";
-			}
-			else
-			{
-				select = "SELECT FACILITY,SECTION,SECTION_" + networkID + ".SECTIONID";
-			}
+        public static string GetAdvancedFilterSelectStatement(bool IsLinear, string networkID, string facility, string advancedSearchText, string property, string value)
+        {
+            string select = "";
+            if (IsLinear)
+            {
+                select = "SELECT FACILITY,SECTION,BEGIN_STATION,END_STATION,DIRECTION";
+            }
+            else
+            {
+                select = "SELECT FACILITY,SECTION,SECTION_" + networkID + ".SECTIONID";
+            }
 
-			//Then at a minumum
-			select += " FROM SECTION_" + networkID;
+            //Then at a minumum
+            select += " FROM SECTION_" + networkID;
 
-			// Now for each table that is attached we add
-			select += " INNER JOIN SEGMENT_" + networkID + "_NS0 ON SECTION_" + networkID + ".SECTIONID=SEGMENT_" + networkID + "_NS0.SECTIONID";
+            // Now for each table that is attached we add
+            select += " INNER JOIN SEGMENT_" + networkID + "_NS0 ON SECTION_" + networkID + ".SECTIONID=SEGMENT_" + networkID + "_NS0.SECTIONID";
 
-			String strWhere = "";
-			String strSearch = advancedSearchText;
-			strSearch = strSearch.Trim();
+            String strWhere = "";
+            String strSearch = advancedSearchText;
+            strSearch = strSearch.Trim();
 
-			if (facility != "All")
-			{
-				strWhere = " WHERE FACILITY='" + facility + "'";
-				select += strWhere;
-			}
-			if (strSearch != "")
-			{
-				select += " AND ";
-				select += "(" + strSearch + ")";
-			}
-			if (property != "")
-			{
-				if (value != "All")
-				{
-					select += " AND ";
-					select += "(" + property.Trim() + " = '" + value.Trim() +"')";
-				}
-			}
-			
-			return select;
-		}
+            if (facility != "All")
+            {
+                strWhere = " WHERE FACILITY='" + facility + "'";
+                select += strWhere;
+            }
+            if (strSearch != "")
+            {
+                select += " AND ";
+                select += "(" + strSearch + ")";
+            }
+            if (property != "")
+            {
+                if (value != "All")
+                {
+                    select += " AND ";
+                    select += "(" + property.Trim() + " = '" + value.Trim() +"')";
+                }
+            }
+            
+            return select;
+        }
 
-		public static BindingSource CreateBoundTable(string query)
-		{
-			BindingSource binding = new BindingSource();
-			DataAdapter dataAdapter = new DataAdapter(query);
+        public static BindingSource CreateBoundTable(string query)
+        {
+            BindingSource binding = new BindingSource();
+            DataAdapter dataAdapter = new DataAdapter(query);
 
-			// Populate a new data table and bind it to the BindingSource.
-			DataTable table = new DataTable();
-			table.Locale = System.Globalization.CultureInfo.InvariantCulture;
-			dataAdapter.Fill(table);
+            // Populate a new data table and bind it to the BindingSource.
+            DataTable table = new DataTable();
+            table.Locale = System.Globalization.CultureInfo.InvariantCulture;
+            dataAdapter.Fill(table);
 
-			binding.DataSource = table;
-			return binding;
-		}
+            binding.DataSource = table;
+            return binding;
+        }
 
-		public static DataSet GetCurrentNetworkLockData( string networkID )
-		{
-			DateTime lastTime = DateTime.Now - LockTimeout;
-			DataSet lockSet = null;
+        public static DataSet GetCurrentNetworkLockData( string networkID )
+        {
+            DateTime lastTime = DateTime.Now - LockTimeout;
+            DataSet lockSet = null;
 
-			switch( DBMgr.NativeConnectionParameters.Provider )
-			{
-				case "MSSQL":
-					//with networkread and simulationread, we can collapse the readonly locking of the network
-					//and the full locking of the simulation into one row
-					//lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE SIMULATIONID IS NULL AND NETWORKID = '" + networkID + "' AND LOCK_START >= '" + lastTime.ToString() + "' ORDER BY LOCK_START DESC" );
-					lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND LOCK_START >= (CAST('" + lastTime.ToString() + "' as datetime)) ORDER BY LOCK_START DESC" );
-					break;
-				case "ORACLE":
-					//lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE SIMULATIONID IS NULL AND NETWORKID = '" + networkID + "' AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
-					lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Implement ANSI version of GetCurrentNetworkLockData() " );
-			}
+            switch( DBMgr.NativeConnectionParameters.Provider )
+            {
+                case "MSSQL":
+                    //with networkread and simulationread, we can collapse the readonly locking of the network
+                    //and the full locking of the simulation into one row
+                    //lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE SIMULATIONID IS NULL AND NETWORKID = '" + networkID + "' AND LOCK_START >= '" + lastTime.ToString() + "' ORDER BY LOCK_START DESC" );
+                    lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND LOCK_START >= (CAST('" + lastTime.ToString() + "' as datetime)) ORDER BY LOCK_START DESC" );
+                    break;
+                case "ORACLE":
+                    //lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE SIMULATIONID IS NULL AND NETWORKID = '" + networkID + "' AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
+                    lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Implement ANSI version of GetCurrentNetworkLockData() " );
+            }
 
-			return lockSet;
-		}
+            return lockSet;
+        }
 
-		public static DataSet GetCurrentSimulationLockData( string networkID, string simulationID )
-		{
-			DateTime lastTime = DateTime.Now - LockTimeout;
-			DataSet lockSet = null;
+        public static DataSet GetCurrentSimulationLockData( string networkID, string simulationID )
+        {
+            DateTime lastTime = DateTime.Now - LockTimeout;
+            DataSet lockSet = null;
 
-			switch( DBMgr.NativeConnectionParameters.Provider )
-			{
-				case "MSSQL":
-					lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND SIMULATIONID = " + simulationID + " AND LOCK_START >= convert( datetime, '" + lastTime.ToString( "yyyy-MM-dd HH:mm:ss" ) + "', 120) ORDER BY LOCK_START DESC" );
-					break;
-				case "ORACLE":
-					lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND SIMULATIONID = " + simulationID + " AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Implement ANSI version of GetCurrentSimulationLockData() " );
-			}
+            switch( DBMgr.NativeConnectionParameters.Provider )
+            {
+                case "MSSQL":
+                    lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND SIMULATIONID = " + simulationID + " AND LOCK_START >= convert( datetime, '" + lastTime.ToString( "yyyy-MM-dd HH:mm:ss" ) + "', 120) ORDER BY LOCK_START DESC" );
+                    break;
+                case "ORACLE":
+                    lockSet = DBMgr.ExecuteQuery( "SELECT NETWORKID, SIMULATIONID, LOCK_START, USERID, LOCKID, NETWORKREAD, SIMULATIONREAD FROM MULTIUSER_LOCK WHERE NETWORKID = '" + networkID + "' AND SIMULATIONID = " + simulationID + " AND LOCK_START >= TO_DATE(" + lastTime.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI') ORDER BY LOCK_START DESC" );
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Implement ANSI version of GetCurrentSimulationLockData() " );
+            }
 
-			return lockSet;
-		}
+            return lockSet;
+        }
 
-		public static void AddNetworkLock( string networkID, string userID, bool readable )
-		{
-			int lockID = -1;
-			switch( DBMgr.NativeConnectionParameters.Provider )
-			{
-				case "MSSQL":
-					lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
-					if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, LOCK_START, USERID, NETWORKREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "', '" + DateTime.Now.ToString() + "', '" + userID + "', '"+ (readable ? "1" : "0") +"')" ) < 1 )
-					{
-						throw new Exception( "ERROR creating network lock for networkID [" + networkID + "] / userID [" + userID + "]" );
-					}
-					break;
-				case "ORACLE":
-					lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
-					if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, LOCK_START, USERID, NETWORKREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "', TO_DATE('" + DateTime.Now.ToString( "yyyyMMddHHmm" ) + "', 'YYYYMMDDHH24MI'), '" + userID + "', '" + (readable ? "1" : "0") + "')" ) < 1 )
-					{
-						throw new Exception( "ERROR creating network lock for networkID [" + networkID + "] / userID [" + userID + "]" );
-					}
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Implement ANSI version of AddNetworkLock() " );
-			}
-		}
+        public static void AddNetworkLock( string networkID, string userID, bool readable )
+        {
+            int lockID = -1;
+            switch( DBMgr.NativeConnectionParameters.Provider )
+            {
+                case "MSSQL":
+                    lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
+                    if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, LOCK_START, USERID, NETWORKREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "', '" + DateTime.Now.ToString() + "', '" + userID + "', '"+ (readable ? "1" : "0") +"')" ) < 1 )
+                    {
+                        throw new Exception( "ERROR creating network lock for networkID [" + networkID + "] / userID [" + userID + "]" );
+                    }
+                    break;
+                case "ORACLE":
+                    lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
+                    if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, LOCK_START, USERID, NETWORKREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "', TO_DATE('" + DateTime.Now.ToString( "yyyyMMddHHmm" ) + "', 'YYYYMMDDHH24MI'), '" + userID + "', '" + (readable ? "1" : "0") + "')" ) < 1 )
+                    {
+                        throw new Exception( "ERROR creating network lock for networkID [" + networkID + "] / userID [" + userID + "]" );
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Implement ANSI version of AddNetworkLock() " );
+            }
+        }
 
-		public static void AddSimulationLock( string networkID, string simulationID, string userID, bool readable )
-		{
-			int lockID = -1;
-			switch( DBMgr.NativeConnectionParameters.Provider )
-			{
-				case "MSSQL":
-					lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
-					if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, SIMULATIONID, LOCK_START, USERID, NETWORKREAD, SIMULATIONREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "','" + simulationID + "', convert( datetime, '" + DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss" ) + "', 120), '" + userID + "', '1', '" + ( readable ? "1" : "0" ) + "')" ) < 1 )
-					{
-						throw new Exception( "ERROR creating simulation lock for networkID [" + networkID + "] / simulationID [" + simulationID + "] / userID [" + userID + "]" );
-					}
-					break;
-				case "ORACLE":
-					lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
-					if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, SIMULATIONID, LOCK_START, USERID, NETWORKREAD, SIMULATIONREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "','" + simulationID + "', TO_DATE(" + DateTime.Now.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI'), '" + userID + "', '1', '" + ( readable ? "1" : "0" ) + "')" ) < 1 )
-					{
-						throw new Exception( "ERROR creating simulation lock for networkID [" + networkID + "] / simulationID [" + simulationID + "] / userID [" + userID + "]" );
-					}
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Implement ANSI version of AddSimulationLock() " );
-			}
-		}
+        public static void AddSimulationLock( string networkID, string simulationID, string userID, bool readable )
+        {
+            int lockID = -1;
+            switch( DBMgr.NativeConnectionParameters.Provider )
+            {
+                case "MSSQL":
+                    lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
+                    if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, SIMULATIONID, LOCK_START, USERID, NETWORKREAD, SIMULATIONREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "','" + simulationID + "', convert( datetime, '" + DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss" ) + "', 120), '" + userID + "', '1', '" + ( readable ? "1" : "0" ) + "')" ) < 1 )
+                    {
+                        throw new Exception( "ERROR creating simulation lock for networkID [" + networkID + "] / simulationID [" + simulationID + "] / userID [" + userID + "]" );
+                    }
+                    break;
+                case "ORACLE":
+                    lockID = DBMgr.ExecuteScalar( "SELECT MAX(LOCKID) FROM MULTIUSER_LOCK" ) + 1;
+                    if( DBMgr.ExecuteNonQuery( "INSERT INTO MULTIUSER_LOCK (LOCKID, NETWORKID, SIMULATIONID, LOCK_START, USERID, NETWORKREAD, SIMULATIONREAD)  VALUES ('" + lockID.ToString() + "', '" + networkID + "','" + simulationID + "', TO_DATE(" + DateTime.Now.ToString( "yyyyMMddHHmm" ) + ", 'YYYYMMDDHH24MI'), '" + userID + "', '1', '" + ( readable ? "1" : "0" ) + "')" ) < 1 )
+                    {
+                        throw new Exception( "ERROR creating simulation lock for networkID [" + networkID + "] / simulationID [" + simulationID + "] / userID [" + userID + "]" );
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Implement ANSI version of AddSimulationLock() " );
+            }
+        }
 
-		public static void RemoveLock( string lockID )
-		{
-			switch( DBMgr.NativeConnectionParameters.Provider )
-			{
-				case "MSSQL":
-				case "ORACLE":
-					if( DBMgr.ExecuteNonQuery( "DELETE FROM MULTIUSER_LOCK WHERE LOCKID = '" + lockID + "'" ) < 1 )
-					{
-						throw new Exception( "ERROR deleting network lock for LOCKID [" + lockID + "]" );
-					}
+        public static void RemoveLock( string lockID )
+        {
+            switch( DBMgr.NativeConnectionParameters.Provider )
+            {
+                case "MSSQL":
+                case "ORACLE":
+                    if( DBMgr.ExecuteNonQuery( "DELETE FROM MULTIUSER_LOCK WHERE LOCKID = '" + lockID + "'" ) < 1 )
+                    {
+                        throw new Exception( "ERROR deleting network lock for LOCKID [" + lockID + "]" );
+                    }
 
-					break;
-				default:
-					throw new NotImplementedException( "TODO: Implement Non-Oracle version of RemoveLock() " );
-			}
-		}
+                    break;
+                default:
+                    throw new NotImplementedException( "TODO: Implement Non-Oracle version of RemoveLock() " );
+            }
+        }
 
-		public static List<CompoundTreatment> GetCompoundTreatments()
-		{
-			List<CompoundTreatment> toReturn = new List<CompoundTreatment>();
-			string query = "SELECT COMPOUND_TREATMENT_NAME FROM COMPOUND_TREATMENTS";
-			DataSet ds = DBMgr.ExecuteQuery(query);
-			foreach(DataRow row in ds.Tables[0].Rows)
-			{
-				CompoundTreatment toAdd = new CompoundTreatment(row["COMPOUND_TREATMENT_NAME"].ToString());
-				toReturn.Add(toAdd);
-			}
-			return toReturn;
-		}
+        public static List<CompoundTreatment> GetCompoundTreatments()
+        {
+            List<CompoundTreatment> toReturn = new List<CompoundTreatment>();
+            string query = "SELECT COMPOUND_TREATMENT_NAME FROM COMPOUND_TREATMENTS";
+            DataSet ds = DBMgr.ExecuteQuery(query);
+            foreach(DataRow row in ds.Tables[0].Rows)
+            {
+                CompoundTreatment toAdd = new CompoundTreatment(row["COMPOUND_TREATMENT_NAME"].ToString());
+                toReturn.Add(toAdd);
+            }
+            return toReturn;
+        }
 
         public static void RenameSimulation(string newName, string simulationID)
         {
