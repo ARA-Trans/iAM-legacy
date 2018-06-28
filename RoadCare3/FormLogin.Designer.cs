@@ -605,6 +605,7 @@
             this.groupBox9.TabIndex = 5;
             this.groupBox9.TabStop = false;
             this.groupBox9.Text = "User Credentials";
+            this.groupBox9.Enter += new System.EventHandler(this.groupBox9_Enter);
             // 
             // tbMSSQLUserName
             // 
@@ -1110,7 +1111,7 @@
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(156, 13);
             this.label7.TabIndex = 4;
-            this.label7.Text = "Version 3.82  Date:01/08/2018";
+            this.label7.Text = "Version 3.85  Date:05/31/2018";
             this.label7.Click += new System.EventHandler(this.label7_Click);
             // 
             // labelLicenseNumber
