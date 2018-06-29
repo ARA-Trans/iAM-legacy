@@ -837,8 +837,10 @@ namespace Reports
 			xlChart.Legend.Position = XlLegendPosition.xlLegendPositionBottom;
 			xlChart.Legend.Font.Size = 14;
             Series oSeries = (Series)xlChart.SeriesCollection(1);
+            
 		}
 
 		
-	}
+    }
+
 }
