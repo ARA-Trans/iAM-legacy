@@ -2806,7 +2806,7 @@ namespace Simulation
             }
 
 
-
+            bool bAscending = SimulationMessaging.GetAttributeAscending(Method.BenefitAttribute);
 
             float fCost;
             String sFile;
@@ -3010,6 +3010,11 @@ namespace Simulation
 
                         deltaRemainingLife = dRemainingLife - section.RemainingLife;
                         deltaBenefit = dBenefit - section.BaseBenefit;
+
+                        if (!bAscending)
+                        {
+                            deltaBenefit = deltaBenefit * -1;
+                        }
 
                         String strRLHash = this.CreateRemainingLifeHashString(hashRL);
                         double dBCRatio;

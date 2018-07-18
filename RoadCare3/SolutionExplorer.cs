@@ -753,6 +753,12 @@ namespace RoadCare3
                     Global.WriteOutput("Done generating PGROUP Aggregation Report at " + DateTime.Now.TimeOfDay);
                     break;
 
+                case "PennDot Bridge Report":
+                    Global.WriteOutput("Done generating PennDot Bridge Report at " + DateTime.Now.TimeOfDay);
+                    var penndot = new Reports.PennDotBridge.BridgeReport(networkID.ToString(), strSimulationID);
+                    penndot.CreateReport();
+                    break;
+
                 default:
                     Global.WriteOutput("Requested report is not implemented.");
                     break;

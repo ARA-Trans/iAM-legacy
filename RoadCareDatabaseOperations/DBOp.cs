@@ -529,6 +529,21 @@
             return dsReturn;
         }
 
+	    public static DataSet QuerySimulationResult(string strNetworkID, string strSimulationID)
+	    {
+	        DataSet dsReturn = null;
+	        string strSelect = "SELECT * FROM SIMULATION_" + strNetworkID + "_" + strSimulationID;
+	        try
+	        {
+	            dsReturn = DBMgr.ExecuteQuery(strSelect);
+	        }
+	        catch (Exception ex)
+	        {
+	            throw ex;
+	        }
+	        return dsReturn;
+	    }
+
         public static DataSet GetNetworkDesc(String networkID)
         {
             try
