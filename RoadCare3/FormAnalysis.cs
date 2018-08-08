@@ -146,6 +146,7 @@ namespace RoadCare3
 			LockTextBox( tbBenefitLimit );
 			LockTextBox( tbDescription );
 			LockTextBox( tbJurisdiction );
+            LockCheckBox(checkBoxMultipleCost);
 
 			if( Global.SecurityOperations.CanModifySimulationAnalysisData( m_strNetworkID, m_strSimulationID ) )
 			{
@@ -158,12 +159,13 @@ namespace RoadCare3
 
 				UnlockTextBox( tbBenefitLimit );
 				UnlockTextBox( tbDescription );
-
-				if (Global.SecurityOperations.CanModifySimulationAnalysisJurisdiction(m_strNetworkID, m_strSimulationID))
+			    UnlockCheckBox(checkBoxMultipleCost);
+                if (Global.SecurityOperations.CanModifySimulationAnalysisJurisdiction(m_strNetworkID, m_strSimulationID))
 				{
 					UnlockTextBox(tbJurisdiction);
 					UnlockButton( buttonCriteria );
 				}
+
 			}
 		}
 
@@ -210,7 +212,7 @@ namespace RoadCare3
                 }
             }
 
-            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT,USE_CUMULATIVE_COST FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
             ds = new DataSet();
 
             try
@@ -231,6 +233,14 @@ namespace RoadCare3
             String strWeighting = ds.Tables[0].Rows[0].ItemArray[4].ToString();
             String strBenefitVariable = ds.Tables[0].Rows[0].ItemArray[5].ToString();
             String strBenefitLimit = ds.Tables[0].Rows[0].ItemArray[6].ToString();
+            var useCumulativeCost = false;
+
+            if (ds.Tables[0].Rows[0]["USE_CUMULATIVE_COST"] != DBNull.Value)
+            {
+                useCumulativeCost = Convert.ToBoolean(ds.Tables[0].Rows[0]["USE_CUMULATIVE_COST"]);
+            }
+            checkBoxMultipleCost.Checked = useCumulativeCost;
+
 
             cbBenefit.Text = strBenefitVariable.ToString();
             cbBudget.Text = strBudgetConstraint.ToString();
@@ -1306,5 +1316,30 @@ namespace RoadCare3
 		{
 
 		}
+
+        private void checkBoxMultipleCost_CheckedChanged(object sender, EventArgs e)
+        {
+            var update = "";
+            if (checkBoxMultipleCost.Checked)
+            {
+                update = "UPDATE SIMULATIONS SET USE_CUMULATIVE_COST='1' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            else
+            {
+                update = "UPDATE SIMULATIONS SET USE_CUMULATIVE_COST='0' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            
+
+            try
+            {
+                DBMgr.ExecuteNonQuery(update);
+            }
+            catch (Exception exception)
+            {
+                Global.WriteOutput("Error updating Apply multiple feasible costs: " + exception.Message.ToString());
+                return;
+            }
+
+        }
     }
 }

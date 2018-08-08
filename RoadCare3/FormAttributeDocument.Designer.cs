@@ -112,6 +112,7 @@ namespace RoadCare3
             // rbSectionRef
             // 
             this.rbSectionRef.AutoSize = true;
+            this.rbSectionRef.Checked = true;
             this.rbSectionRef.Location = new System.Drawing.Point(16, 62);
             this.rbSectionRef.Name = "rbSectionRef";
             this.rbSectionRef.Size = new System.Drawing.Size(114, 17);
@@ -128,7 +129,6 @@ namespace RoadCare3
             this.rbLinearRef.Name = "rbLinearRef";
             this.rbLinearRef.Size = new System.Drawing.Size(107, 17);
             this.rbLinearRef.TabIndex = 2;
-            this.rbLinearRef.TabStop = true;
             this.rbLinearRef.Text = "Linear Reference";
             this.rbLinearRef.UseVisualStyleBackColor = true;
             // 

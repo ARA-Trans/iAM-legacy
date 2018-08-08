@@ -71,20 +71,21 @@ namespace RoadCare3
 		private void FormAttributeDocument_Load(object sender, EventArgs e)
         {
 			SecureForm();
-      
-			m_strLinearYearFilter = "";
+
+
+            // If the attribute is on a data server, then we need to check if the view created was a LRS or SRS based.
+            // It is possible to have both, in which case we need not change the current (LRS) radio button.
+            m_cp = DBMgr.GetAttributeConnectionObject(m_strAttribute);
+
+            m_strLinearYearFilter = "";
 			m_strLinearRouteFilter = "";
 			m_strSectionYearFilter = "";
 			m_strSectionRouteFilter = "";
 
             this.TabText = m_strAttribute;
             this.Text = m_strAttribute;
-            rbLinearRef.Checked = true;
-            rbSectionRef.Checked = false;
 
-			// If the attribute is on a data server, then we need to check if the view created was a LRS or SRS based.
-			// It is possible to have both, in which case we need not change the current (LRS) radio button.
-            m_cp = DBMgr.GetAttributeConnectionObject(m_strAttribute);
+
             if (m_cp == null)
             {
                 Global.WriteOutput("Error:Could not connect to datasource.");

@@ -636,13 +636,38 @@ namespace RoadCare3
                 //strSelect = "SELECT COST_ FROM COSTS WHERE TREATMENTID='" + strTreatmentID + "' AND CRITERIA=''"; 
 				//inserting '' in oracle inserts a null
                 // TODO: Why not pull the criteria for each cost equation found, and calculate the cost for each and show them in a cost dropdown.
-                strSelect = "SELECT COST_ FROM COSTS WHERE TREATMENTID='" + strTreatmentID + "' AND (CRITERIA='' OR CRITERIA IS NULL)"; 
+                strSelect = "SELECT COST_,CRITERIA FROM COSTS WHERE TREATMENTID='" + strTreatmentID + "'"; 
                 try
                 {
                     DataSet ds = DBMgr.ExecuteQuery(strSelect);
                     if(ds.Tables[0].Rows.Count == 1)
                     {
                         DataRow dr = ds.Tables[0].Rows[0];
+                        var cost = dr["COST_"];
+                        var criteria = dr["CRITERIA"];
+
+
+                        if (criteria == DBNull.Value)
+                        {
+                            strCost = dr["COST_"].ToString();
+                        }
+                        else
+                        {
+                            var criteriaString = criteria.ToString();
+                            if (String.IsNullOrWhiteSpace(criteriaString))
+                            {
+                                strCost = dr["COST_"].ToString();
+                            }
+                            else
+                            {
+                                var criteriaToEvaluate = new Criterias();
+                                criteriaToEvaluate.Criteria = criteriaString;
+                                if (criteriaToEvaluate.IsCriteriaMet(m_hashAttributeValue))
+                                {
+                                    strCost = dr["COST_"].ToString();
+                                }
+                            }
+                        }
                         strCost = dr["COST_"].ToString();
                     }
                 }
@@ -678,14 +703,38 @@ namespace RoadCare3
 
                 //strSelect = "SELECT ATTRIBUTE_,CHANGE_ FROM CONSEQUENCES WHERE TREATMENTID='" + strTreatmentID + "' AND CRITERIA=''";
 				//inserting '' in oracle inserts a null
-				strSelect = "SELECT ATTRIBUTE_,CHANGE_ FROM CONSEQUENCES WHERE TREATMENTID='" + strTreatmentID + "' AND (CRITERIA='' OR CRITERIA IS NULL)";
+				strSelect = "SELECT ATTRIBUTE_,CHANGE_, CRITERIA FROM CONSEQUENCES WHERE TREATMENTID='" + strTreatmentID + "'";
                 dgvAttribute.Rows.Clear();
                 try
                 {
                     DataSet ds = DBMgr.ExecuteQuery(strSelect);
                     foreach (DataRow dr in ds.Tables[0].Rows)
                     {
-                        dgvAttribute.Rows.Add(dr["ATTRIBUTE_"].ToString(), dr["CHANGE_"].ToString());
+                        var attribute = dr["ATTRIBUTE_"];
+                        var change = dr["CHANGE_"];
+                        var criteria = dr["CRITERIA"];
+
+                        if (criteria == DBNull.Value)
+                        {
+                            dgvAttribute.Rows.Add(dr["ATTRIBUTE_"].ToString(), dr["CHANGE_"].ToString());
+                        }
+                        else
+                        {
+                            var criteriaString = criteria.ToString();
+                            if (String.IsNullOrWhiteSpace(criteriaString))
+                            {
+                                dgvAttribute.Rows.Add(dr["ATTRIBUTE_"].ToString(), dr["CHANGE_"].ToString());
+                            }
+                            else
+                            {
+                                var criteriaToEvaluate = new Criterias();
+                                criteriaToEvaluate.Criteria = criteriaString;
+                                if (criteriaToEvaluate.IsCriteriaMet(m_hashAttributeValue))
+                                {
+                                    dgvAttribute.Rows.Add(dr["ATTRIBUTE_"].ToString(), dr["CHANGE_"].ToString());
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception exception)

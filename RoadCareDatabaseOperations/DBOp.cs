@@ -529,6 +529,21 @@
             return dsReturn;
         }
 
+	    public static DataSet QuerySimulationResult(string strNetworkID, string strSimulationID)
+	    {
+	        DataSet dsReturn = null;
+	        string strSelect = "SELECT * FROM SIMULATION_" + strNetworkID + "_" + strSimulationID;
+	        try
+	        {
+	            dsReturn = DBMgr.ExecuteQuery(strSelect);
+	        }
+	        catch (Exception ex)
+	        {
+	            throw ex;
+	        }
+	        return dsReturn;
+	    }
+
         public static DataSet GetNetworkDesc(String networkID)
         {
             try
@@ -1931,10 +1946,36 @@
             UpdateRoadCareForPiecewisePerformance();
             UpdateRoadCareForNetworkSpecificArea();
             UpdateRoadCareForFunctionEquationTables();//  Adds the necessary columns to tables with equations for allowing use of complete functions for equations.
-            UpdateRoadCareForConditionalRSL();
+            UpdateRoadCareForConditionalRsl();
+            UpdateRoadCareForCumulativeCost();
         }
 
-        private static void UpdateRoadCareForConditionalRSL()
+	    private static void UpdateRoadCareForCumulativeCost()
+	    {
+	        var ds = DBMgr.GetTableColumnsWithTypes("SIMULATIONS");
+	        bool isCumulativeCost = false;
+	        foreach (DataRow row in ds.Tables[0].Rows)
+	        {
+	            if (row["column_name"].ToString().ToUpper() == "USE_CUMULATIVE_COST")
+	            {
+	                isCumulativeCost = true;
+	            }
+	        }
+	        if (!isCumulativeCost)
+	        {
+	            if (DBMgr.NativeConnectionParameters.Provider == "ORACLE")
+	            {
+	                DBMgr.ExecuteNonQuery("ALTER TABLE SIMULATIONS ADD USE_CUMULATIVE_COST NUMBER(1) NULL");
+	            }
+	            else
+	            {
+	                DBMgr.ExecuteNonQuery("ALTER TABLE SIMULATIONS ADD USE_CUMULATIVE_COST BIT NULL");
+	            }
+	        }
+        }
+
+
+	    private static void UpdateRoadCareForConditionalRsl()
         {
             if (!DBMgr.IsTableInDatabase("CONDITIONAL_RSL"))
             {
