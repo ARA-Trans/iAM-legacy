@@ -135,6 +135,7 @@ namespace Simulation
 
         }
 
+
         public Simulation(String strSimulation, String strNetwork, String strSimulationID, String strNetworkID)
         {
             m_strNetwork = strNetwork;
@@ -516,7 +517,7 @@ namespace Simulation
         public bool GetSimulationMethod()
         {
             //Replace with Method information.
-            String strSelect = "SELECT ANALYSIS, BUDGET_CONSTRAINT,BENEFIT_VARIABLE, BENEFIT_LIMIT,RUN_TIME FROM " + cgOMS.Prefix + "SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            String strSelect = "SELECT ANALYSIS, BUDGET_CONSTRAINT,BENEFIT_VARIABLE, BENEFIT_LIMIT,RUN_TIME,USE_CUMULATIVE_COST FROM " + cgOMS.Prefix + "SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
             try
             {
                 DataSet ds = DBMgr.ExecuteQuery(strSelect);
@@ -532,7 +533,7 @@ namespace Simulation
                     Method.IsRemainingLife = true;
                     Method.BenefitAttribute = dr["BENEFIT_VARIABLE"].ToString();
                     if (dr["RUN_TIME"] != DBNull.Value) SimulationMessaging.LengthLastRun = Convert.ToDouble(dr["RUN_TIME"]);
-                    
+                    if (dr["USE_CUMULATIVE_COST"] != DBNull.Value) Method.UseCumulativeCost = Convert.ToBoolean(dr["USE_CUMULATIVE_COST"]);
                     string str = dr["BENEFIT_LIMIT"].ToString();
                     double dLimit = 0;
                     double.TryParse(str, out dLimit) ;
@@ -3253,6 +3254,7 @@ namespace Simulation
             float fCost;
             float fDefaultCost = 0;
             float fMostCost = 0;
+            float totalCost = 0;
             Sections section = m_listSections.Find((delegate(Sections s) { return s.SectionID == strSectionID; }));
 
             foreach (Treatments treatment in m_listTreatments)
@@ -3274,6 +3276,7 @@ namespace Simulation
                     fCost = -1;
                     fDefaultCost = 0;
                     fMostCost = 0;
+                    totalCost = 0;
                     foreach (Costs cost in treatment.CostList)
                     {
                         if (cost.Default)
@@ -3292,7 +3295,10 @@ namespace Simulation
                                 section.m_hashNextAttributeValue.Add("AREA", section.Area);
                             }
                             fDefaultCost = (float)cost.GetCost(section.m_hashNextAttributeValue);
-
+                            if (Method.UseCumulativeCost)
+                            {
+                                totalCost += fDefaultCost;
+                            }
 
                             //fDefaultCost = cost.Cost;
                         }
@@ -3319,17 +3325,31 @@ namespace Simulation
                                 }
                                 fCost = (float)cost.GetCost(section.m_hashNextAttributeValue);
                                 // fCost = cost.Cost;
-                                if (fCost > fMostCost)
+                                if (Method.UseCumulativeCost)
                                 {
-                                    fMostCost = fCost;
+                                    totalCost += fCost;
+                                }
+                                else
+                                {
+                                    if (fCost > fMostCost)
+                                    {
+                                        fMostCost = fCost;
+                                    }
                                 }
                             }
                         }
                     }
 
                     //If cost is not set use default cost.
-                    if (fCost < 0) fCost = fDefaultCost;
-                    else fCost = fMostCost; //Otherwise use most expensive (conservative).
+                    if (Method.UseCumulativeCost)
+                    {
+                        fCost = totalCost;
+                    }
+                    else
+                    {
+                        if (fCost <= 0) fCost = fDefaultCost;
+                        else fCost = fMostCost; //Otherwise use most expensive (conservative).
+                    }
                     if (section.Area <= 0)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is equal to zero and Benefit/Cost is infinite. Section ignored."));

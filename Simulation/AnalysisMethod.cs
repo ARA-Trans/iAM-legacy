@@ -92,6 +92,7 @@ namespace Simulation
             set { _isOMSTargetEnforced = value; }
         }
 
+        public bool UseCumulativeCost { get; set; }
         ///// <summary>
         ///// Attributes to consider Remaining Life for.
         ///// </summary>
