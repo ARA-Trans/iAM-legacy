@@ -208,6 +208,7 @@ namespace RoadCare3
 			cmb.Enabled = true;
 		}
 
+
 		protected void UnlockCheckBox( CheckBox chb )
 		{
 			chb.Enabled = true;

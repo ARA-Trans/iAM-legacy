@@ -65,6 +65,7 @@ namespace RoadCare3
             this.buttonRunSimulation = new System.Windows.Forms.Button();
             this.timerSimulation = new System.Windows.Forms.Timer(this.components);
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.checkBoxMultipleCost = new System.Windows.Forms.CheckBox();
             this.tabControlAnalysis.SuspendLayout();
             this.tabPagePriority.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPriority)).BeginInit();
@@ -300,7 +301,7 @@ namespace RoadCare3
             this.tbDescription.Location = new System.Drawing.Point(76, 58);
             this.tbDescription.Margin = new System.Windows.Forms.Padding(2);
             this.tbDescription.Name = "tbDescription";
-            this.tbDescription.Size = new System.Drawing.Size(548, 20);
+            this.tbDescription.Size = new System.Drawing.Size(380, 20);
             this.tbDescription.TabIndex = 6;
             this.tbDescription.Validated += new System.EventHandler(this.tbDescription_Validated);
             // 
@@ -374,7 +375,7 @@ namespace RoadCare3
             // labelBenefitLimit
             // 
             this.labelBenefitLimit.AutoSize = true;
-            this.labelBenefitLimit.Location = new System.Drawing.Point(628, 59);
+            this.labelBenefitLimit.Location = new System.Drawing.Point(461, 62);
             this.labelBenefitLimit.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelBenefitLimit.Name = "labelBenefitLimit";
             this.labelBenefitLimit.Size = new System.Drawing.Size(67, 13);
@@ -383,7 +384,7 @@ namespace RoadCare3
             // 
             // tbBenefitLimit
             // 
-            this.tbBenefitLimit.Location = new System.Drawing.Point(695, 59);
+            this.tbBenefitLimit.Location = new System.Drawing.Point(528, 58);
             this.tbBenefitLimit.Margin = new System.Windows.Forms.Padding(2);
             this.tbBenefitLimit.Name = "tbBenefitLimit";
             this.tbBenefitLimit.Size = new System.Drawing.Size(118, 20);
@@ -450,11 +451,23 @@ namespace RoadCare3
             this.pictureBox1.TabIndex = 23;
             this.pictureBox1.TabStop = false;
             // 
+            // checkBoxMultipleCost
+            // 
+            this.checkBoxMultipleCost.AutoSize = true;
+            this.checkBoxMultipleCost.Location = new System.Drawing.Point(656, 60);
+            this.checkBoxMultipleCost.Name = "checkBoxMultipleCost";
+            this.checkBoxMultipleCost.Size = new System.Drawing.Size(157, 17);
+            this.checkBoxMultipleCost.TabIndex = 24;
+            this.checkBoxMultipleCost.Text = "Apply multiple feasible costs";
+            this.checkBoxMultipleCost.UseVisualStyleBackColor = true;
+            this.checkBoxMultipleCost.CheckedChanged += new System.EventHandler(this.checkBoxMultipleCost_CheckedChanged);
+            // 
             // FormAnalysis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(838, 518);
+            this.Controls.Add(this.checkBoxMultipleCost);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.buttonRunSimulation);
             this.Controls.Add(this.buttonCriteria);
@@ -531,5 +544,6 @@ namespace RoadCare3
         private System.Windows.Forms.DataGridViewTextBoxColumn DeficientPercent;
         private System.Windows.Forms.DataGridViewTextBoxColumn DeficientCriteria;
 		private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.CheckBox checkBoxMultipleCost;
     }
 }

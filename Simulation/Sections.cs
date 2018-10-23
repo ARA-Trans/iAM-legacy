@@ -593,7 +593,7 @@ namespace Simulation
 
 
 
-        public void RollForward(List<Deteriorate> listDeteriorate,List<String> listAttribute)
+        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute)
         {
             //All possible data is now in Section.  Do a quick check to see if all data is
             //present in current year.  If it is we are done.
@@ -610,7 +610,8 @@ namespace Simulation
                     hashRollForward.Add("SECTIONID", this.SectionID);
                     continue;
                 }
-				hash = (Hashtable)m_hashAttributeYearValues[str.ToUpper()];
+
+                hash = (Hashtable) m_hashAttributeYearValues[str.ToUpper()];
                 if (hash != null && hash.Contains(nYear.ToString()))
                 {
                     if (hash[nYear.ToString()] != null && !hashRollForward.Contains(str))
@@ -618,7 +619,7 @@ namespace Simulation
                         valueRollForward = hash[nYear.ToString()];
                         hashRollForward.Add(str, valueRollForward);
                     }
-                    else//"" Blank (and need to roll forward.
+                    else //"" Blank (and need to roll forward.
                     {
                         listMissing.Add(str);
                     }
@@ -631,7 +632,7 @@ namespace Simulation
 
             List<String> listAttributeDeteriorate = new List<String>();
 
-            foreach(String str in listMissing)
+            foreach (String str in listMissing)
             {
                 //For each attribute WITHOUT a deterioration curve, find lastest value.
                 if (!SimulationMessaging.DeteriorateAttributes.Contains(str))
@@ -639,20 +640,21 @@ namespace Simulation
                     int nMaximumYear = 0;
                     valueRollForward = null;
 
-                    hash = (Hashtable)m_hashAttributeYearValues[str];
-					if (hash != null)
-					{
-						foreach (String year in hash.Keys)
-						{
+                    hash = (Hashtable) m_hashAttributeYearValues[str];
+                    if (hash != null)
+                    {
+                        foreach (String year in hash.Keys)
+                        {
 
 
-							if (hash[year] != null && int.Parse(year) > nMaximumYear)
-							{
+                            if (hash[year] != null && int.Parse(year) > nMaximumYear)
+                            {
                                 valueRollForward = hash[year];
-								nMaximumYear = int.Parse(year);
-							}
-						}
-					}
+                                nMaximumYear = int.Parse(year);
+                            }
+                        }
+                    }
+
                     //At least one value was found
                     if (nMaximumYear > 0)
                     {
@@ -675,8 +677,11 @@ namespace Simulation
                             }
                             else
                             {
-                                valueRollForward = SimulationMessaging.ConvertToRoadCareObject(SimulationMessaging.GetAttributeDefault(str), str);
+                                valueRollForward =
+                                    SimulationMessaging.ConvertToRoadCareObject(
+                                        SimulationMessaging.GetAttributeDefault(str), str);
                             }
+
                             hashRollForward.Add(str, valueRollForward);
                             //SimulationMessaging.AddMessage("Default value for " + str + " rolled forward for " + this.Facility + " " + this.Section);
                         }
@@ -697,7 +702,7 @@ namespace Simulation
 
                 int nMaximumYear = 0;
                 valueRollForward = null;
-                hash = (Hashtable)m_hashAttributeYearValues[str];
+                hash = (Hashtable) m_hashAttributeYearValues[str];
                 if (hash != null)
                 {
                     foreach (String year in hash.Keys)
@@ -709,6 +714,7 @@ namespace Simulation
                         }
                     }
                 }
+
                 if (nMaximumYear > 0)
                 {
                     int nYearForward = this.RollToYear - nMaximumYear;
@@ -718,40 +724,107 @@ namespace Simulation
                 }
                 else // Value is not there.
                 {
-                    valueRollForward = SimulationMessaging.ConvertToRoadCareObject(SimulationMessaging.GetAttributeDefault(str), str);
+                    valueRollForward =
+                        SimulationMessaging.ConvertToRoadCareObject(SimulationMessaging.GetAttributeDefault(str), str);
                     hashRollForward.Add(str, valueRollForward);
                     hashYearForward.Add(str, 0);
                 }
             }
 
-            
+            var originalValues = new Hashtable();
+            foreach (var key in hashRollForward.Keys)
+            {
+                originalValues.Add(key,hashRollForward[key]);
+            }
             //Run performance equations for 
             foreach (String str in listAttributeDeteriorate)
             {
+                //List of possible rolled forwards
+                var possibleValues = new Dictionary<string, double>();
+
                 foreach (Deteriorate deteriorate in listDeteriorate)
                 {
                     if (deteriorate.Attribute == str)
                     {
                         if (deteriorate.IsCriteriaMet(hashRollForward))
                         {
-                            int nYearForward = (int)hashYearForward[str];
-                            for (int j = 0; j < nYearForward;j++)
+
+                            hashRollForward[str] = originalValues[str];
+
+
+                            int nYearForward = (int) hashYearForward[str];
+                            for (int j = 0; j < nYearForward; j++)
                             {
                                 bool bOutOfRange;
-                                double dValue = deteriorate.IterateOneYear(hashRollForward,out bOutOfRange);
+                                double dValue = deteriorate.IterateOneYear(hashRollForward, out bOutOfRange);
                                 hashRollForward.Remove(str);
                                 hashRollForward.Add(str, dValue);
+                            }
+
+                            possibleValues.Add(deteriorate.Criteria,Convert.ToDouble(hashRollForward[str]));
+                            hashRollForward[str] = originalValues[str];
+
+                        }
+                    }
+                }
+
+
+                //Now figure out which of the possible to use.
+                //Use the least conservative that is not blank.
+
+                var isAscending = SimulationMessaging.GetAttributeAscending(str);
+                var leastConservative = double.MaxValue;
+                if (isAscending) leastConservative = double.MinValue;
+                var found = false;
+                foreach (var key in possibleValues.Keys)
+                {
+                    if (key != "")
+                    {
+                        if (isAscending)
+                        {
+                            if (possibleValues[key] > leastConservative)
+                            {
+                                leastConservative = possibleValues[key];
+                                found = true;
+                            }
+                        }
+                        else
+                        {
+                            if (possibleValues[key] < leastConservative)
+                            {
+                                leastConservative = possibleValues[key];
+                                found = true;
                             }
                         }
                     }
                 }
+
+                if (!found && possibleValues.ContainsKey(""))
+                {
+                    leastConservative = possibleValues[""];
+                    found = true;
+                }
+
+                if (found)
+                {
+                    hashRollForward.Remove(str);
+                    hashRollForward.Add(str, leastConservative);
+                }
             }
 
-			m_hashYearAttributeValues.Remove( this.RollToYear );
+            if (m_hashAttributeYearValues.ContainsKey(RollToYear))
+            { 
+                m_hashYearAttributeValues.Remove(RollToYear);
+            }
+
             //Store all attributes by year.  This is the first for this simulation.
             m_hashYearAttributeValues.Add(this.RollToYear, hashRollForward);
 
-            m_hashYearAttributeValues.Remove(0);
+            if (m_hashAttributeYearValues.ContainsKey(0))
+            {
+                m_hashYearAttributeValues.Remove(0);
+            }
+
             m_hashYearAttributeValues.Add(0, hashRollForward);//Value after rolled forward.
            
             //Delete the data used to created the year hash to to save memory.
@@ -1171,41 +1244,49 @@ namespace Simulation
                 }
                 else
                 {
-                    foreach (Consequences consequence in commit.OMSTreatment.ConsequenceList)
+                    if (commit.OMSTreatment != null)
                     {
-                        AttributeChange change = consequence.AttributeChange.Find((delegate(AttributeChange ac) { return ac.Attribute == key; }));
-
-                        if (change != null && change.Attribute == key)//Adds consequence if matches key
+                        foreach (Consequences consequence in commit.OMSTreatment.ConsequenceList)
                         {
-                            if (change != null && dictionaryCommittedEquation.ContainsKey(change.Change))
+                            AttributeChange change = consequence.AttributeChange.Find((delegate(AttributeChange ac)
                             {
-                                CommittedEquation ce = dictionaryCommittedEquation[change.Change];
-                                if (!ce.HasErrors)
+                                return ac.Attribute == key;
+                            }));
+
+                            if (change != null && change.Attribute == key) //Adds consequence if matches key
+                            {
+                                if (change != null && dictionaryCommittedEquation.ContainsKey(change.Change))
                                 {
-                                    sValue = ce.GetConsequence(this.m_hashNextAttributeValue);
+                                    CommittedEquation ce = dictionaryCommittedEquation[change.Change];
+                                    if (!ce.HasErrors)
+                                    {
+                                        sValue = ce.GetConsequence(this.m_hashNextAttributeValue);
+                                        hashAttributeValue.Add(key, sValue);
+                                    }
+                                    else
+                                    {
+                                        hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
+                                    }
+
+                                }
+                                else if (change != null)
+                                {
+                                    sValue = change.ApplyChange(this.m_hashNextAttributeValue[key]);
+                                    String strPair =
+                                        change.Attribute.ToString() + "\t" + change.Change.ToString() + "\n";
+                                    changeHash += strPair;
                                     hashAttributeValue.Add(key, sValue);
                                 }
-                                else
-                                {
-                                    hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
-                                }
-
-                            }
-                            else if (change != null)
-                            {
-                                sValue = change.ApplyChange(this.m_hashNextAttributeValue[key]);
-                                String strPair = change.Attribute.ToString() + "\t" + change.Change.ToString() + "\n";
-                                changeHash += strPair;
-                                hashAttributeValue.Add(key, sValue);
                             }
                         }
                     }
-                    if(!hashAttributeValue.ContainsKey(key))//No consequence, just keep value
+                    if (!hashAttributeValue.ContainsKey(key)) //No consequence, just keep value
                     {
                         hashAttributeValue.Add(key, m_hashNextAttributeValue[key]);
                     }
                 }
             }
+           
 
             this.Treated = true;
 
@@ -1307,6 +1388,10 @@ namespace Simulation
                         double dValue = 0;
                         double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
                         sValue = dValue.ToString(sFormat);
+                    }
+                    else
+                    {
+                        sValue = hashAttributeValue[sAttribute].ToString();
                     }
                     strOut += "\t";
                     strOut += sValue;

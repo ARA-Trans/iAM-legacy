@@ -58,7 +58,7 @@ namespace RCImageView3
                 {
 //                    pictureBoxImage.SizeMode = PictureBoxSizeMode.AutoSize;
                     //if (!strPath.Contains(".jpg")) strPath += ".jpg";
-                    pictureBoxImage.Load(strPath);
+                    pictureBoxImage.Load(strPicturePath);
 
                 }
                 catch

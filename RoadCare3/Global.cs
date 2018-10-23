@@ -22,6 +22,16 @@ namespace RoadCare3
 {
     public static class Global
     {
+        public static string YearOfLicense => "2018";
+
+        public static string LastDayOfLicense => $"{YearOfLicense}-12-31";
+
+        public static DateTime ExactMomentWhenLicenseExpires => DateTime.ParseExact(YearOfLicense, "yyyy", null).AddYears(1);
+
+        public static DateTime FirstDayOfLicenseExpirationWarning => ExactMomentWhenLicenseExpires.AddMonths(-1);
+
+        public static string BrandCaptionForMessageBoxes => "RoadCare";
+
         private static String m_strLinearUnits = "miles";
         private static bool m_bIsLinear = true;
         private static int m_nMaxReturn = 15000;
@@ -35,12 +45,12 @@ namespace RoadCare3
         static private Hashtable m_hashAttributeFormat = new Hashtable();
         public static Hashtable m_htFieldMapping = new Hashtable();
 
-		private static SecOps m_globalSecurityOperations = null;
+        private static SecOps m_globalSecurityOperations = null;
 
         private static List<String> m_listAttribute = new List<String>();
         private static bool m_bMostRecentFirst = true;
 
-		private static Regex timeFilter = new Regex( "(2[0-3]|1[0-9]|0?[0-9]):([1-5][0-9]|0?[0-9]):([1-5][0-9]|0?[0-9])" );
+        private static Regex timeFilter = new Regex( "(2[0-3]|1[0-9]|0?[0-9]):([1-5][0-9]|0?[0-9]):([1-5][0-9]|0?[0-9])" );
 
 
         [DllImport("user32.dll")]
@@ -58,40 +68,40 @@ namespace RoadCare3
         private static String m_strArea;
         private static List<CommitAttributeChange> m_listAttributeChange;
 
-		private static Dictionary<string, object> m_clipBoard = new Dictionary<string,object>();
+        private static Dictionary<string, object> m_clipBoard = new Dictionary<string,object>();
 
-		public static void PushDataToClipboard( string identifier, object data )
-		{
-			m_clipBoard[identifier] = data;
-		}
+        public static void PushDataToClipboard( string identifier, object data )
+        {
+            m_clipBoard[identifier] = data;
+        }
 
-		public static object PopDataFromClipboard( string identifier )
-		{
-			object data = m_clipBoard[identifier];
-			m_clipBoard.Remove( identifier );
-			return data;
-		}
+        public static object PopDataFromClipboard( string identifier )
+        {
+            object data = m_clipBoard[identifier];
+            m_clipBoard.Remove( identifier );
+            return data;
+        }
 
-		public static bool ClipboardHasData( string identifier )
-		{
-			return m_clipBoard.ContainsKey( identifier );
-		}
+        public static bool ClipboardHasData( string identifier )
+        {
+            return m_clipBoard.ContainsKey( identifier );
+        }
 
-		public static SecOps SecurityOperations
-		{
-			get
-			{
-				if( m_globalSecurityOperations == null )
-				{
-					m_globalSecurityOperations = new SecOps();
-				}
-				return m_globalSecurityOperations;
-			}
-			set
-			{
-				m_globalSecurityOperations = value;
-			}
-		}
+        public static SecOps SecurityOperations
+        {
+            get
+            {
+                if( m_globalSecurityOperations == null )
+                {
+                    m_globalSecurityOperations = new SecOps();
+                }
+                return m_globalSecurityOperations;
+            }
+            set
+            {
+                m_globalSecurityOperations = value;
+            }
+        }
 
         public static String CommitTreatmentName
         {
@@ -153,12 +163,12 @@ namespace RoadCare3
             var outputWindow = FormManager.GetOutputWindow();
             if (outputWindow != null)
             {
-				if (!string.IsNullOrEmpty(strOutputText))
-				{
-				    if (!timeFilter.IsMatch(strOutputText))
-				    {
-					    strOutputText = GetTimeStampPrefix() + strOutputText;
-				    }
+                if (!string.IsNullOrEmpty(strOutputText))
+                {
+                    if (!timeFilter.IsMatch(strOutputText))
+                    {
+                        strOutputText = GetTimeStampPrefix() + strOutputText;
+                    }
 
                     // We wrap the SetOutputText call with Invoke if the
                     // currently executing thread is not on the same thread as
@@ -177,7 +187,7 @@ namespace RoadCare3
                     {
                         outputWindow.SetOutputText(strOutputText);
                     }
-				}
+                }
             }
         }
 
@@ -268,67 +278,67 @@ namespace RoadCare3
                     dataType = Microsoft.SqlServer.Management.Smo.DataType.Float;
                     break;
                 case "image":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Image;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Image;
                     break;
                 case "int":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Int;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Int;
                     break;
                 case "money":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Money;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Money;
                     break;
                 case "nchar(10)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.NChar(10);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.NChar(10);
                     break;
                 case "ntext":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.NText;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.NText;
                     break;
                 case "numeric(18, 0)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Numeric(18, 0);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Numeric(18, 0);
                     break;
                 case "nvarchar(50)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.NVarChar(50);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.NVarChar(50);
                     break;
                 case "nvarchar(MAX)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.NVarCharMax;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.NVarCharMax;
                     break;
                 case "real":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Real;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Real;
                     break;
                 case "smalldatetime":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallDateTime;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallDateTime;
                     break;
                 case "smallint":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallInt;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallInt;
                     break;
                 case "smallmoney":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallMoney;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.SmallMoney;
                     break;
                 case "text":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Text;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Text;
                     break;
                 case "timestamp":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.Timestamp;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.Timestamp;
                     break;
                 case "tinyint":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.TinyInt;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.TinyInt;
                     break;
                 case "uniqueidentifier":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.UniqueIdentifier;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.UniqueIdentifier;
                     break;
                 case "varbinary(50)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.VarBinary(50);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.VarBinary(50);
                     break;
                 case "varbinary(MAX)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.VarBinaryMax;
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.VarBinaryMax;
                     break;
                 case "varchar(50)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(50);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(50);
                     break;
                 case "varchar(MAX)":
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1);
                     break;
                 default:
-					dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(200);
+                    dataType = Microsoft.SqlServer.Management.Smo.DataType.VarChar(200);
                     break;
             }
             return dataType;
@@ -356,18 +366,18 @@ namespace RoadCare3
         /// <param name="strOutputText">Output window string.</param>
         public static void ClearOutputWindow()
         {
-			try
-			{
+            try
+            {
                 if(FormManager.GetOutputWindow() == null)
                 {
                     FormManager.AddOutputWindow(new FormOutputWindow());
                 }
-				FormManager.GetOutputWindow().ClearWindow();
-			}
-			catch (Exception exc)
-			{
-				MessageBox.Show("Error: Could not clear output window.  Check to see if it is open." + exc.Message);
-			}
+                FormManager.GetOutputWindow().ClearWindow();
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Error: Could not clear output window.  Check to see if it is open." + exc.Message);
+            }
 
         }
 
@@ -458,8 +468,8 @@ namespace RoadCare3
             m_hashNetworks.Add("Date Created", "DATE_CREATED");
             m_hashNetworks.Add("Date Last Edit", "DATE_LAST_EDIT");
             m_hashNetworks.Add("Number Sections", "NUMBER_SECTIONS");
-			//m_hashNetworks.Add("Lock", "LOCK");
-			//m_hashNetworks.Add("Private", "PRIVATE");
+            //m_hashNetworks.Add("Lock", "LOCK");
+            //m_hashNetworks.Add("Private", "PRIVATE");
         }
 
         /// <summary>
@@ -497,11 +507,11 @@ namespace RoadCare3
             m_htFieldMapping.Add("Grouping", "GROUPING");
             m_htFieldMapping.Add("Default_Value", "DEFAULT_VALUE");
             m_htFieldMapping.Add("View", "SQLVIEW");
-			m_htFieldMapping.Add("Integrated Security", "INTEGRATED_SECURITY");
-			m_htFieldMapping.Add("SID", "SID_");
-			m_htFieldMapping.Add("Port", "PORT");
+            m_htFieldMapping.Add("Integrated Security", "INTEGRATED_SECURITY");
+            m_htFieldMapping.Add("SID", "SID_");
+            m_htFieldMapping.Add("Port", "PORT");
             m_htFieldMapping.Add("Connection Type", "CONNECTION_TYPE");
- 			m_htFieldMapping.Add("Network Alias", "SERVICE_NAME");
+            m_htFieldMapping.Add("Network Alias", "SERVICE_NAME");
         }
 
         /// <summary>
@@ -617,18 +627,18 @@ namespace RoadCare3
                     if (strAscending != "")
                     {
 
-						switch (DBMgr.NativeConnectionParameters.Provider)
-						{
-							case "MSSQL":
-								m_hashAttributeAscending.Add(strAttribute, bool.Parse(strAscending));
-								break;
-							case "ORACLE":
-								m_hashAttributeAscending.Add(strAttribute, strAscending.Trim() != "0");
-								break;
-							default:
-								throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-								//break;
-						}
+                        switch (DBMgr.NativeConnectionParameters.Provider)
+                        {
+                            case "MSSQL":
+                                m_hashAttributeAscending.Add(strAttribute, bool.Parse(strAscending));
+                                break;
+                            case "ORACLE":
+                                m_hashAttributeAscending.Add(strAttribute, strAscending.Trim() != "0");
+                                break;
+                            default:
+                                throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                                //break;
+                        }
                     }
                 }
                 m_hashAttributeDefault.Add(strAttribute, strDefault);
@@ -835,11 +845,11 @@ namespace RoadCare3
             dataAdapter.Update((DataTable)binding.DataSource);
             dataAdapter.Dispose();
 
-			String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-			strMyDocumentsFolder += "\\RoadCare Projects\\Temp";
-			Directory.CreateDirectory(strMyDocumentsFolder);
+            String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            strMyDocumentsFolder += "\\RoadCare Projects\\Temp";
+            Directory.CreateDirectory(strMyDocumentsFolder);
 
-			String strOutFile = strMyDocumentsFolder + "\\paste.txt";
+            String strOutFile = strMyDocumentsFolder + "\\paste.txt";
             TextWriter tw = new StreamWriter(strOutFile);
 
             string s = Clipboard.GetText();
@@ -884,18 +894,18 @@ namespace RoadCare3
             }
             tw.Close();
 
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					DBMgr.SQLBulkLoad(strTableName, strOutFile, '\t');
-					break;
-				case "ORACLE":
-					DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, strTableName, strOutFile, DBMgr.GetTableColumns(strTableName, DBMgr.NativeConnectionParameters), "\\t");
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    DBMgr.SQLBulkLoad(strTableName, strOutFile, '\t');
+                    break;
+                case "ORACLE":
+                    DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, strTableName, strOutFile, DBMgr.GetTableColumns(strTableName, DBMgr.NativeConnectionParameters), "\\t");
+                    break;
+                default:
+                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                    //break;
+            }
             CreateDataGridView(strTableName, dgvToFill);
         }
 
@@ -1098,11 +1108,11 @@ namespace RoadCare3
             fdr = shapefile.GetFeature(0);
 
             TextWriter tw = null;
-			String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-			strMyDocumentsFolder += "\\RoadCare Projects\\Temp";
-			Directory.CreateDirectory(strMyDocumentsFolder);
+            String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            strMyDocumentsFolder += "\\RoadCare Projects\\Temp";
+            Directory.CreateDirectory(strMyDocumentsFolder);
 
-			String strOutFile = strMyDocumentsFolder + "\\paste.txt";
+            String strOutFile = strMyDocumentsFolder + "\\paste.txt";
             try
             {
                 tw = new StreamWriter(strOutFile);
@@ -1115,42 +1125,42 @@ namespace RoadCare3
             for (uint i = 0; i < iNumFeatureRows; i++)
             {
                 fdr = shapefile.GetFeature(i);
-				if (fdr.Geometry != null)
-				{
-					tw.Write(fdr.Geometry.ToString());
-					for (int j = 0; j < fdr.Table.Columns.Count; j++)
-					{
-						tw.Write("\t" + fdr.ItemArray[j].ToString());
-					}
-					tw.Write("\r\n");
-				}
-				else
-				{
-					for (int j = 0; j < fdr.Table.Columns.Count; j++)
-					{
-						tw.Write("\t" + fdr.ItemArray[j].ToString());
-					}
-					tw.Write("\r\n");
-				}
+                if (fdr.Geometry != null)
+                {
+                    tw.Write(fdr.Geometry.ToString());
+                    for (int j = 0; j < fdr.Table.Columns.Count; j++)
+                    {
+                        tw.Write("\t" + fdr.ItemArray[j].ToString());
+                    }
+                    tw.Write("\r\n");
+                }
+                else
+                {
+                    for (int j = 0; j < fdr.Table.Columns.Count; j++)
+                    {
+                        tw.Write("\t" + fdr.ItemArray[j].ToString());
+                    }
+                    tw.Write("\r\n");
+                }
             }
             tw.Close();
 
             // Now create the TEMP_SHAPEFILE table in the database, this will be dropped after its used.
             List<DatabaseManager.TableParameters> listColumn = new List<DatabaseManager.TableParameters>();
-			//listColumn.Add(new TableParameters("FACILITY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("SECTION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("BEGIN_STATION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("END_STATION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("MILEPOST", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("DIRECTION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("LATITUDE", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("LONGITUDE", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("LAST_MODIFIED", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("EnvelopeMaxX", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("EnvelopeMaxY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("EnvelopeMinX", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			//listColumn.Add(new TableParameters("EnvelopeMinY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
-			listColumn.Add(new TableParameters("GEOMETRY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("FACILITY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("SECTION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("BEGIN_STATION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("END_STATION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("MILEPOST", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("DIRECTION", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("LATITUDE", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("LONGITUDE", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("LAST_MODIFIED", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("EnvelopeMaxX", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("EnvelopeMaxY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("EnvelopeMinX", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            //listColumn.Add(new TableParameters("EnvelopeMinY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+            listColumn.Add(new TableParameters("GEOMETRY", Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
             for (int i = 0; i < fdr.Table.Columns.Count; i++)
             {
                 if (fdr.Table.Columns[i].DataType.ToString() == "System.Double" || fdr.Table.Columns[i].DataType.ToString() == "System.Single")
@@ -1159,7 +1169,7 @@ namespace RoadCare3
                 }
                 else
                 {
-					listColumn.Add(new TableParameters(fdr.Table.Columns[i].ColumnName, Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
+                    listColumn.Add(new TableParameters(fdr.Table.Columns[i].ColumnName, Microsoft.SqlServer.Management.Smo.DataType.VarChar(-1), true, false));
                 }
             }
             try
@@ -1183,23 +1193,23 @@ namespace RoadCare3
 
             // Now bulk load into the database
 
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					DBMgr.SQLBulkLoad("TEMP_SHAPEFILE", strOutFile, '\t');
-					break;
-				case "ORACLE":
-					List<string> columnNames = new List<string>();
-					foreach (TableParameters column in listColumn)
-					{
-						columnNames.Add(column.GetColumnName());
-					}
-					DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, "TEMP_SHAPEFILE", strOutFile, columnNames, "\\t");
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    DBMgr.SQLBulkLoad("TEMP_SHAPEFILE", strOutFile, '\t');
+                    break;
+                case "ORACLE":
+                    List<string> columnNames = new List<string>();
+                    foreach (TableParameters column in listColumn)
+                    {
+                        columnNames.Add(column.GetColumnName());
+                    }
+                    DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, "TEMP_SHAPEFILE", strOutFile, columnNames, "\\t");
+                    break;
+                default:
+                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                    //break;
+            }
         }
 
         static public Hashtable GetAttributeYear(String strNetworkID)
@@ -1208,49 +1218,49 @@ namespace RoadCare3
             Hashtable hashAttributeYear = new Hashtable();
             List<string> listColumns = DBMgr.GetTableColumns(strTable);
 
-			Regex yearSelection = new Regex("^[1-9][0-9][0-9][0-9]$");
-			
-			foreach (string strColumn in listColumns)
+            Regex yearSelection = new Regex("^[1-9][0-9][0-9][0-9]$");
+            
+            foreach (string strColumn in listColumns)
             {
                 int nYear;
                 if(strColumn == "SECTIONID") continue;
                 string[] columns = strColumn.Split('_');
 
-				//totally the wrong way to do this.
-				//try
-				//{
-				//    nYear = int.Parse(columns[columns.Length - 1]);
-				//}
-				//catch//This is just an attribute
-				//{
-				//    //Ignore 
-				//    continue;
-				//}
+                //totally the wrong way to do this.
+                //try
+                //{
+                //    nYear = int.Parse(columns[columns.Length - 1]);
+                //}
+                //catch//This is just an attribute
+                //{
+                //    //Ignore 
+                //    continue;
+                //}
 
-				Match yearHit = yearSelection.Match(columns[columns.Length - 1]);
-				if (yearHit.Success)
-				{
-					nYear = int.Parse(yearHit.Value);
-					//I can't make myself do it.
-					//}
-					//else
-					//{
-					//    //continue;		
-					//}
+                Match yearHit = yearSelection.Match(columns[columns.Length - 1]);
+                if (yearHit.Success)
+                {
+                    nYear = int.Parse(yearHit.Value);
+                    //I can't make myself do it.
+                    //}
+                    //else
+                    //{
+                    //    //continue;		
+                    //}
 
-					String strAttribute = strColumn.Substring(0, strColumn.Length - columns[columns.Length - 1].Length - 1);
-					List<String> listYear;
-					if (!hashAttributeYear.Contains(strAttribute))
-					{
-						listYear = new List<String>();
-						hashAttributeYear.Add(strAttribute, listYear);
-					}
-					else
-					{
-						listYear = (List<String>)hashAttributeYear[strAttribute];
-					}
-					listYear.Add(nYear.ToString());
-				}
+                    String strAttribute = strColumn.Substring(0, strColumn.Length - columns[columns.Length - 1].Length - 1);
+                    List<String> listYear;
+                    if (!hashAttributeYear.Contains(strAttribute))
+                    {
+                        listYear = new List<String>();
+                        hashAttributeYear.Add(strAttribute, listYear);
+                    }
+                    else
+                    {
+                        listYear = (List<String>)hashAttributeYear[strAttribute];
+                    }
+                    listYear.Add(nYear.ToString());
+                }
             }
             return hashAttributeYear;
         }
@@ -1296,10 +1306,10 @@ namespace RoadCare3
             return hashAttributeYear;
         }
 
-		public static List<String> GetAttributeYears(String attributeName, Hashtable hash)
-		{
-			return (List<String>)hash[attributeName];
-		}
+        public static List<String> GetAttributeYears(String attributeName, Hashtable hash)
+        {
+            return (List<String>)hash[attributeName];
+        }
 
         //Committed Project Simulation To Simulation Copy
         public static void CopyCommittedProject(String strTreatment, String strYearAny, String strYearSame, String strCost, String strBudget,String strArea, List<CommitAttributeChange> attributeChange)
@@ -1313,44 +1323,44 @@ namespace RoadCare3
             m_strArea = strArea;
         }
 
-		internal static LockInformation GetLockInfo( string networkID, string simulationID )
-		{
-			LockInformation lockCheck = null;
-			DataSet lockData = null;
-			if( String.IsNullOrEmpty( simulationID ) )
-			{
-				lockData = DBOp.GetCurrentNetworkLockData( networkID );
-			}
-			else
-			{
-				lockData = DBOp.GetCurrentSimulationLockData( networkID, simulationID );
-			}
+        internal static LockInformation GetLockInfo( string networkID, string simulationID )
+        {
+            LockInformation lockCheck = null;
+            DataSet lockData = null;
+            if( String.IsNullOrEmpty( simulationID ) )
+            {
+                lockData = DBOp.GetCurrentNetworkLockData( networkID );
+            }
+            else
+            {
+                lockData = DBOp.GetCurrentSimulationLockData( networkID, simulationID );
+            }
 
-			if( lockData.Tables.Count > 0 && lockData.Tables[0].Rows.Count > 0)
-			{
-				lockCheck = new LockInformation( lockData.Tables[0].Rows[0] );
-			}
-			else
-			{
-				lockCheck = new LockInformation();
-			}
+            if( lockData.Tables.Count > 0 && lockData.Tables[0].Rows.Count > 0)
+            {
+                lockCheck = new LockInformation( lockData.Tables[0].Rows[0] );
+            }
+            else
+            {
+                lockCheck = new LockInformation();
+            }
 
-			return lockCheck;
+            return lockCheck;
 
-		}
+        }
 
-		internal static LockInformation LockNetwork( string networkID, bool readable )
-		{
-			DBOp.AddNetworkLock( networkID, m_globalSecurityOperations.CurrentUser.Name, readable );
+        internal static LockInformation LockNetwork( string networkID, bool readable )
+        {
+            DBOp.AddNetworkLock( networkID, m_globalSecurityOperations.CurrentUser.Name, readable );
 
-			return GetLockInfo( networkID, "" );
-		}
+            return GetLockInfo( networkID, "" );
+        }
 
-		internal static LockInformation LockSimulation( string networkID, string simulationID, bool readable )
-		{
-			DBOp.AddSimulationLock( networkID, simulationID, m_globalSecurityOperations.CurrentUser.Name, readable );
+        internal static LockInformation LockSimulation( string networkID, string simulationID, bool readable )
+        {
+            DBOp.AddSimulationLock( networkID, simulationID, m_globalSecurityOperations.CurrentUser.Name, readable );
 
-			return GetLockInfo( networkID, simulationID );
-		}
-	}
+            return GetLockInfo( networkID, simulationID );
+        }
+    }
 }

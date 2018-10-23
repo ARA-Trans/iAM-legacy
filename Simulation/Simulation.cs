@@ -1088,7 +1088,7 @@ namespace Simulation
             }
             catch (Exception exception)
             {
-                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation benefit cost table " + strTable + " with SQL Message - " + exception.Message));
+                //SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation benefit cost table " + strTable + " with SQL Message - " + exception.Message));
                 return false;
             }
 
@@ -2806,7 +2806,7 @@ namespace Simulation
             }
 
 
-
+            bool bAscending = SimulationMessaging.GetAttributeAscending(Method.BenefitAttribute);
 
             float fCost;
             String sFile;
@@ -3010,6 +3010,11 @@ namespace Simulation
 
                         deltaRemainingLife = dRemainingLife - section.RemainingLife;
                         deltaBenefit = dBenefit - section.BaseBenefit;
+
+                        if (!bAscending)
+                        {
+                            deltaBenefit = deltaBenefit * -1;
+                        }
 
                         String strRLHash = this.CreateRemainingLifeHashString(hashRL);
                         double dBCRatio;
@@ -3629,6 +3634,15 @@ namespace Simulation
                     commit.IsRepeat = false;
                     commit.OMSIsNotAllowed = false;
                     commit.OMSIsExclusive = false;
+
+
+                    section.AnyYear = commit.Any;
+                    SameTreatment sameTreatment = new SameTreatment();
+                    sameTreatment.strTreatment = commit.Treatment;
+                    sameTreatment.nYear = commit.Year + commit.Same;
+                    section.m_listSame.Add(sameTreatment);
+
+
                 }
                 else
                 {
@@ -3639,6 +3653,7 @@ namespace Simulation
                     commit.Same = commit.OMSTreatment.SameTreatment;
                     commit.Budget = commit.OMSTreatment.Budget;
                 }
+      
                 section.YearCommit.Add(commit);
             }
 

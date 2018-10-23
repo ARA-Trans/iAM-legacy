@@ -250,17 +250,25 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 10.0\Visual Studio Tools for Office\PIA\Office14\Microsoft.Office.Interop.Excel.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.SqlServer.ConnectionInfo, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.SqlServer.ConnectionInfo, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.ConnectionInfo.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.SqlServer.Management.Sdk.Sfc, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.SqlServer.Management.Sdk.Sfc, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.Management.Sdk.Sfc.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.SqlServer.Smo, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.SqlServer.Smo, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.Smo.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.SqlServer.SqlEnum, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.SqlServer.SqlEnum, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.SqlEnum.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.Types, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.Types.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -358,6 +366,28 @@
     <Compile Include="MDSHA\ReportBase.cs" />
     <Compile Include="MDSHA\ReportGenerationException.cs" />
     <Compile Include="MDSHA\Utilities.cs" />
+    <Compile Include="PennDotBridge\Bridge5To4Nhs.cs" />
+    <Compile Include="PennDotBridge\Bridge5To4NonNhs.cs" />
+    <Compile Include="PennDotBridge\Bridge6To5Nhs.cs" />
+    <Compile Include="PennDotBridge\Bridge6To5NonNhs.cs" />
+    <Compile Include="PennDotBridge\BridgeAnalysis.cs" />
+    <Compile Include="PennDotBridge\BridgeReport.cs" />
+    <Compile Include="PennDotBridge\BridgeCondition.cs" />
+    <Compile Include="PennDotBridge\IReportActions.cs" />
+    <Compile Include="PennDotBridge\NhsGoodFairPoorDeckArea.cs" />
+    <Compile Include="PennDotBridge\NhsGoodFairPoorNumberBridges.cs" />
+    <Compile Include="PennDotBridge\NonNhsGoodFairPoorDeckArea.cs" />
+    <Compile Include="PennDotBridge\NonNhsGoodFairPoorNumberBridges.cs" />
+    <Compile Include="PennDotBridge\PennDotBaseReport.cs" />
+    <Compile Include="PennDotBridge\PercentPoorEntireStateDeckArea.cs" />
+    <Compile Include="PennDotBridge\PercentPoorEntireStateNumberBridges.cs" />
+    <Compile Include="PennDotBridge\PercentPoorNhsDeckArea.cs" />
+    <Compile Include="PennDotBridge\PercentPoorNhsNumberBridges.cs" />
+    <Compile Include="PennDotBridge\PoorBridgesByCount.cs" />
+    <Compile Include="PennDotBridge\PoorBridgesByDeckArea.cs" />
+    <Compile Include="PennDotBridge\SdOnRateNhs.cs" />
+    <Compile Include="PennDotBridge\SdOnRateNonNhs.cs" />
+    <Compile Include="PennDotBridge\StruturalDeficientSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>

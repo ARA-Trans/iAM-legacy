@@ -37,459 +37,459 @@ namespace PCI
 // Description:  A reduced version of the original ComputeVCIValues from DSS which computes only the
 // VCI.  
 //
-	double Distress::ComputePCIValue( System::String^ sDeductValues, System::String^ sMethodology)
-	{
-		double dVCI = 0.0;
-		//
-		// for PCI call function to get the residue in 100
-		//
-		double dLargeDeductLimit = 5.0;
-		if(sMethodology == "ac.mpr" || sMethodology=="pcc.mpr")dLargeDeductLimit= 2.0;
-		if (IsWASHCLKMethod(sMethodology))
-		{
-			dVCI = 100.0 - TotalDeducts(sDeductValues);
-		}
-		else
-		{
-			dVCI = 100.0 - pciCorrectedDeductValue(sMethodology, sDeductValues,dLargeDeductLimit);
-		}
+    double Distress::ComputePCIValue( System::String^ sDeductValues, System::String^ sMethodology)
+    {
+        double dVCI = 0.0;
+        //
+        // for PCI call function to get the residue in 100
+        //
+        double dLargeDeductLimit = 5.0;
+        if(sMethodology == "ac.mpr" || sMethodology=="pcc.mpr")dLargeDeductLimit= 2.0;
+        if (IsWASHCLKMethod(sMethodology))
+        {
+            dVCI = 100.0 - TotalDeducts(sDeductValues);
+        }
+        else
+        {
+            dVCI = 100.0 - pciCorrectedDeductValue(sMethodology, sDeductValues,dLargeDeductLimit);
+        }
 
-		//
-		// Correct for overflow or underflow of the value
-		//
-		if (dVCI < 0.0)
-			dVCI = 0.0;
-		else if (dVCI > 100.0)
-			dVCI = 100.0 ;
-			
-		return dVCI;
+        //
+        // Correct for overflow or underflow of the value
+        //
+        if (dVCI < 0.0)
+            dVCI = 0.0;
+        else if (dVCI > 100.0)
+            dVCI = 100.0 ;
+            
+        return dVCI;
 
-	}
+    }
 
-	//
-	// TotalDeducts
-	//
-	// Description:  Clark County uses the average of the deduct
-	// values in a section in order to compute the PCI.  This 
-	// function provides the averaged totals for the PCI deductes.
-	//
-	int Distress::TotalDeducts(System::String^ sDeductValues)
-	{
-		double dValue = 0.0;
-		double dTotalDeducts = 0.0;
-		array<System::String^,1>^ split  = sDeductValues->Split(',');
-		for (int i = 0; i < split->Length; i++)
-		{
-			dValue = System::Double::Parse(split[i]->ToString());
-			dTotalDeducts += dValue;
-		}
+    //
+    // TotalDeducts
+    //
+    // Description:  Clark County uses the average of the deduct
+    // values in a section in order to compute the PCI.  This 
+    // function provides the averaged totals for the PCI deductes.
+    //
+    int Distress::TotalDeducts(System::String^ sDeductValues)
+    {
+        double dValue = 0.0;
+        double dTotalDeducts = 0.0;
+        array<System::String^,1>^ split  = sDeductValues->Split(',');
+        for (int i = 0; i < split->Length; i++)
+        {
+            dValue = System::Double::Parse(split[i]->ToString());
+            dTotalDeducts += dValue;
+        }
 
-		dTotalDeducts = dTotalDeducts / (double) split->Length;
-		return (int)floor(dTotalDeducts);
-	}
+        dTotalDeducts = dTotalDeducts / (double) split->Length;
+        return (int)floor(dTotalDeducts);
+    }
 //
 // Description: Returns the percent share (or 0 if the total is 0)
 //		Example SafePercentShare(444, 1000) returns 44.4
 //
-	double Distress::SafePercentShare(double dShare, double dTotal)
-	{
-		double dValue = 0.0;
-		if (dTotal != 0.0)
-			dValue = 100.0 * dShare / dTotal;
-		return dValue;
-	}
-	
+    double Distress::SafePercentShare(double dShare, double dTotal)
+    {
+        double dValue = 0.0;
+        if (dTotal != 0.0)
+            dValue = 100.0 * dShare / dTotal;
+        return dValue;
+    }
+    
 //
 // Description:  Returns the available methodolgies
 //
-	array<System::String^, 1>^ Distress::GetMethodologies()
-	{
-		//String^ strMethodologies = "pcc.mpr";
-		array<System::String^, 1>^ strMethodologies = {"pcc.mpr",	// micropaver pcc
-														"ac.mpr",
-														"pcc.faa",
-														"ac.faa"};	// micropaver ac
+    array<System::String^, 1>^ Distress::GetMethodologies()
+    {
+        //String^ strMethodologies = "pcc.mpr";
+        array<System::String^, 1>^ strMethodologies = {"pcc.mpr",	// micropaver pcc
+                                                        "ac.mpr",
+                                                        "pcc.faa",
+                                                        "ac.faa"};	// micropaver ac
 
 
-		// Other methodologies for the future:
+        // Other methodologies for the future:
 //														"pcc.faa",	// faa pcc
 //														"ac.faa"	// faa ac
 //														"pcc.wci",	// wearing course index pcc
 //														"ac.wci"};	// wci ac
 
-		return strMethodologies;
-	}
+        return strMethodologies;
+    }
 
 //
 // Description:  Returns the distress names for the MicroPaver AC
 // distresses.
 //	
-	array<System::String^, 1>^ Distress::GetMPACDistressNames()
-	{
-		array<System::String^, 1>^ strMPACDistressNames = { 
-				"Alligator Cracking",
-				"Bleeding",
-				"Block Cracking",
-				"Bumps and Sags", 
-				"Corrugation",
-				"Depression",
-				"Edge Cracking",
-				"Joint Reflection Cracking",
-				"Lane/Shoulder Dropoff",
-				"Longitudinal/Transverse Cracking",
-				"Large Parching/UtilityCut",
-				"Polished Aggregate",
-				"Potholes",
-				"Railroad Crossing",
-				"Rutting",
-				"Shoving",
-				"Sippage Cracking",
-				"Swell",
-				"Weathering"
-				};
-				
-		return strMPACDistressNames;
-	}
+    array<System::String^, 1>^ Distress::GetMPACDistressNames()
+    {
+        array<System::String^, 1>^ strMPACDistressNames = { 
+                "Alligator Cracking",
+                "Bleeding",
+                "Block Cracking",
+                "Bumps and Sags", 
+                "Corrugation",
+                "Depression",
+                "Edge Cracking",
+                "Joint Reflection Cracking",
+                "Lane/Shoulder Dropoff",
+                "Longitudinal/Transverse Cracking",
+                "Large Parching/UtilityCut",
+                "Polished Aggregate",
+                "Potholes",
+                "Railroad Crossing",
+                "Rutting",
+                "Shoving",
+                "Sippage Cracking",
+                "Swell",
+                "Weathering"
+                };
+                
+        return strMPACDistressNames;
+    }
 
 //
 // Description: Implements ASTM method of computing the CDV from individual deducts
 //
-	double Distress::pciCorrectedDeductValue(System::String^ sMethod,System::String^ sDeduct ,double dLargeDeductLimit)
-	{
+    double Distress::pciCorrectedDeductValue(System::String^ sMethod,System::String^ sDeduct ,double dLargeDeductLimit)
+    {
 
-		array<System::String^,1>^ split  = sDeduct->Split(',');
+        array<System::String^,1>^ split  = sDeduct->Split(',');
 
-		double adDeductValue[100];
-		for(int i = 0; i<100; i++) adDeductValue[i] = 0;
+        double adDeductValue[100];
+        for(int i = 0; i<100; i++) adDeductValue[i] = 0;
 
-		System::Diagnostics::Debug::Assert(split->Length < 100);
-		for(int i = 0; i<split->Length; i++)
-		{
-			adDeductValue[i] = System::Double::Parse(split[i]->ToString());
-		}
-
-
-
-		double * pDeductValues = adDeductValue;
-		int nLength = split->Length;
-		int nNumLargeDeducts = 0;
-		double nLargestDeduct = 0.0;
-		double nMaxNumOfAllowDis = 0.0;
-		int nMaxNumOfAllowDisIntegerPart = 0;
-		double nMaxNumOfAllowDisFractionalPart = 0.0;
-		double nTrialCDV = 0.0;
-		double nMaxCDV = 0.0;
-		double nSumOfDeducts = 0.0;
-
-		double * pDV = pDeductValues;
-
-	// ====================== Algorithm specified in an ASTM circular (we use it for roads too).
-		//nLength = GetLengthNonNegativeArray(pDeductValues);
-		
-		SortNumericDescending(pDeductValues, 100);
-	// ---------------------- compute the largest deduct 
-		nLargestDeduct = 0.0;
-
-		while(*pDV > 0.0)
-		{
-			if (*pDV > nLargestDeduct)
-				nLargestDeduct = *pDV;
-			pDV++;
-		}
-	// ---------------------- return 0 right now if there are no appreciable deduct values
-		if (nLargestDeduct < 0.01)
-			return 0.0;
-	// ---------------------- filter the distress list by the maximum number of allowable distresses
-	// ---------------------- compute the maximum number of allowable distresses
-		nMaxNumOfAllowDis = min(1.0 + (9.0 / 95.0) * (100.0 - nLargestDeduct), 10.0);
-		if( sMethod=="ac.mpr" || sMethod=="pcc.mpr" )
-			nMaxNumOfAllowDis = min(1.0 + (9.0 / 98.0) * (100.0 - nLargestDeduct), 10.0);
-		if( sMethod=="ac.faa" || sMethod=="pcc.faa"  ||
-			sMethod == "ac.astm" || sMethod == "pcc.astm")
-			nMaxNumOfAllowDis = min(1.0 + (9.0 / 95.0) * (100.0 - nLargestDeduct), 10.0);
-	// ---------------------- scale the last allowable distress
-		nMaxNumOfAllowDisIntegerPart = (int)nMaxNumOfAllowDis;
-		nMaxNumOfAllowDisFractionalPart = nMaxNumOfAllowDis - (double)nMaxNumOfAllowDisIntegerPart;
-
-		pDV = pDeductValues;
-		if (nMaxNumOfAllowDisIntegerPart < nLength)
-			*(pDV + nMaxNumOfAllowDisIntegerPart) = 
-											  *(pDV + nMaxNumOfAllowDisIntegerPart) * nMaxNumOfAllowDisFractionalPart;
-		// ---------------------- truncate the list after the last allowable distress
-		*(pDV + (nMaxNumOfAllowDisIntegerPart + 1)) = -1;
-		nLength = min(nLength, nMaxNumOfAllowDisIntegerPart);
-	// ---------------------- count the number of large deducts (The new sentinal may have decreased this count.)
-		nNumLargeDeducts = 99;
-		nMaxCDV = 0.0;
-
-
-		while(nNumLargeDeducts > 0)
-		{
-			nNumLargeDeducts = 0;
-			pDV = pDeductValues;
-			while( *pDV > 0.0)
-			{
-				if (*pDV > dLargeDeductLimit)// 5.0)
-					nNumLargeDeducts = nNumLargeDeducts + 1;
-				pDV++;
-			}
-		//
-		// ---------------------- compute and return the final corrected deduct value (CDV) 
-		//----------------------- as the max of a set of old method CDV's
-		//
-
-			// -------------------- compute the sum of the deducts
-			nSumOfDeducts = 0.0;
-			pDV = pDeductValues;
-			while( *pDV > 0.0)
-			{
-				nSumOfDeducts = nSumOfDeducts + *pDV;
-				pDV++;
-			}
-		// -------------------- apply the old "q" large deduct correction, remembering the largest one as the CDV, 
-		//                       as all but the largest of the large deducts are successively 
-		//                       and in increasing order reduced to 5.0
-		//
+        System::Diagnostics::Debug::Assert(split->Length < 100);
+        for(int i = 0; i<split->Length; i++)
+        {
+            adDeductValue[i] = System::Double::Parse(split[i]->ToString());
+        }
 
 
 
-			nTrialCDV = pciPrivateLargeDeductCorrection(sMethod, nNumLargeDeducts, nSumOfDeducts);
-			if (nTrialCDV > nMaxCDV)
-				nMaxCDV = nTrialCDV;
-		
-			pDV = pDeductValues;
-			if (nNumLargeDeducts > 0)
-			{
-				nNumLargeDeducts = nNumLargeDeducts - 1;
-				*(pDV + nNumLargeDeducts) = dLargeDeductLimit;//5.0;
-			}
-		}
-		
-		return nMaxCDV;
-	}
-	//
-	int Distress::GetLengthNonNegativeArray(double * pArray)
-	{
-		int nLength = 0;
-		int i = 0;
-		double * p = pArray;
+        double * pDeductValues = adDeductValue;
+        int nLength = split->Length;
+        int nNumLargeDeducts = 0;
+        double nLargestDeduct = 0.0;
+        double nMaxNumOfAllowDis = 0.0;
+        int nMaxNumOfAllowDisIntegerPart = 0;
+        double nMaxNumOfAllowDisFractionalPart = 0.0;
+        double nTrialCDV = 0.0;
+        double nMaxCDV = 0.0;
+        double nSumOfDeducts = 0.0;
 
-		while (*p >= 0.0)
-		{
-			p++;
-			i++;
-		}
-		i--;
-		return i;
-	}
+        double * pDV = pDeductValues;
 
-	void Distress::SortNumericDescending(double * pArray, int nLength)
-	{
+    // ====================== Algorithm specified in an ASTM circular (we use it for roads too).
+        //nLength = GetLengthNonNegativeArray(pDeductValues);
+        
+        SortNumericDescending(pDeductValues, 100);
+    // ---------------------- compute the largest deduct 
+        nLargestDeduct = 0.0;
 
-		int last = nLength - 2; 
-		int isChanged = 1; 
+        while(*pDV > 0.0)
+        {
+            if (*pDV > nLargestDeduct)
+                nLargestDeduct = *pDV;
+            pDV++;
+        }
+    // ---------------------- return 0 right now if there are no appreciable deduct values
+        if (nLargestDeduct < 0.01)
+            return 0.0;
+    // ---------------------- filter the distress list by the maximum number of allowable distresses
+    // ---------------------- compute the maximum number of allowable distresses
+        nMaxNumOfAllowDis = min(1.0 + (9.0 / 95.0) * (100.0 - nLargestDeduct), 10.0);
+        if( sMethod=="ac.mpr" || sMethod=="pcc.mpr" )
+            nMaxNumOfAllowDis = min(1.0 + (9.0 / 98.0) * (100.0 - nLargestDeduct), 10.0);
+        if( sMethod=="ac.faa" || sMethod=="pcc.faa"  ||
+            sMethod == "ac.astm" || sMethod == "pcc.astm")
+            nMaxNumOfAllowDis = min(1.0 + (9.0 / 95.0) * (100.0 - nLargestDeduct), 10.0);
+    // ---------------------- scale the last allowable distress
+        nMaxNumOfAllowDisIntegerPart = (int)nMaxNumOfAllowDis;
+        nMaxNumOfAllowDisFractionalPart = nMaxNumOfAllowDis - (double)nMaxNumOfAllowDisIntegerPart;
 
-		while ( last >= 0 && isChanged ) 
-		{ 
-			isChanged = 0; 
-			for ( int k = 0; k <= last; k++ ) 
-			{
-				if ( pArray[k] < pArray[k+1] ) 
-				{ 
-					double temp;
-					temp = pArray[k];
-					pArray[k] = pArray[k+1];
-					pArray[k+1] = temp;
-					isChanged = 1; 
-				  } 
-			}
-			last--; 
-	   } 
-	}
-
-	//
-	// Description: Applies the original (before ASTM) large deduct correction
-	//				pciLargeDeductCorrection(sMethod, nNumLargeDeducts, nTotalDeduct)
-	//
-	double Distress::pciPrivateLargeDeductCorrection(System::String^ sMethod, int nNumLargeDeducts, double dTotalDeduct)
-	{
-		float nTotalDeduct = (float) dTotalDeduct;
-		float fCorrDeduct = 0.0;
-		
+        pDV = pDeductValues;
+        if (nMaxNumOfAllowDisIntegerPart < nLength)
+            *(pDV + nMaxNumOfAllowDisIntegerPart) = 
+                                              *(pDV + nMaxNumOfAllowDisIntegerPart) * nMaxNumOfAllowDisFractionalPart;
+        // ---------------------- truncate the list after the last allowable distress
+        *(pDV + (nMaxNumOfAllowDisIntegerPart + 1)) = -1;
+        nLength = min(nLength, nMaxNumOfAllowDisIntegerPart);
+    // ---------------------- count the number of large deducts (The new sentinal may have decreased this count.)
+        nNumLargeDeducts = 99;
+        nMaxCDV = 0.0;
 
 
-		if (sMethod == "ac.mpr")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q(MPACRDQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q(MPACRDQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q(MPACRDQ3 ,nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q(MPACRDQ4 ,nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q(MPACRDQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q(MPACRDQ6 ,nTotalDeduct );
-			else if (nNumLargeDeducts == 7)
-				fCorrDeduct = Q(MPACRDQ7 ,nTotalDeduct );
-			else
-				fCorrDeduct = Q(MPACRDQ7 , nTotalDeduct );
+        while(nNumLargeDeducts > 0)
+        {
+            nNumLargeDeducts = 0;
+            pDV = pDeductValues;
+            while( *pDV > 0.0)
+            {
+                if (*pDV > dLargeDeductLimit)// 5.0)
+                    nNumLargeDeducts = nNumLargeDeducts + 1;
+                pDV++;
+            }
+        //
+        // ---------------------- compute and return the final corrected deduct value (CDV) 
+        //----------------------- as the max of a set of old method CDV's
+        //
 
-		}
-		else if (sMethod == "pcc.mpr")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q( MPPCCRDQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q( MPPCCRDQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q( MPPCCRDQ3 , nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q( MPPCCRDQ4 , nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q( MPPCCRDQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q( MPPCCRDQ6 , nTotalDeduct );
-			else if (nNumLargeDeducts == 7)
-				fCorrDeduct = Q( MPPCCRDQ7 , nTotalDeduct );
-			else if (nNumLargeDeducts == 8)
-				fCorrDeduct = Q( MPPCCRDQ8 , nTotalDeduct );
-			else if (nNumLargeDeducts == 9)
-				fCorrDeduct = Q( MPPCCRDQ9 , nTotalDeduct );
-			else
-				fCorrDeduct = Q( MPPCCRDQ8 , nTotalDeduct );
-		}
-		else if (sMethod == "pcc.faa")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q( FAA82PCCQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q( FAA82PCCQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q( FAA82PCCQ3 , nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q( FAA82PCCQ4 , nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q( FAA82PCCQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q( FAA82PCCQ6 , nTotalDeduct );
-			else if (nNumLargeDeducts == 7)
-				fCorrDeduct = Q( FAA82PCCQ7 , nTotalDeduct );
-			else if (nNumLargeDeducts == 8)
-				fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
-			else
-				fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
-		}
-		else if (sMethod == "pcc.astm")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q( FAA82PCCQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q( FAA82PCCQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q( FAA82PCCQ3 , nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q( FAA82PCCQ4 , nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q( FAA82PCCQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q( FAA82PCCQ6 , nTotalDeduct );
-			else if (nNumLargeDeducts == 7)
-				fCorrDeduct = Q( FAA82PCCQ7 , nTotalDeduct );
-			else if (nNumLargeDeducts == 8)
-				fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
-			else
-				fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
-		}
-		else if (sMethod == "ac.faa")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q( FAA82ACQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q( FAA82ACQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q( FAA82ACQ3 , nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q( FAA82ACQ4 , nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q( FAA82ACQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
-			else
-				fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
-		}
-		else if (sMethod == "ac.astm")
-		{
-			if (nNumLargeDeducts == 0)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts == 1)
-				fCorrDeduct = Q( FAA82ACQ1 , nTotalDeduct );
-			else if (nNumLargeDeducts == 2)
-				fCorrDeduct = Q( FAA82ACQ2 , nTotalDeduct );
-			else if (nNumLargeDeducts == 3)
-				fCorrDeduct = Q( FAA82ACQ3 , nTotalDeduct );
-			else if (nNumLargeDeducts == 4)
-				fCorrDeduct = Q( FAA82ACQ4 , nTotalDeduct );
-			else if (nNumLargeDeducts == 5)
-				fCorrDeduct = Q( FAA82ACQ5 , nTotalDeduct );
-			else if (nNumLargeDeducts == 6)
-				fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
-			else
-				fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
-		}
-		else if (sMethod == "ac.wci")
-		{
-			if (nNumLargeDeducts < 2)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts < 10)
-				fCorrDeduct = (float) CalcWCI_CDV(nNumLargeDeducts, nTotalDeduct );
-			else
-				fCorrDeduct = (float) CalcWCI_CDV(9, nTotalDeduct );
-		}
-		else if (sMethod == "pcc.wci")
-		{
-			if (nNumLargeDeducts < 2)
-				fCorrDeduct = nTotalDeduct;
-			else if (nNumLargeDeducts < 10)
-				fCorrDeduct = (float) CalcWCI_CDV(nNumLargeDeducts, nTotalDeduct );
-			else
-				fCorrDeduct = (float) CalcWCI_CDV(9, nTotalDeduct );
-		}
+            // -------------------- compute the sum of the deducts
+            nSumOfDeducts = 0.0;
+            pDV = pDeductValues;
+            while( *pDV > 0.0)
+            {
+                nSumOfDeducts = nSumOfDeducts + *pDV;
+                pDV++;
+            }
+        // -------------------- apply the old "q" large deduct correction, remembering the largest one as the CDV, 
+        //                       as all but the largest of the large deducts are successively 
+        //                       and in increasing order reduced to 5.0
+        //
 
-		
-		return fCorrDeduct;
 
-	}
 
-	double Distress::CalcWCI_CDV(int iQuantity, double dDeductValue)
+            nTrialCDV = pciPrivateLargeDeductCorrection(sMethod, nNumLargeDeducts, nSumOfDeducts);
+            if (nTrialCDV > nMaxCDV)
+                nMaxCDV = nTrialCDV;
+        
+            pDV = pDeductValues;
+            if (nNumLargeDeducts > 0)
+            {
+                nNumLargeDeducts = nNumLargeDeducts - 1;
+                *(pDV + nNumLargeDeducts) = dLargeDeductLimit;//5.0;
+            }
+        }
+        
+        return nMaxCDV;
+    }
+    //
+    int Distress::GetLengthNonNegativeArray(double * pArray)
+    {
+        int nLength = 0;
+        int i = 0;
+        double * p = pArray;
+
+        while (*p >= 0.0)
+        {
+            p++;
+            i++;
+        }
+        i--;
+        return i;
+    }
+
+    void Distress::SortNumericDescending(double * pArray, int nLength)
+    {
+
+        int last = nLength - 2; 
+        int isChanged = 1; 
+
+        while ( last >= 0 && isChanged ) 
+        { 
+            isChanged = 0; 
+            for ( int k = 0; k <= last; k++ ) 
+            {
+                if ( pArray[k] < pArray[k+1] ) 
+                { 
+                    double temp;
+                    temp = pArray[k];
+                    pArray[k] = pArray[k+1];
+                    pArray[k+1] = temp;
+                    isChanged = 1; 
+                  } 
+            }
+            last--; 
+       } 
+    }
+
+    //
+    // Description: Applies the original (before ASTM) large deduct correction
+    //				pciLargeDeductCorrection(sMethod, nNumLargeDeducts, nTotalDeduct)
+    //
+    double Distress::pciPrivateLargeDeductCorrection(System::String^ sMethod, int nNumLargeDeducts, double dTotalDeduct)
+    {
+        float nTotalDeduct = (float) dTotalDeduct;
+        float fCorrDeduct = 0.0;
+        
+
+
+        if (sMethod == "ac.mpr")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q(MPACRDQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q(MPACRDQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q(MPACRDQ3 ,nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q(MPACRDQ4 ,nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q(MPACRDQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q(MPACRDQ6 ,nTotalDeduct );
+            else if (nNumLargeDeducts == 7)
+                fCorrDeduct = Q(MPACRDQ7 ,nTotalDeduct );
+            else
+                fCorrDeduct = Q(MPACRDQ7 , nTotalDeduct );
+
+        }
+        else if (sMethod == "pcc.mpr")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q( MPPCCRDQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q( MPPCCRDQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q( MPPCCRDQ3 , nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q( MPPCCRDQ4 , nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q( MPPCCRDQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q( MPPCCRDQ6 , nTotalDeduct );
+            else if (nNumLargeDeducts == 7)
+                fCorrDeduct = Q( MPPCCRDQ7 , nTotalDeduct );
+            else if (nNumLargeDeducts == 8)
+                fCorrDeduct = Q( MPPCCRDQ8 , nTotalDeduct );
+            else if (nNumLargeDeducts == 9)
+                fCorrDeduct = Q( MPPCCRDQ9 , nTotalDeduct );
+            else
+                fCorrDeduct = Q( MPPCCRDQ8 , nTotalDeduct );
+        }
+        else if (sMethod == "pcc.faa")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q( FAA82PCCQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q( FAA82PCCQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q( FAA82PCCQ3 , nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q( FAA82PCCQ4 , nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q( FAA82PCCQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q( FAA82PCCQ6 , nTotalDeduct );
+            else if (nNumLargeDeducts == 7)
+                fCorrDeduct = Q( FAA82PCCQ7 , nTotalDeduct );
+            else if (nNumLargeDeducts == 8)
+                fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
+            else
+                fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
+        }
+        else if (sMethod == "pcc.astm")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q( FAA82PCCQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q( FAA82PCCQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q( FAA82PCCQ3 , nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q( FAA82PCCQ4 , nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q( FAA82PCCQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q( FAA82PCCQ6 , nTotalDeduct );
+            else if (nNumLargeDeducts == 7)
+                fCorrDeduct = Q( FAA82PCCQ7 , nTotalDeduct );
+            else if (nNumLargeDeducts == 8)
+                fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
+            else
+                fCorrDeduct = Q( FAA82PCCQ8 , nTotalDeduct );
+        }
+        else if (sMethod == "ac.faa")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q( FAA82ACQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q( FAA82ACQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q( FAA82ACQ3 , nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q( FAA82ACQ4 , nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q( FAA82ACQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
+            else
+                fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
+        }
+        else if (sMethod == "ac.astm")
+        {
+            if (nNumLargeDeducts == 0)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts == 1)
+                fCorrDeduct = Q( FAA82ACQ1 , nTotalDeduct );
+            else if (nNumLargeDeducts == 2)
+                fCorrDeduct = Q( FAA82ACQ2 , nTotalDeduct );
+            else if (nNumLargeDeducts == 3)
+                fCorrDeduct = Q( FAA82ACQ3 , nTotalDeduct );
+            else if (nNumLargeDeducts == 4)
+                fCorrDeduct = Q( FAA82ACQ4 , nTotalDeduct );
+            else if (nNumLargeDeducts == 5)
+                fCorrDeduct = Q( FAA82ACQ5 , nTotalDeduct );
+            else if (nNumLargeDeducts == 6)
+                fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
+            else
+                fCorrDeduct = Q( FAA82ACQ6 , nTotalDeduct );
+        }
+        else if (sMethod == "ac.wci")
+        {
+            if (nNumLargeDeducts < 2)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts < 10)
+                fCorrDeduct = (float) CalcWCI_CDV(nNumLargeDeducts, nTotalDeduct );
+            else
+                fCorrDeduct = (float) CalcWCI_CDV(9, nTotalDeduct );
+        }
+        else if (sMethod == "pcc.wci")
+        {
+            if (nNumLargeDeducts < 2)
+                fCorrDeduct = nTotalDeduct;
+            else if (nNumLargeDeducts < 10)
+                fCorrDeduct = (float) CalcWCI_CDV(nNumLargeDeducts, nTotalDeduct );
+            else
+                fCorrDeduct = (float) CalcWCI_CDV(9, nTotalDeduct );
+        }
+
+        
+        return fCorrDeduct;
+
+    }
+
+    double Distress::CalcWCI_CDV(int iQuantity, double dDeductValue)
 {
-	//
-	// the array Params[] [] contains the values used in the calculation routine.  These
-	// parameters are the constants that make the function computed the proper curve.  We
-	// use this information to compute the curve directly, not approximate as done in 
-	// other parts of this routine.
-	//
-	static double Params[QROWS] [CVALUES] ={
-		{3.415421, 0.2246326, 0.02872284, -0.0006318123, 0.000006380303, -0.00000003067465, 0.00000000005644553},
-		{-1.201932, 0.4330228, 0.01165469, -0.0002100998, 0.000001709584, -0.000000006750956, 0.00000000001035905},
-		{12.20614, -0.502545 , .03301571, -0.00046876, 3.38797E-06, -1.22595E-08, 1.75135E-11},
-		{18.0909, -0.9794627, 0.04278762, -0.000558333, 3.76568E-06, -1.28973E-08, 1.77034E-11},
-		{26.05572, -1.261192, 0.04101644, -0.000438443, 2.35762E-06, -6.13409E-09, 5.87181E-12},
-		{52.13357, -2.445436, 0.06009657, -0.000580392, 2.79808E-06, -6.28999E-09, 4.72022E-12},
-		{18.83555, -0.8038614, 0.02964717, -0.000338495, 2.09418E-06, -6.81047E-09, 9.07303E-12},
-		{12.78057, -0.4164763, 0.01818463, -0.000176542, 8.95002E-07, -2.36785E-09, 2.59654E-12}};
+    //
+    // the array Params[] [] contains the values used in the calculation routine.  These
+    // parameters are the constants that make the function computed the proper curve.  We
+    // use this information to compute the curve directly, not approximate as done in 
+    // other parts of this routine.
+    //
+    static double Params[QROWS] [CVALUES] ={
+        {3.415421, 0.2246326, 0.02872284, -0.0006318123, 0.000006380303, -0.00000003067465, 0.00000000005644553},
+        {-1.201932, 0.4330228, 0.01165469, -0.0002100998, 0.000001709584, -0.000000006750956, 0.00000000001035905},
+        {12.20614, -0.502545 , .03301571, -0.00046876, 3.38797E-06, -1.22595E-08, 1.75135E-11},
+        {18.0909, -0.9794627, 0.04278762, -0.000558333, 3.76568E-06, -1.28973E-08, 1.77034E-11},
+        {26.05572, -1.261192, 0.04101644, -0.000438443, 2.35762E-06, -6.13409E-09, 5.87181E-12},
+        {52.13357, -2.445436, 0.06009657, -0.000580392, 2.79808E-06, -6.28999E-09, 4.72022E-12},
+        {18.83555, -0.8038614, 0.02964717, -0.000338495, 2.09418E-06, -6.81047E-09, 9.07303E-12},
+        {12.78057, -0.4164763, 0.01818463, -0.000176542, 8.95002E-07, -2.36785E-09, 2.59654E-12}};
 /*
 // Asphalt curves
 168	3.119215	0.1584799	0.0269957	-0.000527892	5.06317E-06	-2.41185E-08
@@ -501,79 +501,79 @@ namespace PCI
 
 */
   //
-	// The index is smaller than the quantity fed into this program.  
-		int iIndex = iQuantity - 2;
-	double dCDV = 0.0;
-	double dMaxDV[QROWS] = {163.0, 179.0, 198.0, 200.0, 200.0, 200.0, 200.0};
-	double C0 = Params[iIndex] [0];
-	double C1 = Params[iIndex] [1];
-	double C2 = Params[iIndex] [2];
-	double C3 = Params[iIndex] [3];
-	double C4 = Params[iIndex] [4];
-	double C5 = Params[iIndex] [5];
-	double C6 = Params[iIndex] [6];
+    // The index is smaller than the quantity fed into this program.  
+        int iIndex = iQuantity - 2;
+    double dCDV = 0.0;
+    double dMaxDV[QROWS] = {163.0, 179.0, 198.0, 200.0, 200.0, 200.0, 200.0};
+    double C0 = Params[iIndex] [0];
+    double C1 = Params[iIndex] [1];
+    double C2 = Params[iIndex] [2];
+    double C3 = Params[iIndex] [3];
+    double C4 = Params[iIndex] [4];
+    double C5 = Params[iIndex] [5];
+    double C6 = Params[iIndex] [6];
 
-	if (iQuantity > (QROWS - 1))
-		return 0.0;
-	if ( (dDeductValue > 1000.0) || (dDeductValue < 0.0) ){
-		return 0.0;
+    if (iQuantity > (QROWS - 1))
+        return 0.0;
+    if ( (dDeductValue > 1000.0) || (dDeductValue < 0.0) ){
+        return 0.0;
    }
 
-	if (dDeductValue < dMaxDV[iIndex])
-	{
-		dCDV = C0 + (C1 * dDeductValue) + (C2 * pow(dDeductValue, 2)) + (C3 * pow(dDeductValue, 3)) + 
-			(C4 * pow(dDeductValue, 4)) + (C5 * pow(dDeductValue, 5)) + (C6 * pow(dDeductValue, 6));
-	}
-	else
-	{
-		dCDV =  0.0;
-	}
+    if (dDeductValue < dMaxDV[iIndex])
+    {
+        dCDV = C0 + (C1 * dDeductValue) + (C2 * pow(dDeductValue, 2)) + (C3 * pow(dDeductValue, 3)) + 
+            (C4 * pow(dDeductValue, 4)) + (C5 * pow(dDeductValue, 5)) + (C6 * pow(dDeductValue, 6));
+    }
+    else
+    {
+        dCDV =  0.0;
+    }
 
-		return dCDV;
+        return dCDV;
 }
 
 
 
 
-	double Distress::pvt_ComputePCIDeduct(int nDistress, System::String^ sSeverity, double dAmount, double dSamsiz)
-	{
-		double dPCIDeduct = 0.0;
-		double dPercentDensity = 0.0;
-		int iSeverity = pvt_nSevFromSev(sSeverity);
+    double Distress::pvt_ComputePCIDeduct(int nDistress, System::String^ sSeverity, double dAmount, double dSamsiz)
+    {
+        double dPCIDeduct = 0.0;
+        double dPercentDensity = 0.0;
+        int iSeverity = pvt_nSevFromSev(sSeverity);
 
-		if (dSamsiz < .0001)
-			dPCIDeduct = 0.0;
-		if (dAmount < .0001)
-			dPCIDeduct = 0.0;
-		if (dSamsiz < dAmount)
-			dPercentDensity = 100.0;
-		else
-			dPercentDensity = 100.0 * (dAmount / dSamsiz);
-		//
-		// Calculate the deduct only if there is something to calculate.  Don't calculate zeros!
-		//
-		// Gregg and Alice investaged and found out, even the density is 0, micropaver is still using 0.1
-		// After consulted with Mike Darter, we decide to match MicroPaver
-	//	if (dPercentDensity > 0.0)
-			dPCIDeduct = DeductEval(nDistress, iSeverity, (float)dPercentDensity);
+        if (dSamsiz < .0001)
+            dPCIDeduct = 0.0;
+        if (dAmount < .0001)
+            dPCIDeduct = 0.0;
+        if (dSamsiz < dAmount)
+            dPercentDensity = 100.0;
+        else
+            dPercentDensity = 100.0 * (dAmount / dSamsiz);
+        //
+        // Calculate the deduct only if there is something to calculate.  Don't calculate zeros!
+        //
+        // Gregg and Alice investaged and found out, even the density is 0, micropaver is still using 0.1
+        // After consulted with Mike Darter, we decide to match MicroPaver
+    //	if (dPercentDensity > 0.0)
+            dPCIDeduct = DeductEval(nDistress, iSeverity, (float)dPercentDensity);
 
-		return dPCIDeduct;
-	}
+        return dPCIDeduct;
+    }
 
-	int Distress::pvt_nSevFromSev(System::String^ sSev)
-	{
-		int iSev = 0;
-		sSev = sSev->ToUpper();
-		if (sSev == "L")
-			iSev = 2;
-		else if (sSev == "M")
-			iSev =  1;
-		else if (sSev == "H")
-			iSev =  0;
+    int Distress::pvt_nSevFromSev(System::String^ sSev)
+    {
+        int iSev = 0;
+        sSev = sSev->ToUpper();
+        if (sSev == "L")
+            iSev = 2;
+        else if (sSev == "M")
+            iSev =  1;
+        else if (sSev == "H")
+            iSev =  0;
 
-		return iSev;
-	}
-	
+        return iSev;
+    }
+    
 /***************************************************************************/
 /*
  * DeductEval(int a, int b, float x) -- this is nothing more than an
@@ -598,7 +598,7 @@ namespace PCI
  *   be negative or positive with equal likelyhood.  Some of the curves
  *   are plotted as x vs y and some are plotted as log(x) vs y.
  */
-	float Distress::DeductEval(int distress, int degree, float x){
+    float Distress::DeductEval(int distress, int degree, float x){
 
    static struct { float x,y; }  d[NUMCURVES][NUMPTS] = {
 
@@ -1128,247 +1128,247 @@ namespace PCI
  *	      distress severity combination.
  *	      SEE also the related function q2row.
  */
-	int Distress::dis2row(int distress, int degree) {
-	static int p[SALDISTRESSRANGE*3] = {
+    int Distress::dis2row(int distress, int degree) {
+    static int p[SALDISTRESSRANGE*3] = {
 
 
-		/* distress 	 HIGH	   MEDIUM      LOW     */
-		/* # in SAL 	  =0	     =1 	=2     */
+        /* distress 	 HIGH	   MEDIUM      LOW     */
+        /* # in SAL 	  =0	     =1 	=2     */
 
-		 /*   0  */ 	  0,	     0, 	0,     /* 0 unused in SAL*/
+         /*   0  */ 	  0,	     0, 	0,     /* 0 unused in SAL*/
 
-		 /*   1  */ 	  0,	     1, 	2,     /* mpr alligator cracking, SAL uses 1, we will use 0 */
-		 /*   2  */ 	  3,	     4, 	5,     /* mp ac road bleeding */
-		 /*   3  */ 	  6,	     7, 	8,     /* mp ac road block cracking */
-		 /*   4  */ 	  9,	    10,        11,     /* mp ac road bumps adn sags */
-		 /*   5  */ 	 12,	    13,        14,     /* mp ac road corrugation */
-		 /*   6  */ 	 15,	    16,        17,     /* mp ac road depression */
-		 /*   7  */ 	 18,	    19,        20,     /* mp ac road edge cracking */
-		 /*   8  */ 	 21,	    22,        23,     /* mp ac road joint refelection */
-		 /*   9  */ 	 24,	    25,        26,     /* mp ac road ls dropoff */
-		 /*  10  */ 	 27,	    28,        29,     /* mp ac road lon and tra cracking */
-		 /*  11  */ 	 30,	    31,        32,     /* mp ac road patching */
-		 /*  12  */ 	 33,	    34,        35,     /* mp ac road polished agg */
-		 /*  13  */ 	 36,	    37,        38,     /* mp ac road potholes */
-		 /*  14  */ 	 39,	    40,        41,     /* mp ac road rr xing */
-		 /*  15  */ 	 42,	    43,        44,     /* mp ac road rutting */
-		 /*  16  */ 	 45,	    46,        47,     /* mp ac road shoving */
-		 /*  17  */ 	 48,	    49,        50,     /* mp ac road slippage cracking */
-		 /*  18  */ 	 51,	    52,        53,     /* mp ac road swell */
-		 /*  19  */ 	 54,	    55,        56,     /* mp ac road weathering and raveling */
+         /*   1  */ 	  0,	     1, 	2,     /* mpr alligator cracking, SAL uses 1, we will use 0 */
+         /*   2  */ 	  3,	     4, 	5,     /* mp ac road bleeding */
+         /*   3  */ 	  6,	     7, 	8,     /* mp ac road block cracking */
+         /*   4  */ 	  9,	    10,        11,     /* mp ac road bumps adn sags */
+         /*   5  */ 	 12,	    13,        14,     /* mp ac road corrugation */
+         /*   6  */ 	 15,	    16,        17,     /* mp ac road depression */
+         /*   7  */ 	 18,	    19,        20,     /* mp ac road edge cracking */
+         /*   8  */ 	 21,	    22,        23,     /* mp ac road joint refelection */
+         /*   9  */ 	 24,	    25,        26,     /* mp ac road ls dropoff */
+         /*  10  */ 	 27,	    28,        29,     /* mp ac road lon and tra cracking */
+         /*  11  */ 	 30,	    31,        32,     /* mp ac road patching */
+         /*  12  */ 	 33,	    34,        35,     /* mp ac road polished agg */
+         /*  13  */ 	 36,	    37,        38,     /* mp ac road potholes */
+         /*  14  */ 	 39,	    40,        41,     /* mp ac road rr xing */
+         /*  15  */ 	 42,	    43,        44,     /* mp ac road rutting */
+         /*  16  */ 	 45,	    46,        47,     /* mp ac road shoving */
+         /*  17  */ 	 48,	    49,        50,     /* mp ac road slippage cracking */
+         /*  18  */ 	 51,	    52,        53,     /* mp ac road swell */
+         /*  19  */ 	 54,	    55,        56,     /* mp ac road weathering and raveling */
 
-		 /*  20  */ 	  0,	     0, 	0,     /* 20 unused in SAL*/
+         /*  20  */ 	  0,	     0, 	0,     /* 20 unused in SAL*/
 
-		 /*  21  */ 	 57,	    58,        59,     /* mp pcc roadway distresses */
-		 /*  22  */ 	 60,	    61,        62,     /* mp pcc roadway distresses */
-		 /*  23  */ 	 63,	    64,        65,     /* mp pcc roadway distresses */
-		 /*  24  */ 	 66,	    67,        68,     /* mp pcc roadway distresses */
-		 /*  25  */ 	 69,	    70,        71,     /* mp pcc roadway distresses */
-		 /*  26  */ 	 72,	    73,        74,     /* mp pcc roadway distresses */
-		 /*  27  */ 	 75,	    76,        77,     /* mp pcc roadway distresses */
-		 /*  28  */ 	 78,	    79,        80,     /* mp pcc roadway distresses */
-		 /*  29  */ 	 81,	    82,        83,     /* mp pcc roadway distresses */
-		 /*  30  */ 	 84,	    85,        86,     /* mp pcc roadway distresses */
-		 /*  31  */ 	 87,	    88,        89,     /* mp pcc roadway distresses */
-		 /*  32  */ 	 90,	    91,        92,     /* mp pcc roadway distresses */
-		 /*  33  */ 	 93,	    94,        95,     /* mp pcc roadway distresses */
-		 /*  34  */ 	 96,	    97,        98,     /* mp pcc roadway distresses */
-		 /*  35  */ 	 99,	   100,       101,     /* mp pcc roadway distresses */
-		 /*  36  */ 	102,	   103,       104,     /* mp pcc roadway distresses */
-		 /*  37  */ 	105,	   106,       107,     /* mp pcc roadway distresses */
-		 /*  38  */ 	108,	   109,       110,     /* mp pcc roadway distresses */
-		 /*  39  */ 	111,	   112,       113,     /* mp pcc roadway distresses */
+         /*  21  */ 	 57,	    58,        59,     /* mp pcc roadway distresses */
+         /*  22  */ 	 60,	    61,        62,     /* mp pcc roadway distresses */
+         /*  23  */ 	 63,	    64,        65,     /* mp pcc roadway distresses */
+         /*  24  */ 	 66,	    67,        68,     /* mp pcc roadway distresses */
+         /*  25  */ 	 69,	    70,        71,     /* mp pcc roadway distresses */
+         /*  26  */ 	 72,	    73,        74,     /* mp pcc roadway distresses */
+         /*  27  */ 	 75,	    76,        77,     /* mp pcc roadway distresses */
+         /*  28  */ 	 78,	    79,        80,     /* mp pcc roadway distresses */
+         /*  29  */ 	 81,	    82,        83,     /* mp pcc roadway distresses */
+         /*  30  */ 	 84,	    85,        86,     /* mp pcc roadway distresses */
+         /*  31  */ 	 87,	    88,        89,     /* mp pcc roadway distresses */
+         /*  32  */ 	 90,	    91,        92,     /* mp pcc roadway distresses */
+         /*  33  */ 	 93,	    94,        95,     /* mp pcc roadway distresses */
+         /*  34  */ 	 96,	    97,        98,     /* mp pcc roadway distresses */
+         /*  35  */ 	 99,	   100,       101,     /* mp pcc roadway distresses */
+         /*  36  */ 	102,	   103,       104,     /* mp pcc roadway distresses */
+         /*  37  */ 	105,	   106,       107,     /* mp pcc roadway distresses */
+         /*  38  */ 	108,	   109,       110,     /* mp pcc roadway distresses */
+         /*  39  */ 	111,	   112,       113,     /* mp pcc roadway distresses */
 
-		 /*  40  */ 	  0,	     0, 	0,     /* 40 unused in SAL */
+         /*  40  */ 	  0,	     0, 	0,     /* 40 unused in SAL */
 
-		 /* distress	 HIGH	   MEDIUM      LOW     */
-		 /* # in SAL	  =0	     =1 	=2     */
-
-
-		 /*  41  */ 	 120,	    121,       122,	/* mpaver & faa82 ac AIRFIELDS ALLIGATOR CRACKING */
-		 /*  42  */ 	 123,	    124,       125,	/* mpaver & faa82 ac AIRFIELDS bleeding  */
-		 /*  43  */ 	 126,	    127,       128,	/* mpaver & faa82 ac AIRFIELDS block cracking */
-		 /*  44  */ 	 129,	    130,       131,	/* mpaver & faa82 ac AIRFIELD corrugation */
-		 /*  45  */ 	 132,	    133,       134,	/* mpaver & faa82 ac AIRFIELDS depression */
-		 /*  46  */ 	 135,	    136,       137,	/* mpaver & faa82 ac AIRFIELDS jet blast erosion  */
-		 /*  47  */ 	 138,	    139,       140,	/* mpaver & faa82 ac AIRFIELDS joint reflection cracking  */
-		 /*  48  */ 	 141,	    142,       143,	/* mpaver & faa82 ac AIRFIELDS longitudinal and transverse cracking */
-		 /*  49  */ 	 144,	    145,       146,	/* mpaver & faa82 ac AIRFIELDS oil spillage  */
-		 /*  50  */ 	 147,	    148,       149,	/* mpaver & faa82 ac AIRFIELDS patching and utility cut  */
-		 /*  51  */ 	 150,	    151,       152,	/* mpaver & faa82 ac AIRFIELDS polished aggregate  */
-		 /*  52  */ 	 153,	    154,       155,	/* mpaver & faa82 ac AIRFIELDS raveling/weathering  */
-		 /*  53  */ 	 156,	    157,       158,	/* mpaver & faa82 ac AIRFIELDS rutting */
-		 /*  54  */ 	 159,	    160,       161,	/* mpaver & faa82 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
-		 /*  55  */ 	 162,	    163,       164,	/* mpaver & faa82 ac AIRFIELDS slippage cracking */
-		 /*  56  */ 	 165,	    166,       167,	/* mpaver & faa82 ac AIRFIELDS swell */
-
-		 /*  57  */ 	  0,	     0, 	0,     /* 57 unused in SAL */
-		 /*  58  */ 	  0,	     0, 	0,     /* 58 unused in SAL */
-		 /*  59  */ 	  0,	     0, 	0,     /* 59 unused in SAL */
-		 /*  60  */ 	  0,	     0, 	0,     /* 60 unused in SAL */
-
-		 /*  61  */ 	 180,	    181,       182,	/* mpaver & faa82 pcc AIRFIELDS  BLOWUPS */
-		 /*  62  */ 	 183,	    184,       185,	/* mpaver & faa82 pcc AIRFIELDS corner break */
-		 /*  63  */ 	 186,	    187,       188,	/* mpaver & faa82 pcc AIRFIELDS longitudinal/transverse/diagonal cracking */
-		 /*  64  */ 	 189,	    190,       191,	/* mpaver & faa82 pcc AIRFIELDS durability cracking */
-		 /*  65  */ 	 192,	    193,       194,
-		 /*  66  */ 	 195,	    196,       197,	/* mpaver & faa82 pcc AIRFIELDS small patch */
-		 /*  67  */ 	 198,	    199,       200,	/* mpaver & faa82 pcc AIRFIELDS patching/utility cut defect */
-		 /*  68  */ 	 201,	    202,       203,	/* mpaver & faa82 pcc AIRFIELDS popouts */
-		 /*  69  */ 	 204,	    205,       206,	/* mpaver & faa82 pcc AIRFIELDS pumping */
-		 /*  70  */ 	 207,	    208,       209,	/* mpaver & faa82 pcc AIRFIELDS scaling */
-		 /*  71  */ 	 210,	    211,       212,	/* mpaver & faa82 pcc AIRFIELDS settlement */
-		 /*  72  */ 	 213,	    214,       215,	/* mpaver & faa82 pcc AIRFIELDS shattered slab */
-		 /*  73  */ 	 216,	    217,       218,	/* mpaver & faa82 pcc AIRFIELDS shrinkage cracks */
-		 /*  74  */ 	 219,	    220,       221,	/* mpaver & faa82 pcc AIRFIELDS spalling along the joints */
-		 /*  75  */ 	 222,	    223,       224,	/* mpaver & faa82 pcc AIRFIELDS spalling corner */
-
-		 /*  76  */ 	  225,	     226,   227,     /* wci ac Linear Cracking */
-		 /*  77  */ 	  228,	     229, 	230,     /* wci ac Pattern Cracking */
-		 /*  78  */ 	  231,	     232, 	233,     /* wci ac Surface Deterioration */
-		 /*  79  */ 	  234,	     235, 	236,     /* wci ac Surface Distortion */
-		 /*  80  */ 	  237,	     238, 	239,     /* wci ac Surface Defects */
-		 /*  81  */ 	  240,	     241, 	242,     /* wci pcc Linear Cracking */
-		 /*  82  */ 	  243,	     244, 	245,     /* wci pcc Pattern Cracking */
-		 /*  83  */ 	  246,	     247, 	248,     /* wci pcc Surface Deterioration */
-		 /*  84  */ 	  249,	     250, 	251,     /* wci pcc Surface Defects */
+         /* distress	 HIGH	   MEDIUM      LOW     */
+         /* # in SAL	  =0	     =1 	=2     */
 
 
-		 /*  85  */ 	  0,	     0, 	0,     /* unused */
-		 /*  86  */ 	  0,	     0, 	0,     /* unused */
-		 /*  87  */ 	  0,	     0, 	0,     /* unused */
-		 /*  88  */ 	  0,	     0, 	0,     /* unused */
-		 /*  89  */ 	  0,	     0, 	0,     /* unused */
-		 /*  90  */ 	  0,	     0, 	0,     /* unused */
-		 /*  91  */ 	  0,	     0, 	0,     /* unused */
-		 /*  92  */ 	  0,	     0, 	0,     /* unused */
-		 /*  93  */ 	  0,	     0, 	0,     /* unused */
-		 /*  94  */ 	  0,	     0, 	0,     /* unused */
-		 /*  95  */ 	  0,	     0, 	0,     /* unused */
-		 /*  96  */ 	  0,	     0, 	0,     /* unused */
-		 /*  97  */ 	  0,	     0, 	0,     /* unused */
-		 /*  98  */ 	  0,	     0, 	0,     /* unused */
-		 /*  99  */ 	  0,	     0, 	0,     /* unused */
+         /*  41  */ 	 120,	    121,       122,	/* mpaver & faa82 ac AIRFIELDS ALLIGATOR CRACKING */
+         /*  42  */ 	 123,	    124,       125,	/* mpaver & faa82 ac AIRFIELDS bleeding  */
+         /*  43  */ 	 126,	    127,       128,	/* mpaver & faa82 ac AIRFIELDS block cracking */
+         /*  44  */ 	 129,	    130,       131,	/* mpaver & faa82 ac AIRFIELD corrugation */
+         /*  45  */ 	 132,	    133,       134,	/* mpaver & faa82 ac AIRFIELDS depression */
+         /*  46  */ 	 135,	    136,       137,	/* mpaver & faa82 ac AIRFIELDS jet blast erosion  */
+         /*  47  */ 	 138,	    139,       140,	/* mpaver & faa82 ac AIRFIELDS joint reflection cracking  */
+         /*  48  */ 	 141,	    142,       143,	/* mpaver & faa82 ac AIRFIELDS longitudinal and transverse cracking */
+         /*  49  */ 	 144,	    145,       146,	/* mpaver & faa82 ac AIRFIELDS oil spillage  */
+         /*  50  */ 	 147,	    148,       149,	/* mpaver & faa82 ac AIRFIELDS patching and utility cut  */
+         /*  51  */ 	 150,	    151,       152,	/* mpaver & faa82 ac AIRFIELDS polished aggregate  */
+         /*  52  */ 	 153,	    154,       155,	/* mpaver & faa82 ac AIRFIELDS raveling/weathering  */
+         /*  53  */ 	 156,	    157,       158,	/* mpaver & faa82 ac AIRFIELDS rutting */
+         /*  54  */ 	 159,	    160,       161,	/* mpaver & faa82 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
+         /*  55  */ 	 162,	    163,       164,	/* mpaver & faa82 ac AIRFIELDS slippage cracking */
+         /*  56  */ 	 165,	    166,       167,	/* mpaver & faa82 ac AIRFIELDS swell */
 
-		/* distress 	 HIGH	   MEDIUM      LOW     */
-		/* # in SAL 	  =0	     =1 	=2     */
+         /*  57  */ 	  0,	     0, 	0,     /* 57 unused in SAL */
+         /*  58  */ 	  0,	     0, 	0,     /* 58 unused in SAL */
+         /*  59  */ 	  0,	     0, 	0,     /* 59 unused in SAL */
+         /*  60  */ 	  0,	     0, 	0,     /* 60 unused in SAL */
 
-		 /* 100  */ 	  120,	     121,       122,     /* faa82 ac AIRFIELDS ALLIGATOR CRACKING */
-		 /* 101  */ 	  123,	     124, 	125,     /* faa82 ac AIRFIELDS bleeding  */
-		 /* 102  */ 	  126,	     127, 	128,     /* faa82 ac AIRFIELDS block cracking */
-		 /* 103  */ 	  129,	     130, 	131,     /* faa82 ac AIRFIELD corrugation */
-		 /* 104  */ 	  132,	     133, 	134,     /* faa82 ac AIRFIELDS depression */
-		 /* 105  */ 	  135,	     136, 	137,     /* faa82 ac AIRFIELDS jet blast erosion  */
-		 /* 106  */ 	  138,	     139, 	140,     /* faa82 ac AIRFIELDS joint reflection cracking  */
-		 /* 107  */ 	  141,	     142,       143,     /* faa82 ac AIRFIELDS longitudinal and transverse cracking */
-		 /* 108  */ 	  144,	     145, 	146,     /* faa82 ac AIRFIELDS oil spillage  */
-		 /* 109  */ 	  147,	     148, 	149,     /* faa82 ac AIRFIELDS patching and utility cut  */
-		 /* 110  */ 	  150,	     151, 	152,     /* faa82 ac AIRFIELDS polished aggregate  */
-		 /* 111  */ 	  153,	     154, 	155,     /* faa82 ac AIRFIELDS raveling/weathering  */
-		 /* 112  */ 	  156,	     157, 	158,     /* faa82 ac AIRFIELDS rutting */
-		 /* 113  */ 	  159,	     160, 	161,     /* faa82 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
-		 /* 114  */ 	  162,	     163, 	164,     /* faa82 ac AIRFIELDS slippage cracking */
-		 /* 115  */ 	  165,	     166,	167,	 /* faa82 ac AIRFIELDS swell */
+         /*  61  */ 	 180,	    181,       182,	/* mpaver & faa82 pcc AIRFIELDS  BLOWUPS */
+         /*  62  */ 	 183,	    184,       185,	/* mpaver & faa82 pcc AIRFIELDS corner break */
+         /*  63  */ 	 186,	    187,       188,	/* mpaver & faa82 pcc AIRFIELDS longitudinal/transverse/diagonal cracking */
+         /*  64  */ 	 189,	    190,       191,	/* mpaver & faa82 pcc AIRFIELDS durability cracking */
+         /*  65  */ 	 192,	    193,       194,
+         /*  66  */ 	 195,	    196,       197,	/* mpaver & faa82 pcc AIRFIELDS small patch */
+         /*  67  */ 	 198,	    199,       200,	/* mpaver & faa82 pcc AIRFIELDS patching/utility cut defect */
+         /*  68  */ 	 201,	    202,       203,	/* mpaver & faa82 pcc AIRFIELDS popouts */
+         /*  69  */ 	 204,	    205,       206,	/* mpaver & faa82 pcc AIRFIELDS pumping */
+         /*  70  */ 	 207,	    208,       209,	/* mpaver & faa82 pcc AIRFIELDS scaling */
+         /*  71  */ 	 210,	    211,       212,	/* mpaver & faa82 pcc AIRFIELDS settlement */
+         /*  72  */ 	 213,	    214,       215,	/* mpaver & faa82 pcc AIRFIELDS shattered slab */
+         /*  73  */ 	 216,	    217,       218,	/* mpaver & faa82 pcc AIRFIELDS shrinkage cracks */
+         /*  74  */ 	 219,	    220,       221,	/* mpaver & faa82 pcc AIRFIELDS spalling along the joints */
+         /*  75  */ 	 222,	    223,       224,	/* mpaver & faa82 pcc AIRFIELDS spalling corner */
 
-		 /* 116  */ 	  0,	     0, 	0,     /* unused */
-		 /* 117  */ 	  0,	     0, 	0,     /* unused */
-		 /* 118  */ 	  0,	     0, 	0,     /* unused */
-		 /* 119  */ 	  0,	     0, 	0,     /* unused */
-
-		/* distress 	 HIGH	   MEDIUM      LOW     */
-		/* # in SAL 	  =0	     =1 	=2     */
-
-		 /* 120  */ 	  180,	     181,	182,	 /* faa82 pcc AIRFIELDS  BLOWUPS */
-		 /* 121  */ 	  183,	     184,	185,	 /* faa82 pcc AIRFIELDS corner break */
-		 /* 122  */ 	  186,	     187, 	188,     /* faa82 pcc AIRFIELDS longitudinal/transverse/diagonal cracking */
-		 /* 123  */ 	  189,	     190, 	191,     /* faa82 pcc AIRFIELDS durability cracking */
-		 /* 124  */ 	  192,	     193, 	194,     /* faa82 pcc AIRFIELDS small patch */
-		 /* 125  */ 	  195,	     196, 	197,     /* faa82 pcc AIRFIELDS patching/utility cut defect */
-		 /* 126  */ 	  198,	     199, 	200,     /* faa82 pcc AIRFIELDS popouts */
-		 /* 127  */ 	  201,	     202, 	203,     /* faa82 pcc AIRFIELDS pumping */
-		 /* 128  */ 	  204,	     205, 	206,     /* faa82 pcc AIRFIELDS scaling */
-		 /* 129  */ 	  207,	     208, 	209,     /* faa82 pcc AIRFIELDS settlement */
-		 /* 130  */ 	  210,	     211, 	212,     /* faa82 pcc AIRFIELDS shattered slab */
-		 /* 131  */ 	  213,	     214, 	215,     /* faa82 pcc AIRFIELDS shrinkage cracks */
-		 /* 132  */ 	  216,	     217, 	218,     /* faa82 pcc AIRFIELDS spalling along the joints */
-		 /* 133  */ 	  219,	     220,	221,	 /* faa82 pcc AIRFIELDS spalling corner */
-
-		 /* ASTM D53040-10 method for pcc  (pcc.astm) */
-		 /* 134  */ 	  180,	     181, 	182,     /* D534010 pcc AIRFIELDS blowups */
-		 /* 135  */ 	  183,	     184, 	185,     /* D534010 pcc AIRFIELDS corner break */
-		 /* 136  */ 	  186,	     187, 	188,     /* D534010 pcc AIRFIELDS longitudinal/transverse/diagonal cracking*/
-		 /* 137  */ 	  261,	     262, 	263,     /* D534010 pcc AIRFIELDS durability cracking */
-		 /* 138  */ 	  192,	     193, 	194,     /* D534010 pcc AIRFIELDS joint seal damage*/
-		 /* 139  */ 	  195,	     196, 	197,     /* D534010 pcc AIRFIELDS small patch */
-		 /* 140  */ 	  198,	     199, 	200,     /* D534010 pcc AIRFIELDS large patching/utility cut */
-		 /* 141  */ 	  201,	     202, 	203,     /* D534010 pcc AIRFIELDS popouts */
-		 /* 142  */ 	  204,	     205, 	206,	 /* D534010 pcc AIRFIELDS pumping */
-		 /* 143  */ 	  252,	     253, 	254,     /* D534010 pcc AIRFIELDS scaling */
-		 /* 144  */ 	  210,	     211, 	212,     /* D534010 pcc AIRFIELDS settlement (faulting) */
-		 /* 145  */ 	  213,	     214, 	215,     /* D534010 pcc AIRFIELDS shattered slab/Intersecting cracks */
-		 /* 146  */ 	  216,	     217, 	218,     /* D534010 pcc AIRFIELDS shrinkage cracks */
-		 /* 147  */ 	  219,	     220, 	221,     /* D534010 pcc AIRFIELDS spalling (Transverse and longitudinal joint) */
-		 /* 148  */		  222,	     223,	224,     /* D534010 pcc AIRFIELDS spalling (corner) */
-		 /* 149  */ 	  255,	     256, 	257,     /* D534010 pcc AIRFIELDS alkali silica reaction (ASR) */
+         /*  76  */ 	  225,	     226,   227,     /* wci ac Linear Cracking */
+         /*  77  */ 	  228,	     229, 	230,     /* wci ac Pattern Cracking */
+         /*  78  */ 	  231,	     232, 	233,     /* wci ac Surface Deterioration */
+         /*  79  */ 	  234,	     235, 	236,     /* wci ac Surface Distortion */
+         /*  80  */ 	  237,	     238, 	239,     /* wci ac Surface Defects */
+         /*  81  */ 	  240,	     241, 	242,     /* wci pcc Linear Cracking */
+         /*  82  */ 	  243,	     244, 	245,     /* wci pcc Pattern Cracking */
+         /*  83  */ 	  246,	     247, 	248,     /* wci pcc Surface Deterioration */
+         /*  84  */ 	  249,	     250, 	251,     /* wci pcc Surface Defects */
 
 
-		 /* ASTM D53040-10 method for ac (ac.astm) */
-		 /*  150 */ 	 120,	    121,       122,	/* D534010 ac AIRFIELDS ALLIGATOR CRACKING */
-		 /*  151 */ 	 123,	    124,       125,	/* D534010 ac AIRFIELDS bleeding  */
-		 /*  152 */ 	 126,	    127,       128,	/* D534010 ac AIRFIELDS block cracking */
-		 /*  153 */ 	 129,	    130,       131,	/* D534010 ac AIRFIELD corrugation */
-		 /*  154 */ 	 132,	    133,       134,	/* D534010 ac AIRFIELDS depression */
-		 /*  155 */ 	 135,	    136,       137,	/* D534010 ac AIRFIELDS jet blast erosion  */
-		 /*  156 */ 	 138,	    139,       140,	/* D534010 ac AIRFIELDS joint reflection cracking  */
-		 /*  157 */ 	 141,	    142,       143,	/* D534010 ac AIRFIELDS longitudinal and transverse cracking */
-		 /*  158  */ 	 144,	    145,       146,	/* D534010 ac AIRFIELDS oil spillage  */
-		 /*  159 */ 	 147,	    148,       149,	/* D534010 ac AIRFIELDS patching and utility cut  */
-		 /*  160 */ 	 150,	    151,       152,	/* D534010 ac AIRFIELDS polished aggregate  */
-		 /*  161 */ 	 153,	    154,       155,	/* D534010 ac AIRFIELDS raveling  */
-		 /*  162 */ 	 156,	    157,       158,	/* D534010 ac AIRFIELDS rutting */
-		 /*  163 */ 	 159,	    160,       161,	/* D534010 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
-		 /*  164 */ 	 162,	    163,       164,	/* D534010 ac AIRFIELDS slippage cracking */
-		 /*  165 */ 	 165,	    166,       167,	/* D534010 ac AIRFIELDS swell */
-		 /* 166  */ 	 258,	    259, 	   260, /* d534010 ac AIRFIELDS weathering */
+         /*  85  */ 	  0,	     0, 	0,     /* unused */
+         /*  86  */ 	  0,	     0, 	0,     /* unused */
+         /*  87  */ 	  0,	     0, 	0,     /* unused */
+         /*  88  */ 	  0,	     0, 	0,     /* unused */
+         /*  89  */ 	  0,	     0, 	0,     /* unused */
+         /*  90  */ 	  0,	     0, 	0,     /* unused */
+         /*  91  */ 	  0,	     0, 	0,     /* unused */
+         /*  92  */ 	  0,	     0, 	0,     /* unused */
+         /*  93  */ 	  0,	     0, 	0,     /* unused */
+         /*  94  */ 	  0,	     0, 	0,     /* unused */
+         /*  95  */ 	  0,	     0, 	0,     /* unused */
+         /*  96  */ 	  0,	     0, 	0,     /* unused */
+         /*  97  */ 	  0,	     0, 	0,     /* unused */
+         /*  98  */ 	  0,	     0, 	0,     /* unused */
+         /*  99  */ 	  0,	     0, 	0,     /* unused */
 
-		 /* 167  */ 	  0,	     0, 	0,     /* unused */
-		 /* 168  */ 	  0,	     0, 	0,     /* unused */
-		 /* 169  */ 	  0,	     0, 	0,     /* unused */
-		 /* 170  */ 	  0,	     0, 	0,     /* unused */
-		 /* 171  */ 	  0,	     0, 	0,     /* unused */
-		 /* 172  */ 	  0,	     0, 	0,     /* unused */
-		 /* 173  */ 	  0,	     0, 	0,     /* unused */
-		 /* 174  */ 	  0,	     0, 	0,     /* unused */
-		 /* 175  */ 	  0,	     0, 	0,     /* unused */
-		 /* 176  */ 	  0,	     0, 	0,     /* unused */
-		 /* 177  */ 	  0,	     0, 	0,     /* unused */
-		 /* 178  */ 	  0,	     0, 	0,     /* unused */
-		 /* 179  */ 	  0,	     0, 	0,     /* unused */
-		 /* 180  */ 	  0,	     0, 	0,     /* unused */
-		 /* 181  */ 	  0,	     0, 	0,     /* unused */
-		 /* 182  */ 	  0,	     0, 	0,     /* unused */
-		 /* 183  */ 	  0,	     0, 	0,     /* unused */
-		 /* 184  */ 	  0,	     0, 	0,     /* unused */
-		 /* 185  */ 	  0,	     0, 	0,     /* unused */
-		 /* 186  */ 	  0,	     0, 	0,     /* unused */
-		 /* 187  */ 	  0,	     0, 	0,     /* unused */
-		 /* 188  */ 	  0,	     0, 	0,     /* unused */
-		 /* 189  */ 	  0,	     0, 	0,     /* unused */
-		 /* 190  */ 	  0,	     0, 	0,     /* unused */
-		 /* 191  */ 	  0,	     0, 	0,     /* unused */
-		 /* 192  */ 	  0,	     0, 	0,     /* unused */
-		 /* 193  */ 	  0,	     0, 	0,     /* unused */
-		 /* 194  */ 	  0,	     0, 	0,     /* unused */
-		 /* 195  */ 	  0,	     0, 	0,     /* unused */
-		 /* 196  */ 	  0,	     0, 	0,     /* unused */
-		 /* 197  */ 	  0,	     0, 	0,     /* unused */
-		 /* 198  */ 	  0,	     0, 	0,     /* unused */
-		 /* 199  */ 	  0,	     0, 	0     /* unused */
+        /* distress 	 HIGH	   MEDIUM      LOW     */
+        /* # in SAL 	  =0	     =1 	=2     */
 
-	   };
+         /* 100  */ 	  120,	     121,       122,     /* faa82 ac AIRFIELDS ALLIGATOR CRACKING */
+         /* 101  */ 	  123,	     124, 	125,     /* faa82 ac AIRFIELDS bleeding  */
+         /* 102  */ 	  126,	     127, 	128,     /* faa82 ac AIRFIELDS block cracking */
+         /* 103  */ 	  129,	     130, 	131,     /* faa82 ac AIRFIELD corrugation */
+         /* 104  */ 	  132,	     133, 	134,     /* faa82 ac AIRFIELDS depression */
+         /* 105  */ 	  135,	     136, 	137,     /* faa82 ac AIRFIELDS jet blast erosion  */
+         /* 106  */ 	  138,	     139, 	140,     /* faa82 ac AIRFIELDS joint reflection cracking  */
+         /* 107  */ 	  141,	     142,       143,     /* faa82 ac AIRFIELDS longitudinal and transverse cracking */
+         /* 108  */ 	  144,	     145, 	146,     /* faa82 ac AIRFIELDS oil spillage  */
+         /* 109  */ 	  147,	     148, 	149,     /* faa82 ac AIRFIELDS patching and utility cut  */
+         /* 110  */ 	  150,	     151, 	152,     /* faa82 ac AIRFIELDS polished aggregate  */
+         /* 111  */ 	  153,	     154, 	155,     /* faa82 ac AIRFIELDS raveling/weathering  */
+         /* 112  */ 	  156,	     157, 	158,     /* faa82 ac AIRFIELDS rutting */
+         /* 113  */ 	  159,	     160, 	161,     /* faa82 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
+         /* 114  */ 	  162,	     163, 	164,     /* faa82 ac AIRFIELDS slippage cracking */
+         /* 115  */ 	  165,	     166,	167,	 /* faa82 ac AIRFIELDS swell */
+
+         /* 116  */ 	  0,	     0, 	0,     /* unused */
+         /* 117  */ 	  0,	     0, 	0,     /* unused */
+         /* 118  */ 	  0,	     0, 	0,     /* unused */
+         /* 119  */ 	  0,	     0, 	0,     /* unused */
+
+        /* distress 	 HIGH	   MEDIUM      LOW     */
+        /* # in SAL 	  =0	     =1 	=2     */
+
+         /* 120  */ 	  180,	     181,	182,	 /* faa82 pcc AIRFIELDS  BLOWUPS */
+         /* 121  */ 	  183,	     184,	185,	 /* faa82 pcc AIRFIELDS corner break */
+         /* 122  */ 	  186,	     187, 	188,     /* faa82 pcc AIRFIELDS longitudinal/transverse/diagonal cracking */
+         /* 123  */ 	  189,	     190, 	191,     /* faa82 pcc AIRFIELDS durability cracking */
+         /* 124  */ 	  192,	     193, 	194,     /* faa82 pcc AIRFIELDS small patch */
+         /* 125  */ 	  195,	     196, 	197,     /* faa82 pcc AIRFIELDS patching/utility cut defect */
+         /* 126  */ 	  198,	     199, 	200,     /* faa82 pcc AIRFIELDS popouts */
+         /* 127  */ 	  201,	     202, 	203,     /* faa82 pcc AIRFIELDS pumping */
+         /* 128  */ 	  204,	     205, 	206,     /* faa82 pcc AIRFIELDS scaling */
+         /* 129  */ 	  207,	     208, 	209,     /* faa82 pcc AIRFIELDS settlement */
+         /* 130  */ 	  210,	     211, 	212,     /* faa82 pcc AIRFIELDS shattered slab */
+         /* 131  */ 	  213,	     214, 	215,     /* faa82 pcc AIRFIELDS shrinkage cracks */
+         /* 132  */ 	  216,	     217, 	218,     /* faa82 pcc AIRFIELDS spalling along the joints */
+         /* 133  */ 	  219,	     220,	221,	 /* faa82 pcc AIRFIELDS spalling corner */
+
+         /* ASTM D53040-10 method for pcc  (pcc.astm) */
+         /* 134  */ 	  180,	     181, 	182,     /* D534010 pcc AIRFIELDS blowups */
+         /* 135  */ 	  183,	     184, 	185,     /* D534010 pcc AIRFIELDS corner break */
+         /* 136  */ 	  186,	     187, 	188,     /* D534010 pcc AIRFIELDS longitudinal/transverse/diagonal cracking*/
+         /* 137  */ 	  261,	     262, 	263,     /* D534010 pcc AIRFIELDS durability cracking */
+         /* 138  */ 	  192,	     193, 	194,     /* D534010 pcc AIRFIELDS joint seal damage*/
+         /* 139  */ 	  195,	     196, 	197,     /* D534010 pcc AIRFIELDS small patch */
+         /* 140  */ 	  198,	     199, 	200,     /* D534010 pcc AIRFIELDS large patching/utility cut */
+         /* 141  */ 	  201,	     202, 	203,     /* D534010 pcc AIRFIELDS popouts */
+         /* 142  */ 	  204,	     205, 	206,	 /* D534010 pcc AIRFIELDS pumping */
+         /* 143  */ 	  252,	     253, 	254,     /* D534010 pcc AIRFIELDS scaling */
+         /* 144  */ 	  210,	     211, 	212,     /* D534010 pcc AIRFIELDS settlement (faulting) */
+         /* 145  */ 	  213,	     214, 	215,     /* D534010 pcc AIRFIELDS shattered slab/Intersecting cracks */
+         /* 146  */ 	  216,	     217, 	218,     /* D534010 pcc AIRFIELDS shrinkage cracks */
+         /* 147  */ 	  219,	     220, 	221,     /* D534010 pcc AIRFIELDS spalling (Transverse and longitudinal joint) */
+         /* 148  */		  222,	     223,	224,     /* D534010 pcc AIRFIELDS spalling (corner) */
+         /* 149  */ 	  255,	     256, 	257,     /* D534010 pcc AIRFIELDS alkali silica reaction (ASR) */
 
 
-	return p[degree + 3*distress] ;
+         /* ASTM D53040-10 method for ac (ac.astm) */
+         /*  150 */ 	 120,	    121,       122,	/* D534010 ac AIRFIELDS ALLIGATOR CRACKING */
+         /*  151 */ 	 123,	    124,       125,	/* D534010 ac AIRFIELDS bleeding  */
+         /*  152 */ 	 126,	    127,       128,	/* D534010 ac AIRFIELDS block cracking */
+         /*  153 */ 	 129,	    130,       131,	/* D534010 ac AIRFIELD corrugation */
+         /*  154 */ 	 132,	    133,       134,	/* D534010 ac AIRFIELDS depression */
+         /*  155 */ 	 135,	    136,       137,	/* D534010 ac AIRFIELDS jet blast erosion  */
+         /*  156 */ 	 138,	    139,       140,	/* D534010 ac AIRFIELDS joint reflection cracking  */
+         /*  157 */ 	 141,	    142,       143,	/* D534010 ac AIRFIELDS longitudinal and transverse cracking */
+         /*  158  */ 	 144,	    145,       146,	/* D534010 ac AIRFIELDS oil spillage  */
+         /*  159 */ 	 147,	    148,       149,	/* D534010 ac AIRFIELDS patching and utility cut  */
+         /*  160 */ 	 150,	    151,       152,	/* D534010 ac AIRFIELDS polished aggregate  */
+         /*  161 */ 	 153,	    154,       155,	/* D534010 ac AIRFIELDS raveling  */
+         /*  162 */ 	 156,	    157,       158,	/* D534010 ac AIRFIELDS rutting */
+         /*  163 */ 	 159,	    160,       161,	/* D534010 ac AIRFIELDS shoving of flexible pavement by PCC slabs */
+         /*  164 */ 	 162,	    163,       164,	/* D534010 ac AIRFIELDS slippage cracking */
+         /*  165 */ 	 165,	    166,       167,	/* D534010 ac AIRFIELDS swell */
+         /* 166  */ 	 258,	    259, 	   260, /* d534010 ac AIRFIELDS weathering */
+
+         /* 167  */ 	  0,	     0, 	0,     /* unused */
+         /* 168  */ 	  0,	     0, 	0,     /* unused */
+         /* 169  */ 	  0,	     0, 	0,     /* unused */
+         /* 170  */ 	  0,	     0, 	0,     /* unused */
+         /* 171  */ 	  0,	     0, 	0,     /* unused */
+         /* 172  */ 	  0,	     0, 	0,     /* unused */
+         /* 173  */ 	  0,	     0, 	0,     /* unused */
+         /* 174  */ 	  0,	     0, 	0,     /* unused */
+         /* 175  */ 	  0,	     0, 	0,     /* unused */
+         /* 176  */ 	  0,	     0, 	0,     /* unused */
+         /* 177  */ 	  0,	     0, 	0,     /* unused */
+         /* 178  */ 	  0,	     0, 	0,     /* unused */
+         /* 179  */ 	  0,	     0, 	0,     /* unused */
+         /* 180  */ 	  0,	     0, 	0,     /* unused */
+         /* 181  */ 	  0,	     0, 	0,     /* unused */
+         /* 182  */ 	  0,	     0, 	0,     /* unused */
+         /* 183  */ 	  0,	     0, 	0,     /* unused */
+         /* 184  */ 	  0,	     0, 	0,     /* unused */
+         /* 185  */ 	  0,	     0, 	0,     /* unused */
+         /* 186  */ 	  0,	     0, 	0,     /* unused */
+         /* 187  */ 	  0,	     0, 	0,     /* unused */
+         /* 188  */ 	  0,	     0, 	0,     /* unused */
+         /* 189  */ 	  0,	     0, 	0,     /* unused */
+         /* 190  */ 	  0,	     0, 	0,     /* unused */
+         /* 191  */ 	  0,	     0, 	0,     /* unused */
+         /* 192  */ 	  0,	     0, 	0,     /* unused */
+         /* 193  */ 	  0,	     0, 	0,     /* unused */
+         /* 194  */ 	  0,	     0, 	0,     /* unused */
+         /* 195  */ 	  0,	     0, 	0,     /* unused */
+         /* 196  */ 	  0,	     0, 	0,     /* unused */
+         /* 197  */ 	  0,	     0, 	0,     /* unused */
+         /* 198  */ 	  0,	     0, 	0,     /* unused */
+         /* 199  */ 	  0,	     0, 	0     /* unused */
+
+       };
+
+
+    return p[degree + 3*distress] ;
 }
 
 /***************************************************************************/
@@ -1442,11 +1442,11 @@ static struct { short x,y; } d[NUMQ][NUMPTS] = {
       for (k=1; (float) d[i][k].x < x; k++)
          ;
       {
-		 float x1 = d[i][k-1].x;
-		 float y1 = d[i][k-1].y;
-		 float x2 = d[i][k].x;
-		 float y2 = d[i][k].y;
-			 val =  ((x - x1) * (y2 - y1)) / (x2 - x1) + y1 ;
+         float x1 = d[i][k-1].x;
+         float y1 = d[i][k-1].y;
+         float x2 = d[i][k].x;
+         float y2 = d[i][k].y;
+             val =  ((x - x1) * (y2 - y1)) / (x2 - x1) + y1 ;
       }
    }
    return  val;
@@ -1455,11 +1455,11 @@ static struct { short x,y; } d[NUMQ][NUMPTS] = {
 
 bool Distress::IsWASHCLKMethod(System::String^ s)
 {
-	if (s == "pcc.wash" || s == "ac.wash" || s == "ac.clk" || s == "bit.clk" )
-		return true;
-	else
-		return false;
-	
+    if (s == "pcc.wash" || s == "ac.wash" || s == "ac.clk" || s == "bit.clk" )
+        return true;
+    else
+        return false;
+    
 }
 
 //
@@ -1467,11 +1467,11 @@ bool Distress::IsWASHCLKMethod(System::String^ s)
 //
 double Distress::pvt_ComputeNonPCIDeduct(	System::String^ sMethod, int nDistress, System::String^ sSeverity, double dExtent)
 {
-	System::String^ sExtent = "";
-	if(dExtent < 0.40) sExtent = "L";
-	else if(dExtent >= 0.40 && dExtent > 0.8) sExtent = "M";
-	else sExtent = "H";
-	return pvt_ComputeNonPCIDeduct(sMethod,nDistress,sSeverity,sExtent);
+    System::String^ sExtent = "";
+    if(dExtent < 0.40) sExtent = "L";
+    else if(dExtent >= 0.40 && dExtent > 0.8) sExtent = "M";
+    else sExtent = "H";
+    return pvt_ComputeNonPCIDeduct(sMethod,nDistress,sSeverity,sExtent);
 }
 
 
@@ -1480,20 +1480,20 @@ double Distress::pvt_ComputeNonPCIDeduct(	System::String^ sMethod, int nDistress
 //
 double Distress::pvt_ComputeNonPCIDeduct(	System::String^ sMethod, int nDistress, System::String^ sSeverity, System::String^ sExtent)
 {
-	double dVal = 0.0;
-	//if (IsWNDMethod(sMethod))
-	//{
-	//	dVal = pvt_ComputeWNDDeduct(nDistress, sSeverity, sExtent);
-	//	return dVal;
-	//}
-	if (IsWASHCLKMethod(sMethod))
-	{
-		dVal = pvt_ComputeWASHCLKDeduct(nDistress, sSeverity, sExtent) ;
-		return dVal;
-	}
-	// default to the WNDMethod
-	//dVal = pvt_ComputeWNDDeduct(nDistress, sSeverity, sExtent);
-	return dVal;
+    double dVal = 0.0;
+    //if (IsWNDMethod(sMethod))
+    //{
+    //	dVal = pvt_ComputeWNDDeduct(nDistress, sSeverity, sExtent);
+    //	return dVal;
+    //}
+    if (IsWASHCLKMethod(sMethod))
+    {
+        dVal = pvt_ComputeWASHCLKDeduct(nDistress, sSeverity, sExtent) ;
+        return dVal;
+    }
+    // default to the WNDMethod
+    //dVal = pvt_ComputeWNDDeduct(nDistress, sSeverity, sExtent);
+    return dVal;
 }
 
 //
@@ -1503,144 +1503,144 @@ double Distress::pvt_ComputeNonPCIDeduct(	System::String^ sMethod, int nDistress
 //
 double Distress::pvt_ComputeWASHCLKDeduct(int nDistress, System::String^ sSeverity, System::String^ sExtent)
 {
-	double dDistress = 0.0;
-	switch (nDistress)
-	{
-	// Have the spreadsheet that links number to distress in your hand before touching this code.
-	// When '-' 'nun' or whatever is passed in, parameters must be replicated in the call to the sub.
-	// severity varies fastest, deducts for the same extent are contiguous
-	//
-	case 270:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 17, 27, 35, 35, 50, 61, 57, 75, 87);
-		break;
-	case 271:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 90, 100, 100, 90, 100, 100, 90, 100, 100);
-		break;
-	case 272:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 12, 20, 27, 32, 46, 57, 47, 64, 76);
-		break;
-	case 273:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 8, 14, 20, 18, 28, 37, 26, 39, 49);
-		break;
-	case 274:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 14, 23, 35, 29, 42, 61, 47, 63, 87);
-		break;
-	case 275:
-		dDistress = 0;
-		break;
-	case 276:
-		dDistress = 0;
-		break;
-	case 277:
-		dDistress = 0;
-		break;
-	case 278:
-		dDistress = 0;
-		break;
-	case 279:
-		dDistress = 0;
-		break;
-	case 280:
-		dDistress = 0;
-		break;
-	case 290:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 7, 22, 37, 17, 39, 60, 29, 55, 80);
-		break;
-	case 291:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 3, 5, 13, 5, 9, 23, 7, 13, 32);
-		break;
-	case 292:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 18, 37, 15, 36, 60, 30, 56, 80);
-		break;
-	case 293:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 6, 6, 6, 12, 12, 12, 18, 18, 18);
-		break;
-	case 294:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 4, 7, 16, 8, 14, 28, 13, 22, 40);
-		break;
-	case 295:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 7, 13, 4, 12, 23, 6, 18, 34);
-		break;
-	case 296:
-		dDistress = 0;
-		break;
-	case 297:
-		dDistress = 0;
-		break;
-	case 298:
-		dDistress = 0;
-		break;
-	case 310:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 15, 20, 30, 20, 30, 45, 30, 40, 50);
-		break;
-	case 311:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 35, 50, 55, 35, 50, 55, 35, 50, 55);
-		break;
-	case 312:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 3, 6, 9, 3, 6, 9, 3, 6, 9);
-		break;
-	case 313:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 20, 10, 15, 25, 15, 20, 30);
-		break;
-	case 314:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 4, 6, 4, 6, 8, 6, 8, 12);
-		break;
-	case 315:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 10, 15, 10, 15, 20, 15, 20, 25);
-		break;
-	case 316:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 15, 0, 25, 20, 5, 30, 30, 10);
-		break;
-	case 317:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 20, 10, 15, 25, 15, 20, 30);
-		break;
-	case 318:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 25, 5, 15, 25, 5, 15, 25);
-		break;
-	case 319:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 5, 5, 10, 10, 10, 15, 15, 15);
-		break;
-	case 320:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 2, 2, 5, 5, 5, 10, 10, 10);
-		break;
-	case 321:
-		dDistress = 0;
-		break;
-	case 330:
-		dDistress = 0;
-		break;
-	case 331:
-		dDistress = 0;
-		break;
-	case 332:
-		dDistress = 0;
-		break;
-	case 333:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 35, 50, 65, 35, 50, 65, 35, 50, 65);
-		break;
-	case 334:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 35, 50, 25, 40, 55, 30, 45, 60);
-		break;
-	case 335:
-		dDistress = 0;
-		break;
-	case 336:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 30, 15, 30, 45, 30, 45, 60);
-		break;
-	case 337:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 10, 15, 10, 15, 20, 15, 20, 25);
-		break;
-	case 338:
-		dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 25, 30, 25, 30, 35, 30, 40, 50);
-		break;
-	case 339:
-		dDistress = 0;
-		break;
-	default:
-		dDistress = 0;
-		break;
-	}
-	return dDistress;
+    double dDistress = 0.0;
+    switch (nDistress)
+    {
+    // Have the spreadsheet that links number to distress in your hand before touching this code.
+    // When '-' 'nun' or whatever is passed in, parameters must be replicated in the call to the sub.
+    // severity varies fastest, deducts for the same extent are contiguous
+    //
+    case 270:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 17, 27, 35, 35, 50, 61, 57, 75, 87);
+        break;
+    case 271:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 90, 100, 100, 90, 100, 100, 90, 100, 100);
+        break;
+    case 272:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 12, 20, 27, 32, 46, 57, 47, 64, 76);
+        break;
+    case 273:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 8, 14, 20, 18, 28, 37, 26, 39, 49);
+        break;
+    case 274:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 14, 23, 35, 29, 42, 61, 47, 63, 87);
+        break;
+    case 275:
+        dDistress = 0;
+        break;
+    case 276:
+        dDistress = 0;
+        break;
+    case 277:
+        dDistress = 0;
+        break;
+    case 278:
+        dDistress = 0;
+        break;
+    case 279:
+        dDistress = 0;
+        break;
+    case 280:
+        dDistress = 0;
+        break;
+    case 290:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 7, 22, 37, 17, 39, 60, 29, 55, 80);
+        break;
+    case 291:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 3, 5, 13, 5, 9, 23, 7, 13, 32);
+        break;
+    case 292:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 18, 37, 15, 36, 60, 30, 56, 80);
+        break;
+    case 293:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 6, 6, 6, 12, 12, 12, 18, 18, 18);
+        break;
+    case 294:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 4, 7, 16, 8, 14, 28, 13, 22, 40);
+        break;
+    case 295:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 7, 13, 4, 12, 23, 6, 18, 34);
+        break;
+    case 296:
+        dDistress = 0;
+        break;
+    case 297:
+        dDistress = 0;
+        break;
+    case 298:
+        dDistress = 0;
+        break;
+    case 310:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 15, 20, 30, 20, 30, 45, 30, 40, 50);
+        break;
+    case 311:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 35, 50, 55, 35, 50, 55, 35, 50, 55);
+        break;
+    case 312:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 3, 6, 9, 3, 6, 9, 3, 6, 9);
+        break;
+    case 313:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 20, 10, 15, 25, 15, 20, 30);
+        break;
+    case 314:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 4, 6, 4, 6, 8, 6, 8, 12);
+        break;
+    case 315:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 10, 15, 10, 15, 20, 15, 20, 25);
+        break;
+    case 316:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 15, 0, 25, 20, 5, 30, 30, 10);
+        break;
+    case 317:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 20, 10, 15, 25, 15, 20, 30);
+        break;
+    case 318:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 25, 5, 15, 25, 5, 15, 25);
+        break;
+    case 319:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 5, 5, 10, 10, 10, 15, 15, 15);
+        break;
+    case 320:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 2, 2, 2, 5, 5, 5, 10, 10, 10);
+        break;
+    case 321:
+        dDistress = 0;
+        break;
+    case 330:
+        dDistress = 0;
+        break;
+    case 331:
+        dDistress = 0;
+        break;
+    case 332:
+        dDistress = 0;
+        break;
+    case 333:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 35, 50, 65, 35, 50, 65, 35, 50, 65);
+        break;
+    case 334:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 35, 50, 25, 40, 55, 30, 45, 60);
+        break;
+    case 335:
+        dDistress = 0;
+        break;
+    case 336:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 15, 30, 15, 30, 45, 30, 45, 60);
+        break;
+    case 337:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 5, 10, 15, 10, 15, 20, 15, 20, 25);
+        break;
+    case 338:
+        dDistress = pvt_SeverityExtent2Deduct(sSeverity, sExtent, 20, 25, 30, 25, 30, 35, 30, 40, 50);
+        break;
+    case 339:
+        dDistress = 0;
+        break;
+    default:
+        dDistress = 0;
+        break;
+    }
+    return dDistress;
 }
 //
 // Description: PRIVATE for WASH CLK deduct calculation
@@ -1650,30 +1650,30 @@ double Distress::pvt_ComputeWASHCLKDeduct(int nDistress, System::String^ sSeveri
 //				
 //
 int Distress::pvt_SeverityExtent2Deduct(System::String^ sRawSeverity, System::String^ sRawExtent, int n1, int n2, int n3, int n4, int n5, 
-								 int n6, int n7, int n8, int n9)
+                                 int n6, int n7, int n8, int n9)
 {
-	System::String^ sSeverity;
-	System::String^ sExtent;
-	sSeverity = sRawSeverity;
-	sExtent = sRawExtent;
+    System::String^ sSeverity;
+    System::String^ sExtent;
+    sSeverity = sRawSeverity;
+    sExtent = sRawExtent;
 
-	if (sSeverity != "L" && sSeverity !="M" && sSeverity != "H") sSeverity = "H";
-	if (sExtent != "L" && sExtent !="M" && sExtent != "H") sExtent = "H";
+    if (sSeverity != "L" && sSeverity !="M" && sSeverity != "H") sSeverity = "H";
+    if (sExtent != "L" && sExtent !="M" && sExtent != "H") sExtent = "H";
 
-	if(sSeverity == "L" && sExtent == "L") return n1;
-	if(sSeverity == "M" && sExtent == "L") return n2;
-	if(sSeverity == "H" && sExtent == "L") return n3;
+    if(sSeverity == "L" && sExtent == "L") return n1;
+    if(sSeverity == "M" && sExtent == "L") return n2;
+    if(sSeverity == "H" && sExtent == "L") return n3;
 
-	if(sSeverity == "L" && sExtent == "M") return n4;
-	if(sSeverity == "M" && sExtent == "M") return n5;
-	if(sSeverity == "H" && sExtent == "M") return n6;
+    if(sSeverity == "L" && sExtent == "M") return n4;
+    if(sSeverity == "M" && sExtent == "M") return n5;
+    if(sSeverity == "H" && sExtent == "M") return n6;
 
 
-	if(sSeverity == "L" && sExtent == "H") return n7;
-	if(sSeverity == "M" && sExtent == "H") return n8;
-	if(sSeverity == "H" && sExtent == "H") return n9;
+    if(sSeverity == "L" && sExtent == "H") return n7;
+    if(sSeverity == "M" && sExtent == "H") return n8;
+    if(sSeverity == "H" && sExtent == "H") return n9;
 
-	return n9;
+    return n9;
 }
 
 

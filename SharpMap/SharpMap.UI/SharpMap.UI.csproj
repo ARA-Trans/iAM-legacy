@@ -240,10 +240,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SharpMap, Version=3.8.1.2008, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\SharpMap\bin\Debug\SharpMap.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
@@ -267,6 +263,10 @@
     <ProjectReference Include="..\..\DatabaseManager\DatabaseManager.csproj">
       <Project>{0370C578-5D1E-41DC-B0FF-E40DCF942CFF}</Project>
       <Name>DatabaseManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpMap\SharpMap.csproj">
+      <Project>{c83777fc-aabb-47d9-911f-d76255d4d541}</Project>
+      <Name>SharpMap</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
