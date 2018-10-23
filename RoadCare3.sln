@@ -107,6 +107,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{BA3DE4
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{BFFB02BB-124F-4216-A1C4-6AA9CA8B327B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\Downloads\LICENSE = ..\..\..\Downloads\LICENSE
+		..\..\..\Downloads\README.md = ..\..\..\Downloads\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		AACOUNTY|Any CPU = AACOUNTY|Any CPU
