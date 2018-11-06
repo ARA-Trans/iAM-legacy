@@ -72,7 +72,7 @@ namespace SimulationDataAccess.DTO
             }
             
             int current = 0;
-            while ((double)nAge < dAgeMaximum &&  nAge < 100 && current < m_ageValueList.Count - 1)
+            while ((double)nAge < dAgeMaximum &&  nAge < 1000 && current < m_ageValueList.Count - 1)
             {
                 double ageCurrent = m_ageValueList[current].Age;
                 double ageNext = m_ageValueList[current + 1].Age;
@@ -98,7 +98,7 @@ namespace SimulationDataAccess.DTO
                 }
             }
 
-            while ((double)nAge >= dAgeMaximum && nAge < 100)
+            while ((double)nAge >= dAgeMaximum && nAge < 1000)
             {
                 m_yearlyAgeValue.Add(new AgeValue((double)nAge, m_ageValueList[m_ageValueList.Count - 1].Value));
                 nAge++;

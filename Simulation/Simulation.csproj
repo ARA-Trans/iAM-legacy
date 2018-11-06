@@ -248,6 +248,8 @@
     <Compile Include="AppliedTreatment.cs" />
     <Compile Include="AttributeChange.cs" />
     <Compile Include="BenefitCost.cs" />
+    <Compile Include="CalculateBenefit.cs" />
+    <Compile Include="CalculatedAttribute.cs" />
     <Compile Include="CommitCopy.cs" />
     <Compile Include="CommittedEquation.cs" />
     <Compile Include="CompoundTreatment.cs" />

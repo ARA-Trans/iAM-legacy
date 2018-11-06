@@ -178,7 +178,7 @@ namespace RoadCare3
             this.specialReportsToolStripMenuItem,
             this.importOMSToolStripMenuItem});
             this.toolsToolStripMenuItem1.Name = "toolsToolStripMenuItem1";
-            this.toolsToolStripMenuItem1.Size = new System.Drawing.Size(48, 20);
+            this.toolsToolStripMenuItem1.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem1.Text = "Tools";
             // 
             // loadBinariesToolStripMenuItem
@@ -495,7 +495,7 @@ namespace RoadCare3
             this.IsMdiContainer = true;
             this.MainMenuStrip = this.menuMain;
             this.Name = "FormRoadCare";
-            this.Text = "RoadCare Decision Support System";
+            this.Text = "BridgeCare Decision Support System";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormRoadCare_FormClosed);
             this.Load += new System.EventHandler(this.formRoadCare_Load);

@@ -292,8 +292,10 @@ namespace Simulation
             get { return m_sBCTargetTable; }
             set { m_sBCTargetTable = value; }
         }
-
-
+        /// <summary>
+        /// Stores costs that make up CumulativeCost
+        /// </summary>
+        public static string CumulativeCostTable { get; set; }
 
         static public List<SimulationMessage> GetProgressList()
         {

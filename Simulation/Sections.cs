@@ -593,7 +593,7 @@ namespace Simulation
 
 
 
-        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute)
+        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute, List<CalculatedAttribute> listCalculatedAttributes)
         {
             //All possible data is now in Section.  Do a quick check to see if all data is
             //present in current year.  If it is we are done.
@@ -816,6 +816,18 @@ namespace Simulation
             { 
                 m_hashYearAttributeValues.Remove(RollToYear);
             }
+
+            // Update CalculatedAttributes for RollForward.
+
+            foreach (var calculatedAttribute in listCalculatedAttributes)
+            {
+                if (!hashRollForward.ContainsKey(calculatedAttribute.Attribute)) continue;
+                if (calculatedAttribute.IsCriteriaMet(hashRollForward))
+                {
+                    hashRollForward[calculatedAttribute.Attribute] = calculatedAttribute.Calculate(hashRollForward);
+                }
+            }
+
 
             //Store all attributes by year.  This is the first for this simulation.
             m_hashYearAttributeValues.Add(this.RollToYear, hashRollForward);

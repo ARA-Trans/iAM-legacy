@@ -47,6 +47,8 @@ namespace Simulation
         private String m_strYear = "";//Single Section Year
 
         private Dictionary<string, CommittedEquation> m_dictionaryCommittedEquations;//Stores equations stored in committed equations.
+        private Dictionary<string, List<AttributeChange>> m_dictionaryCommittedConsequences; //Stores all the committed project consequences for the simulation
+        private List<CalculatedAttribute> m_listCalculatedAttribute;//List of all calculated attributes.
 
         TimeSpan _spanRead = new TimeSpan();
         TimeSpan _spanAnalysis = new TimeSpan();
@@ -307,6 +309,12 @@ namespace Simulation
             //Adds to list of Simulation Attributes
             //Creates a list of Deterioration objects which contain all Deterioration data for this simulation
             //This data is stored in m_listDeteriorate which will be iterated every year (rolling forward and simulation).
+
+            //Get calculated field data
+            //Populates Calculated field data with fields from the get treatment data function.
+            if (!GetCalculatedFieldData()) return false;
+
+
 
             if (m_listDeteriorate.Count == 0)
             {
@@ -1009,6 +1017,38 @@ namespace Simulation
                     return false;
                 }
             }
+
+
+            //Drop Existing TARGET table when re-running SIMULATION or just Deleting Simulation.
+            strTable = cgOMS.Prefix + "CUMULATIVECOST_" + strNetworkID + "_" + strSimulationID;
+            SimulationMessaging.CumulativeCostTable = strTable;
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
+                    break;
+                case "ORACLE":
+                    strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
+                    break;
+                default:
+                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                //break;
+            }
+            ds = DBMgr.ExecuteQuery(strSelect);
+            //This table exists
+            if (ds.Tables[0].Rows.Count > 0)
+            {
+                String strDrop = "DROP TABLE " + strTable; ;
+                try
+                {
+                    DBMgr.ExecuteNonQuery(strDrop);
+                }
+                catch (Exception exception)
+                {
+                    SimulationMessaging.AddMessage(new SimulationMessage("Dropping CumulativeCost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -1083,6 +1123,7 @@ namespace Simulation
 			listColumn.Add(new TableParameters("RLHASH", DataType.VarChar(4000), true));
             listColumn.Add(new TableParameters("CHANGEHASH", DataType.VarChar(4000), true));
             listColumn.Add(new TableParameters("OMS_IGNORE", DataType.Bit, true));
+            //listColumn.Add(new TableParameters("CUMULATIVE_COST_ID", DataType.Int, true));
             try
             {
                 DBMgr.CreateTable(strTable, listColumn);
@@ -1092,6 +1133,28 @@ namespace Simulation
                 //SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation benefit cost table " + strTable + " with SQL Message - " + exception.Message));
                 return false;
             }
+
+            strTable = SimulationMessaging.CumulativeCostTable;
+            listColumn = new List<TableParameters>();
+            listColumn.Add(new TableParameters("CUMULATIVE_COST_ID", DataType.Int, false, false));
+            listColumn.Add(new TableParameters("COST_ID", DataType.Int, false));
+            listColumn.Add(new TableParameters("COST", DataType.Float, false));
+
+
+            try
+            {
+   //             DBMgr.CreateTable(strTable, listColumn);
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating cumulative cost table " + strTable + " with SQL Message - " + exception.Message));
+                return false;
+            }
+
+
+
+
+
 
             strTable = SimulationMessaging.ReportTable;
             listColumn = new List<TableParameters>();
@@ -1311,7 +1374,7 @@ namespace Simulation
 						}
 						try
 						{
-							section.RollForward(m_listDeteriorate, m_listAttributes);
+							section.RollForward(m_listDeteriorate, m_listAttributes, m_listCalculatedAttribute);
 						}
 						catch(Exception exc)
                         {
@@ -1361,7 +1424,7 @@ namespace Simulation
                                     section.AddAttributeValue(str, ostrValue);
                                 }
 							}
-							section.RollForward(m_listDeteriorate, m_listAttributes);
+							section.RollForward(m_listDeteriorate, m_listAttributes,m_listCalculatedAttribute);
 							m_listSections.Add(section);
 						}
 						odr.Close();
@@ -1436,7 +1499,7 @@ namespace Simulation
 						section.ClearAttributeValues( str );
                         section.AddAttributeValue(str, dr2[str]);
                     }
-                    section.RollForward(m_listDeteriorate, m_listAttributes);
+                    section.RollForward(m_listDeteriorate, m_listAttributes,m_listCalculatedAttribute);
                     section.CalculateArea(Investment.StartYear - 1);
                 }
 				dr2.Close();
@@ -1701,14 +1764,19 @@ namespace Simulation
                 //SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 2");
             }
 
-
+            if (!IsUpdateOMS)
+            {
+                //Get calculated field data
+                //Populates Calculated field data with fields from the get treatment data function.
+                if (!GetCalculatedFieldData()) return false;
+            }
 
             //InvestmentID does not have SIMULATION ATTRIBUTES
-            //Deterioration
-            //Adds to list of Simulation Attributes
-            //Creates a list of Deterioration objects which contain all Deterioration data for this simulation
-            //This data is stored in m_listDeteriorate which will be iterated every year (rolling forward and simulation).
-            if(!GetDeteriorationData())return false;
+                //Deterioration
+                //Adds to list of Simulation Attributes
+                //Creates a list of Deterioration objects which contain all Deterioration data for this simulation
+                //This data is stored in m_listDeteriorate which will be iterated every year (rolling forward and simulation).
+            if (!GetDeteriorationData())return false;
 			//SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 3");
 
 			SimulationMessaging.AddMessage(new SimulationMessage("Verifying Performance Equations and Criteria complete: " + DateTime.Now.ToString("HH:mm:ss")));
@@ -1741,11 +1809,13 @@ namespace Simulation
             if( !GetTreatmentData()) return false;
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Treatments complete: " + DateTime.Now.ToString("HH:mm:ss")));
 
+            if (!GetCommittedConsequences()) return false;
+            SimulationMessaging.AddMessage(new SimulationMessage("Retrieving committed project consequences complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+
+
             if (!IsUpdateOMS)
             {
-                //Get calculated field data
-                //Populates Calculated field data with fields from the get treatment data function.
-                if (!GetCalculatedFieldData()) return false;
 
                 //Priority
                 //Adds to the list of Simulation Attributes
@@ -1992,6 +2062,25 @@ namespace Simulation
                                 return true;
                             }
                         }
+                        //If the benefit is set to a calculated benefit, accept this as a valid benefit variable.
+                        // Benefit can occur due to deterioration of the individual components of the calculated field
+                        // Or can occur due to changes in the consequences.
+                        // Currently this is to difficult to unravel to see if something changes.  So assumption is that a calculated variable is always accepted.
+                        foreach (var calculatedBenefit in m_listCalculatedAttribute)
+                        {
+                            if (calculatedBenefit.Attribute == Method.BenefitAttribute.ToUpper())
+                            {
+                                if (!m_listAttributes.Contains(Method.BenefitAttribute))
+                                {
+                                    m_listAttributes.Add(Method.BenefitAttribute.ToUpper());
+                                }
+
+                                return true;
+                            }
+                        }
+
+
+
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: At least one deterioration equation must be set for the Benefit variable."));
                         return false;
                     //break;
@@ -2005,83 +2094,51 @@ namespace Simulation
 
         private bool GetCalculatedFieldData()
         {
-            if (!SimulationMessaging.IsOMS)
+            m_listCalculatedAttribute = new List<CalculatedAttribute>();
+
+            var strSelect = "SELECT ATTRIBUTE_,EQUATION,CRITERIA,ID_ FROM " + cgOMS.Prefix + "ATTRIBUTES_CALCULATED";
+            DataSet ds;
+            try
             {
-                String strSelect = "SELECT ATTRIBUTE_,EQUATION,CRITERIA,ID_ FROM " + cgOMS.Prefix + "ATTRIBUTES_CALCULATED";
-                DataSet ds;
-                try
-                {
-                    ds = DBMgr.ExecuteQuery(strSelect);
-                }
-                catch (Exception exception)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Calculated Field data. SQL Message - " + exception.Message));
-                    return false;
-                }
-
-                foreach (DataRow row in ds.Tables[0].Rows)
-                {
-                    string id = row["ID_"].ToString();
-                    //Deteriorate deteriorate = new Deteriorate();
-                    Deteriorate deteriorate = new Deteriorate(cgOMS.Prefix + "ATTRIBUTES_CALCULATED", "BINARY_CRITERIA", id);
-                    deteriorate.Attribute = row["ATTRIBUTE_"].ToString();
-
-
-
-                    byte[] assemblyEquation = SimulationMessaging.GetSerializedCalculateEvaluate(cgOMS.Prefix + "ATTRIBUTES_CALCULATED", "BINARY_EQUATION", id, null);
-                    if (assemblyEquation != null && assemblyEquation.Length > 0)
-                    {
-                        string equation = row["EQUATION"].ToString();
-                        deteriorate.Calculate = (CalculateEvaluate.CalculateEvaluate)AssemblySerialize.DeSerializeObjectFromByteArray(assemblyEquation);
-                        if (deteriorate.Calculate.OriginalInput != equation)
-                        {
-                            deteriorate.Calculate = null;
-                        }
-                    }
-                    deteriorate.Equation = row["EQUATION"].ToString();
-
-
-
-                    byte[] assemblyCriteria = SimulationMessaging.GetSerializedCalculateEvaluate(cgOMS.Prefix + "ATTRIBUTES_CALCULATED", "BINARY_CRITERIA", id, null);
-                    if (assemblyCriteria != null && assemblyCriteria.Length > 0)
-                    {
-                        string criteria = row["CRITERIA"].ToString();
-                        deteriorate.Evaluate = (CalculateEvaluate.CalculateEvaluate)AssemblySerialize.DeSerializeObjectFromByteArray(assemblyCriteria);
-                        if (deteriorate.Evaluate.OriginalInput != criteria)
-                        {
-                            deteriorate.Evaluate = null;
-                        }
-                    }
-
-                    deteriorate.Criteria = row["CRITERIA"].ToString();
-
-                    if (m_listAttributes.Contains(deteriorate.Attribute))
-                    {
-                        foreach (String str in deteriorate.CriteriaAttributes)
-                        {
-                            if (!m_listAttributes.Contains(str))
-                            {
-                                m_listAttributes.Add(str);
-                            }
-                        }
-
-                        foreach (String str in deteriorate.EquationAttributes)
-                        {
-                            if (!m_listAttributes.Contains(str))
-                            {
-                                m_listAttributes.Add(str);
-                            }
-                        }
-                    }
-                }
-                return true;
+                ds = DBMgr.ExecuteQuery(strSelect);
             }
-            else
+            catch (Exception exception)
             {
-                return true;
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Calculated Field data. SQL Message - " + exception.Message));
+                return false;
             }
+
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                var id = Int32.Parse(row["ID_"].ToString());
+                var attribute = row["ATTRIBUTE_"].ToString();
+                string equation = row["EQUATION"].ToString();
+                string criteria = row["CRITERIA"].ToString();
+                var calculatedAttribute = new CalculatedAttribute(id, attribute.ToUpper(), equation, criteria);
+                m_listCalculatedAttribute.Add(calculatedAttribute);
+
+                if (!m_listAttributes.Contains(attribute.ToUpper()))
+                {
+                    m_listAttributes.Add(attribute.ToUpper());
+                }
+                foreach (String str in calculatedAttribute.AttributesCriteria)
+                {
+                    if (!m_listAttributes.Contains(str))
+                    {
+                        m_listAttributes.Add(str);
+                    }
+                }
+
+                foreach (String str in calculatedAttribute.AttributesEquation)
+                {
+                    if (!m_listAttributes.Contains(str))
+                    {
+                        m_listAttributes.Add(str);
+                    }
+                }
+            }
+            return true;
         }
-
 
 
 
@@ -2159,6 +2216,46 @@ namespace Simulation
             }
             return true;
         }
+
+
+        private bool GetCommittedConsequences()
+        {
+            m_dictionaryCommittedConsequences = new Dictionary<string, List<AttributeChange>>();
+
+            // Get list of Committed Consequences.
+            String strSelect =
+                "SELECT CC.COMMITID,ATTRIBUTE_,CHANGE_ FROM COMMIT_CONSEQUENCES CC INNER JOIN COMMITTED_ C ON C.COMMITID = CC.COMMITID WHERE C.SIMULATIONID = '" +
+                m_strSimulationID + "'";
+
+            DataSet ds;
+            try
+            {
+                ds = DBMgr.ExecuteQuery(strSelect);
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var id = row["COMMITID"].ToString();
+                    var attribute = row["ATTRIBUTE_"].ToString();
+                    var change = row["CHANGE_"].ToString();
+ 
+                    if (!m_dictionaryCommittedConsequences.ContainsKey(id))
+                    {
+                        var commitedAttributeChange = new List<AttributeChange>();
+                        m_dictionaryCommittedConsequences.Add(id,commitedAttributeChange);
+                    }
+                    m_dictionaryCommittedConsequences[id].Add(new AttributeChange(attribute,change));
+                }
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open COMMITTED_CONSEQUENCES table for Analysis.  SQL message - " + exception.Message));
+                return false;
+            }
+            return true;
+        }
+
+
+
 
         private bool GetPriorityData()
         {
@@ -2810,6 +2907,18 @@ namespace Simulation
             bool bAscending = SimulationMessaging.GetAttributeAscending(Method.BenefitAttribute);
 
             float fCost;
+            //Create a new  CalculateBenefit (Treatment treatmentToEvaluate, List<Deteriorate> deterioratates, List<CalculatedAttribute> calculatedAttribute, List<Consequence> noTreatmentConsequences, List<Committed> futureProjects).
+            // A consequence can never be set for a calculated field.
+
+
+            
+
+
+
+
+
+
+
             String sFile;
             TextWriter tw = SimulationMessaging.CreateTextWriter("bc_" + m_strSimulationID +".txt", out sFile);
 
@@ -2817,10 +2926,13 @@ namespace Simulation
             {
                 foreach (Treatments treatment in m_listTreatments)
                 {
+                    
 
                     int nTargetDeficient = 0;
                     if (treatment.Treatment.ToUpper() == "NO TREATMENT")
                     {
+                        var noTreatmentBenefit = new CalculateBenefit(nYear,treatment,m_listDeteriorate,m_listCalculatedAttribute,treatment.ConsequenceList,section.YearCommit,m_dictionaryCommittedConsequences,m_dictionaryCommittedEquations);
+                        var b = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue);
                         noTreatments = treatment;
                         continue;
                     }
@@ -2829,8 +2941,8 @@ namespace Simulation
                     if (treatment.IsTreatmentCriteriaMet(section.m_hashNextAttributeValue))
                     {
                         section.NumberTreatment++;
-
-                        fCost = GetTreatmentCost(section, treatment);
+                        
+                        fCost = GetTreatmentCost(section, treatment, out int cumulativeCostId);
 
 
                         #region benefit
@@ -4262,7 +4374,7 @@ namespace Simulation
                         }
                         else
                         {
-                            fAmount = GetTreatmentCost(section, commit.OMSTreatment) * section.Area;
+                            fAmount = GetTreatmentCost(section, commit.OMSTreatment, out int cumulativeCostId) * section.Area;
                         }
                     }
                     Investment.SpendBudget(fAmount, strBudget, nYear.ToString());
@@ -4484,7 +4596,7 @@ namespace Simulation
                 
                 if (SimulationMessaging.IsOMS)
                 {
-                    fAmount = GetTreatmentCost(section, commit.OMSTreatment);
+                    fAmount = GetTreatmentCost(section, commit.OMSTreatment, out int cumulativeCostId);
                 }
 
                 float fCost = fAmount / section.Area;
@@ -4910,7 +5022,7 @@ namespace Simulation
                             if (updateTreatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
                             {
                                 //If yes recalculate BC.
-                                float cost = GetTreatmentCost(section, updateTreatment);
+                                float cost = GetTreatmentCost(section, updateTreatment,out int cumulativeCostId);
                                 Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
                                 section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
                                 int numberTargetDeficient = 0;
@@ -4950,7 +5062,7 @@ namespace Simulation
                         }
                         if (newlyAvailbleTreatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
                         {
-                            float cost = GetTreatmentCost(section, newlyAvailbleTreatment);
+                            float cost = GetTreatmentCost(section, newlyAvailbleTreatment,out int cumulativeCostId);
                             Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
                             section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
                             AppliedTreatment newAppliedTreatment = MakeAppliedTreatment(section, newlyAvailbleTreatment, cost, benefit, (double)remainingLife, 0);
@@ -6170,7 +6282,7 @@ namespace Simulation
                                     if (treatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
                                     {
                                         //If yes recalculate BC.
-                                        float cost = GetTreatmentCost(section, treatment);
+                                        float cost = GetTreatmentCost(section, treatment, out int cumulativeCostId);
                                         Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
                                         section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
 
@@ -6214,7 +6326,7 @@ namespace Simulation
                                 }
                                 if (treatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
                                 {
-                                    float cost = GetTreatmentCost(section, treatment);
+                                    float cost = GetTreatmentCost(section, treatment,out int cumulativeCostId);
                                     Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
                                     section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
                                     AppliedTreatment appliedTreatment = MakeAppliedTreatment(section, treatment, cost, benefit, (double)remainingLife, 0);
@@ -7173,25 +7285,15 @@ namespace Simulation
             if (!SimulationMessaging.IsOMS)
             {
                 Hashtable hashConsequences = new Hashtable();
-                String strSelect = "SELECT ATTRIBUTE_, CHANGE_ FROM " + cgOMS.Prefix + "COMMIT_CONSEQUENCES WHERE COMMITID='" + commit.ConsequenceID.ToString() + "'";
-                try
-                {
-                    DataSet ds = DBMgr.ExecuteQuery(strSelect);
-                    foreach (DataRow row in ds.Tables[0].Rows)
-                    {
-                        AttributeChange attributeChange = new AttributeChange();
-                        attributeChange.Attribute = row[0].ToString();
-                        attributeChange.Change = row[1].ToString();
-                        if (SimulationMessaging.AttributeMinimum.Contains(attributeChange.Attribute)) attributeChange.Minimum = SimulationMessaging.AttributeMinimum[attributeChange.Attribute].ToString();
+                var committedConsequences = m_dictionaryCommittedConsequences[commit.ConsequenceID];
+
+                foreach(AttributeChange attributeChange in committedConsequences)
+                { 
+                    if (SimulationMessaging.AttributeMinimum.Contains(attributeChange.Attribute)) attributeChange.Minimum = SimulationMessaging.AttributeMinimum[attributeChange.Attribute].ToString();
                         if (SimulationMessaging.AttributeMaximum.Contains(attributeChange.Attribute)) attributeChange.Maximum = SimulationMessaging.AttributeMaximum[attributeChange.Attribute].ToString();
                         hashConsequences.Add(attributeChange.Attribute, attributeChange);
-                    }
                 }
-                catch (Exception exception)
-                {
 
-                    SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Committed project consequences." + exception.Message));
-                }
                 // Get all of this years deteriorated values.
                 foreach (String key in hashInput.Keys)
                 {
@@ -7562,7 +7664,7 @@ namespace Simulation
                 if (treatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
                 {
                     //System.Diagnostics.Debug.WriteLine(treatment.Treatment);
-                    float cost = GetTreatmentCost(section, treatment);
+                    float cost = GetTreatmentCost(section, treatment, out int cumulativeCostId);
                     Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
                     section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
 
@@ -7628,13 +7730,15 @@ namespace Simulation
 
 
 
-        private float GetTreatmentCost(Sections section, Treatments treatment)
+        private float GetTreatmentCost(Sections section, Treatments treatment, out int cumulativeCostId)
         {
             #region cost
             //Find cost.
             float fCost = -1;
             float fDefaultCost = 0;
             float fMostCost = 0;
+            float totalCost = 0;
+            cumulativeCostId = 0;
             foreach (Costs cost in treatment.CostList)
             {
                 if (cost.Default)
@@ -7653,9 +7757,8 @@ namespace Simulation
                         section.m_hashNextAttributeValue.Add("AREA", section.Area);
                     }
                     fDefaultCost = (float)cost.GetCost(section.m_hashNextAttributeValue);
+                    totalCost += fDefaultCost;
 
-
-                    //fDefaultCost = cost.Cost;
                 }
                 else
                 {
@@ -7679,6 +7782,8 @@ namespace Simulation
                             section.m_hashNextAttributeValue.Add("AREA", section.Area);
                         }
                         fCost = (float)cost.GetCost(section.m_hashNextAttributeValue);
+                        totalCost += fCost;
+
                         // fCost = cost.Cost;
                         if (fCost > fMostCost)
                         {
@@ -7688,9 +7793,17 @@ namespace Simulation
                 }
             }
 
-            //If cost is not set use default cost.
-            if (fCost < 0) fCost = fDefaultCost;
-            else fCost = fMostCost; //Otherwise use most expensive (conservative).
+            if (Method.UseCumulativeCost)
+            {
+                fCost = totalCost;
+            }
+            else
+            {
+                if (fCost <= 0) fCost = fDefaultCost;
+                else fCost = fMostCost; //Otherwise use most expensive (conservative).
+            }
+
+
             if (section.Area <= 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is equal to zero and Benefit/Cost is infinite. Section ignored."));
@@ -8190,7 +8303,7 @@ namespace Simulation
                     }
                     else
                     {
-                        fAmount = GetTreatmentCost(section, commit.OMSTreatment) * section.Area;
+                        fAmount = GetTreatmentCost(section, commit.OMSTreatment,out int cumulativeCostId) * section.Area;
                     }
                 }
                 Investment.SpendBudget(fAmount, strBudget, nYear.ToString());

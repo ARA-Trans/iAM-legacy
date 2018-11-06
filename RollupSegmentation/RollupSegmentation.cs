@@ -3403,6 +3403,33 @@ namespace RollupSegmentation
                 case "Weighted"://Weighted TODO:
                     strNumber = "";
                     break;
+
+                case "First": //First
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        if (String.IsNullOrEmpty(strNumber))
+                        {
+                            strNumber = pt.m_strData;
+                        }
+                    }
+                    break;
+
+                case "Last": //Last
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        strNumber = pt.m_strData;
+                    }
+                    break;
+
+
+
+
                 default:
                     strNumber = "";
                     break;
@@ -3511,6 +3538,30 @@ namespace RollupSegmentation
                     }
                     strNumber = nCount.ToString();
                     break;
+
+                case "First": //First
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        if (String.IsNullOrEmpty(strNumber))
+                        {
+                            strNumber = pt.m_strData;
+                        }
+                    }
+                    break;
+
+                case "Last": //Last
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        strNumber = pt.m_strData;
+                    }
+                    break;
+
 
                 default:
                     strNumber = "";
