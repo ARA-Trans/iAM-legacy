@@ -349,11 +349,10 @@ namespace RoadCare3
         private void FormLogin_Load(object sender, EventArgs e)
         {
 
+            #if DEBUG
 
-#if DEBUG
-            tbRoadCarePassword.Text = "install";
-            tbRoadCareUserName.Text = "install";
-#endif
+            #endif
+
             //GetLicenseFileInfo();
             if (Settings.Default.DefaultTab.ToString() == "MSSQL")
             {
@@ -377,7 +376,14 @@ namespace RoadCare3
             chkUseIntegratedSecurity.Checked = Settings.Default.USE_INTEGRATED_SECURITY;
 
             tbRoadCareUserName.Text = Settings.Default.LAST_LOGIN;
-        
+            TabSqlServer.Enabled = true;
+            #if DEBUG
+                        tbRoadCarePassword.Text = "install";
+                        tbRoadCareUserName.Text = "install";
+                        tbMSSQLDatabaseName.Text = "BridgeCare";
+                        tbMSSQLServerName.Text = "TRANS-GLARSON4";
+                        tcLogin.SelectedIndex= 0;
+            #endif
         }
 
         private void FormLogin_KeyPress(object sender, KeyPressEventArgs e)

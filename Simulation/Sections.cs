@@ -1346,7 +1346,10 @@ namespace Simulation
                         }
                         else
                         {
-                            strOut += hashAttributeValue[sAttribute].ToString();
+                            if (hashAttributeValue[sAttribute] != null)
+                            {
+                                strOut += hashAttributeValue[sAttribute].ToString();
+                            }
                         }
                     }
                 }
@@ -1381,7 +1384,10 @@ namespace Simulation
                         }
                         else
                         {
-                            strOut += hashAttributeValue[sAttribute].ToString();
+                            if(hashAttributeValue[sAttribute] != null)
+                            { 
+                                strOut += hashAttributeValue[sAttribute].ToString();
+                            }
                         }
                     }
                 }
@@ -1395,16 +1401,25 @@ namespace Simulation
                     String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
                     if (sAttribute == "SECTIONID") continue;
                     String sValue = "";
-                    if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
+                    if (hashAttributeValue[sAttribute] != null) //Values can remain null in OMS analysis
                     {
-                        double dValue = 0;
-                        double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
-                        sValue = dValue.ToString(sFormat);
+
+ 
+                        if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
+                        {
+                            double dValue = 0;
+                            double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
+                            sValue = dValue.ToString(sFormat);
+                        }
+                        else
+                        {
+                            if (hashAttributeValue[sAttribute] != null)
+                            {
+                                sValue = hashAttributeValue[sAttribute].ToString();
+                            }
+                        }
                     }
-                    else
-                    {
-                        sValue = hashAttributeValue[sAttribute].ToString();
-                    }
+
                     strOut += "\t";
                     strOut += sValue;
                 }

@@ -30,27 +30,27 @@ namespace RoadCare3
             InitializeComponent();
 
             var formLogin = new FormLogin();
+            //Project is now open source so removing license check.
+            //var now = DateTime.Now;
+            //if (now >= Global.ExactMomentWhenLicenseExpires)
+            //{
+            //    MessageBox.Show(
+            //        "License has expired.  Please contact Applied Research Associates to renew.",
+            //        Global.BrandCaptionForMessageBoxes,
+            //        MessageBoxButtons.OK,
+            //        MessageBoxIcon.Error);
 
-            var now = DateTime.Now;
-            if (now >= Global.ExactMomentWhenLicenseExpires)
-            {
-                MessageBox.Show(
-                    "License has expired.  Please contact Applied Research Associates to renew.",
-                    Global.BrandCaptionForMessageBoxes,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+            //    Environment.Exit(0);
+            //}
 
-                Environment.Exit(0);
-            }
-
-            if (now >= Global.FirstDayOfLicenseExpirationWarning)
-            {
-                MessageBox.Show(
-                    $"Warning: License expires {Global.LastDayOfLicense}.  Please contact Applied Research Associates to renew.",
-                    Global.BrandCaptionForMessageBoxes,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
+            //if (now >= Global.FirstDayOfLicenseExpirationWarning)
+            //{
+            //    MessageBox.Show(
+            //        $"Warning: License expires {Global.LastDayOfLicense}.  Please contact Applied Research Associates to renew.",
+            //        Global.BrandCaptionForMessageBoxes,
+            //        MessageBoxButtons.OK,
+            //        MessageBoxIcon.Warning);
+            //}
 
             var strFile = "";
 #if MDSHA

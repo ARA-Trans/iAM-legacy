@@ -247,8 +247,8 @@ namespace SimulationDataAccess.DTO
         /// <returns></returns>
         public double GetRemainingLife(double value, double deficient, double age)
         {
-            double apparentAge = GetApparentAge(value);
-            double deficientAge = GetApparentAge(deficient);
+            double apparentAge = GetApparentAge(value,0);
+            double deficientAge = GetApparentAge(deficient,0);
             double remainingLife = deficientAge-apparentAge;
             if (apparentAge > 0)
             {
@@ -266,8 +266,8 @@ namespace SimulationDataAccess.DTO
         /// <returns></returns>
         public double GetRemainingLife(double value, double deficient)
         {
-            double apparentAge = GetApparentAge(value);
-            double deficientAge = GetApparentAge(deficient);
+            double apparentAge = GetApparentAge(value,0);
+            double deficientAge = GetApparentAge(deficient,0);
             double remainingLife = deficientAge - apparentAge;
             if (remainingLife < 0) remainingLife = 0;
             return remainingLife;
@@ -338,7 +338,7 @@ namespace SimulationDataAccess.DTO
         /// <returns>Shifted benefit</returns>
         public double GetBenefit(double value, double benefitLimit, double weighting, bool isWeighted, double age)
         {
-            double apparentAge = GetApparentAge(value);
+            double apparentAge = GetApparentAge(value,0);
             double benefit = GetBenefit(value, benefitLimit, weighting, isWeighted);
             if (apparentAge > 0)
             {
@@ -379,9 +379,9 @@ namespace SimulationDataAccess.DTO
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public double GetApparentAge(double value)
+        public double GetApparentAge(double value, int hint)
         {
-            for (int i = 0; i < m_yearlyAgeValue.Count - 1; i++)
+            for (int i = hint; i < m_yearlyAgeValue.Count - 1; i++)
             {
                 if (m_yearlyAgeValue[i].Value == value)
                 {
@@ -402,6 +402,32 @@ namespace SimulationDataAccess.DTO
                     return (double)i + ratio;
                 }
             }
+
+
+            for (int i = 0; i < hint; i++)
+            {
+                if (m_yearlyAgeValue[i].Value == value)
+                {
+                    return (double)i;
+                }
+                else if (m_isAscending && m_yearlyAgeValue[i].Value >= m_yearlyAgeValue[i + 1].Value && m_yearlyAgeValue[i].Value >= value && value > m_yearlyAgeValue[i + 1].Value)
+                {
+                    double deltaBottom = m_yearlyAgeValue[i + 1].Value - m_yearlyAgeValue[i].Value;
+                    double deltaTop = value - m_yearlyAgeValue[i].Value;
+                    double ratio = deltaTop / deltaBottom;
+                    return (double)i + ratio;
+                }
+                else if (!m_isAscending && m_yearlyAgeValue[i].Value <= m_yearlyAgeValue[i + 1].Value && m_yearlyAgeValue[i].Value <= value && value < m_yearlyAgeValue[i + 1].Value)
+                {
+                    double deltaBottom = m_yearlyAgeValue[i + 1].Value - m_yearlyAgeValue[i].Value;
+                    double deltaTop = value - m_yearlyAgeValue[i].Value;
+                    double ratio = deltaTop / deltaBottom;
+                    return (double)i + ratio;
+                }
+            }
+
+
+
             return 0;
         }
 
@@ -413,10 +439,10 @@ namespace SimulationDataAccess.DTO
         /// <param name="value">Current value of dependent variable</param>
         /// <param name="age">Current age</param>
         /// <returns>Shifted value</returns>
-        public AgeValue GetNextValue(double value, double age, double span)
+        public AgeValue GetNextValue(double value, double age, double span, out double apparentAge)
         {
             AgeValue ageValue = null;
-            double apparentAge = GetApparentAge(value);
+            apparentAge = GetApparentAge(value,0);
             if (age > 0)
             {
                 double ratio = apparentAge / age;
@@ -473,10 +499,18 @@ namespace SimulationDataAccess.DTO
         /// <returns>Value after aging an apparent year</returns>
         public AgeValue GetNextValue(double value, double span)
         {
-            double apparentAge = GetApparentAge(value);
+            double apparentAge = GetApparentAge(value,0);
             apparentAge += span;//Age one year
             return new AgeValue(apparentAge,GetValue(apparentAge));
         }
+
+        public AgeValue GetNextValue(double value, double span, int apparentAgeHint, out double apparentAge)
+        {
+            apparentAge = GetApparentAge(value, apparentAgeHint);
+            apparentAge += span;//Age one year
+            return new AgeValue(apparentAge, GetValue(apparentAge));
+        }
+
 
         public override string ToString()
         {

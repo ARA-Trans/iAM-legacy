@@ -263,6 +263,7 @@
     <Compile Include="Criterias.cs" />
     <Compile Include="DataOMS.cs" />
     <Compile Include="Deteriorate.cs" />
+    <Compile Include="Interface\IScheduled.cs" />
     <Compile Include="Investments.cs" />
     <Compile Include="Jurisdiction.cs" />
     <Compile Include="LCCAOptimization.cs" />
@@ -273,6 +274,7 @@
     <Compile Include="OverallConditionIndex.cs" />
     <Compile Include="Priorities.cs" />
     <Compile Include="ReportOMS.cs" />
+    <Compile Include="Scheduled.cs" />
     <Compile Include="Sections.cs" />
     <Compile Include="Simulation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

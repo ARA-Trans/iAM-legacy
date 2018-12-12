@@ -121,9 +121,27 @@ namespace RoadCare3
 
             }
 
+            for (var i = 1; i < 100; i++)
+            {
+                ScheduledYears.Items.Add(i.ToString());
+            }
+
+            UpdateScheduledTreatments();
         }
 
-		protected void SecureForm()
+        private void UpdateScheduledTreatments()
+        {
+            ScheduledTreatment.Items.Clear();
+            foreach (var key in m_hashTreatment.Keys)
+            {
+                var treatment = (Treatment)m_hashTreatment[key];
+                ScheduledTreatment.Items.Add(treatment.m_strTreatment);
+            }
+
+
+        }
+
+        protected void SecureForm()
 		{
 			dgvTreatment.RowsRemoved -= new DataGridViewRowsRemovedEventHandler(dgvTreatment_RowsRemoved);
 			LockDataGridView( dgvTreatment );
@@ -238,6 +256,7 @@ namespace RoadCare3
             dgvFeasibility.Rows.Clear();
             dgvCost.Rows.Clear();
             dgvConsequences.Rows.Clear();
+            dataGridViewScheduled.Rows.Clear();
 
             dgvFeasibility.Columns[0].ReadOnly = true;
             dgvCost.Columns[0].ReadOnly = true;
@@ -269,7 +288,8 @@ namespace RoadCare3
             strSelect = "SELECT COSTID,COST_,CRITERIA,ISFUNCTION FROM COSTS WHERE TREATMENTID='" + strTag + "'";
             if (SimulationMessaging.IsOMS)
             {
-                strSelect = "SELECT COSTID,COST_,CRITERIA,NULL AS ISFUNCTION FROM COSTS WHERE TREATMENTID='" + strTag + "'";
+                strSelect = "SELECT COSTID,COST_,CRITERIA,NULL AS ISFUNCTION FROM COSTS WHERE TREATMENTID='" + strTag +
+                            "'";
             }
 
 
@@ -282,7 +302,7 @@ namespace RoadCare3
                 {
                     String strCriteria = dr["CRITERIA"].ToString().Replace("|", "'");
 
-                    string[] strDataRow = { dr["COST_"].ToString(), strCriteria };
+                    string[] strDataRow = {dr["COST_"].ToString(), strCriteria};
                     int nRowIndex = dgvCost.Rows.Add(strDataRow);
                     dgvCost.Rows[nRowIndex].Tag = dr["COSTID"].ToString();
 
@@ -291,6 +311,7 @@ namespace RoadCare3
                     {
                         isFunction = Convert.ToBoolean(dr["ISFUNCTION"]);
                     }
+
                     if (isFunction)
                     {
                         dgvCost.Rows[nRowIndex].Cells[0].Tag = "1";
@@ -303,7 +324,9 @@ namespace RoadCare3
             }
 
 
-            strSelect = "SELECT CONSEQUENCEID,ATTRIBUTE_,CHANGE_,CRITERIA,EQUATION,ISFUNCTION FROM CONSEQUENCES WHERE TREATMENTID='" + strTag + "'";
+            strSelect =
+                "SELECT CONSEQUENCEID,ATTRIBUTE_,CHANGE_,CRITERIA,EQUATION,ISFUNCTION FROM CONSEQUENCES WHERE TREATMENTID='" +
+                strTag + "'";
             ds = DBMgr.ExecuteQuery(strSelect);
             foreach (DataRow dr in ds.Tables[0].Rows)
             {
@@ -314,7 +337,7 @@ namespace RoadCare3
                     {
                         String strEquation = dr["EQUATION"].ToString().Replace("|", "'");
                         String strCriteria = dr["CRITERIA"].ToString().Replace("|", "'");
-                        string[] strDataRow = { strAttribute, dr["CHANGE_"].ToString(), strEquation, strCriteria };
+                        string[] strDataRow = {strAttribute, dr["CHANGE_"].ToString(), strEquation, strCriteria};
                         int nRowIndex = dgvConsequences.Rows.Add(strDataRow);
                         dgvConsequences.Rows[nRowIndex].Tag = dr["CONSEQUENCEID"].ToString();
 
@@ -329,9 +352,25 @@ namespace RoadCare3
                     }
                 }
             }
+
+            strSelect =
+                "SELECT SCHEDULEDID, SCHEDULEDYEAR, SCHEDULEDTREATMENTID FROM SCHEDULED WHERE TREATMENTID='" +
+                strTag + "'";
+            ds = DBMgr.ExecuteQuery(strSelect);
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                var scheduledId = dr["SCHEDULEDID"].ToString();
+                var scheduledTreatmentId = dr["SCHEDULEDTREATMENTID"].ToString();
+                var scheduledYear = dr["SCHEDULEDYEAR"].ToString();
+
+                if (m_hashTreatment.Contains(scheduledTreatmentId))
+                {
+                    var treatment = (Treatment) m_hashTreatment[scheduledTreatmentId];
+                    var rowIndex = dataGridViewScheduled.Rows.Add(treatment.m_strTreatment, scheduledYear);
+                    dataGridViewScheduled.Rows[rowIndex].Tag = scheduledId;
+                }
+            }
         }
-
-
 
 
         /// <summary>
@@ -414,12 +453,7 @@ namespace RoadCare3
                     }
                 }
             }
-            
-
-
-
-
-
+            UpdateScheduledTreatments();
         }
 
 
@@ -495,6 +529,8 @@ namespace RoadCare3
                     }
                 }
             }
+
+            UpdateScheduledTreatments();
         }
 
 
@@ -1522,6 +1558,174 @@ namespace RoadCare3
         private void checkedComboBoxBudget_ItemCheck(object sender, ItemCheckEventArgs e)
         {
 
+        }
+
+        private void dataGridViewScheduled_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dataGridViewScheduled_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+ 
+        }
+
+        private void dataGridViewScheduled_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex > -1)
+            {
+                var strValue = "";
+                if (dataGridViewScheduled.Rows[e.RowIndex].Tag == null)
+                {
+                    var strTreatmentId = "";
+                    if (dgvTreatment.SelectedCells.Count > 0)
+                    {
+                        strTreatmentId = dgvTreatment.Rows[dgvTreatment.SelectedCells[0].RowIndex].Tag.ToString();
+                    }
+                    else if (dgvTreatment.SelectedRows.Count > 0)
+                    {
+                        strTreatmentId = dgvTreatment.SelectedRows[0].Tag.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    if (dataGridViewScheduled.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewScheduled.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+
+                    var strInsert = "";
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            foreach (var key in m_hashTreatment.Keys)
+                            {
+                                var treatment = (Treatment)m_hashTreatment[key];
+                                if (treatment.m_strTreatment == strValue)
+                                {
+                                    strInsert =
+                                        "INSERT INTO SCHEDULED (TREATMENTID,SCHEDULEDTREATMENTID,SCHEDULEDYEAR) VALUES ('" +
+                                        strTreatmentId + "','" +key +"','" + 1 + "')";
+                                }
+                            }
+                            break;
+                        case 1:
+                            foreach (var key in m_hashTreatment.Keys)
+                            {
+                                var treatment = (Treatment)m_hashTreatment[key];
+                                if (treatment.m_strTreatment == "No Treatment")
+                                {
+                                    strInsert =
+                                        "INSERT INTO SCHEDULED (TREATMENTID,SCHEDULEDTREATMENTID,SCHEDULEDYEAR) VALUES ('" +
+                                        strTreatmentId + "','" + key + "','" + strValue + "')";
+                                }
+                            }
+                            break;
+                        default:
+                            return;
+                    }
+
+                   
+
+                    try
+                    {
+                        String strIdentity;
+                        DBMgr.ExecuteNonQuery(strInsert);
+                        switch (DBMgr.NativeConnectionParameters.Provider)
+                        {
+                            case "MSSQL":
+                                strIdentity = "SELECT IDENT_CURRENT ('SCHEDULED') FROM SCHEDULED";
+                                break;
+                            case "ORACLE":
+                                strIdentity = "SELECT MAX(SCHEDULEDID) FROM SCHEDULED";
+                                break;
+                            default:
+                                throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                            //break;
+                        }
+
+                        DataSet ds = DBMgr.ExecuteQuery(strIdentity);
+                        dataGridViewScheduled.Rows[e.RowIndex].Tag = ds.Tables[0].Rows[0].ItemArray[0].ToString();
+
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error:" + except.Message.ToString());
+                    }
+                }
+                else
+                {
+                    String strTag = dataGridViewScheduled.Rows[e.RowIndex].Tag.ToString();
+                    String strUpdate = "";
+
+
+                    if (dataGridViewScheduled.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewScheduled.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            foreach (var key in m_hashTreatment.Keys)
+                            {
+                                var treatment = (Treatment)m_hashTreatment[key];
+                                if (treatment.m_strTreatment == strValue)
+                                {
+                                    strUpdate = "UPDATE SCHEDULED SET SCHEDULEDTREATMENTID='" + key + "' WHERE SCHEDULEDID='" + strTag + "'";
+                                }
+                            }
+                            break;
+                        case 1:
+                            strUpdate = "UPDATE SCHEDULED SET SCHEDULEDYEAR='" + strValue + "' WHERE SCHEDULEDID='" + strTag + "'";
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(strUpdate))
+                        {
+                            DBMgr.ExecuteNonQuery(strUpdate);
+                        }
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error: " + except.Message.ToString());
+
+                    }
+                }
+            }
+        }
+
+        private void dataGridViewScheduled_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            if (e.Row.Tag != null)
+            {
+                String strDelete = "DELETE FROM SCHEDULED WHERE SCHEDULEDID='" + e.Row.Tag + "'";
+                try
+                {
+                    DBMgr.ExecuteNonQuery(strDelete);
+                }
+                catch (Exception except)
+                {
+                    Global.WriteOutput("Error Deleting Scheduled Treatment:" + except.Message.ToString());
+                }
+            }
         }
     }
 

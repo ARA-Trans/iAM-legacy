@@ -16,6 +16,15 @@ namespace Simulation
         private List<Committed> CommittedProjects { get; }
         private Dictionary<string, List<AttributeChange>> CommittedConsequences { get; }
         private Dictionary<string, CommittedEquation> CommittedEquations { get; }
+        private List<Deteriorate> CurrentDeteriorate { get; }
+        
+        private List<Treatments> SimulationTreatments { get; }
+
+
+        private bool IsBenefitAttributeAscending { get; }
+        private bool IsBenefitCalculated { get; }
+
+
 
         public CalculateBenefit(int year, 
             Treatments treatmentToEvaluate,
@@ -24,7 +33,8 @@ namespace Simulation
             List<Consequences> noTreatmentConsequences,
             List<Committed> committedProjects,
             Dictionary<string, List<AttributeChange>> committedConsequences, 
-            Dictionary<string,CommittedEquation> committedEquation)
+            Dictionary<string,CommittedEquation> committedEquation,
+            List<Treatments> simulationTreatments)
         {
             Year = year;
             Treatment = treatmentToEvaluate;
@@ -34,7 +44,13 @@ namespace Simulation
             CommittedProjects = committedProjects;
             CommittedConsequences = committedConsequences;
             CommittedEquations = committedEquation;
+            IsBenefitAttributeAscending =  SimulationMessaging.GetAttributeAscending(SimulationMessaging.Method.BenefitAttribute);
+            IsBenefitCalculated = calculatedAttributes.Any(a => a.Attribute == SimulationMessaging.Method.BenefitAttribute);
+            CurrentDeteriorate = new List<Deteriorate>();
+            SimulationTreatments = simulationTreatments;
+
         }
+
 
         public double Solve(Hashtable hashAttributeValue)
         {
@@ -48,96 +64,161 @@ namespace Simulation
 
         private double SolveBenefitCost(Hashtable attributeValue)
         {
+
             //Apply consequence of treatment
             attributeValue = ApplyConsequences(Treatment.ConsequenceList, attributeValue);
 
-            var attributeValueNext = new Hashtable();
+            
             double sumBenefit = 0;
-            //Calculate the 100 year benefit
+            UpdateCurrentDeteriorate(attributeValue);
 
+            var apparentAgeHints = new Dictionary<string, int>();
+            foreach (var deteriorate in CurrentDeteriorate)
+            {
+                apparentAgeHints.Add(deteriorate.Attribute, 0);
+            }
+
+
+
+
+            //Calculate the 100 year benefit
             for (var i = 0; i < 100; i++)
             {
-                // Set all values for which there are no default deterioration. May get overridden.
-                foreach (var key in attributeValue.Keys)
+                //Make sure the current deterioration equations are current (meet all criteria).
+                UpdateCurrentDeteriorate(attributeValue);
+
+                //// Deteriorate current deterioration model.
+                foreach (var deteriorate in CurrentDeteriorate)
                 {
-                    //If no default deterioration exists, then add to next value
-                    if (!Deteriorates.Exists(d => d.Attribute == key.ToString() && d.Default))
-                    {
-                        attributeValueNext.Add(key, attributeValue[key]);
-                    }
+                    attributeValue[deteriorate.Attribute] =
+                        deteriorate.IterateOneYear(attributeValue, apparentAgeHints[deteriorate.Attribute], out double apparentAge);
+
+                    apparentAgeHints[deteriorate.Attribute] = (int) apparentAge;
                 }
 
-                // Deteriorate each non default (may override previous step).
-                foreach (var deteriorate in Deteriorates)
-                {
-                    if (deteriorate.Default) continue;
 
-                    if (deteriorate.IsCriteriaMet(attributeValue))
-                    {
-                        attributeValueNext[deteriorate.Attribute] =
-                            deteriorate.IterateOneYear(attributeValue, out bool outOfRange);
-                    }
-                }
-                
-                //Deteriorate each value that did not have a non-default set (will not override).
-                foreach (var deteriorate in Deteriorates)
-                {
-                    if (!deteriorate.Default) continue;
-
-                    if (!attributeValueNext.ContainsKey(deteriorate.Attribute))
-                    {
-                        attributeValueNext[deteriorate.Attribute] =
-                            deteriorate.IterateOneYear(attributeValue, out bool outOfRange);
-                    }
-                }
-
-                // Apply No Treatment or Committed Consequences
+                // Apply No Treatment or Committed Consequences (or Scheduled)
                 var committed = CommittedProjects.Find(c => c.Year == Year);
-                attributeValueNext = committed == null ? ApplyConsequences(NoTreatmentConsequences, attributeValueNext) : ApplyCommittedConsequences(attributeValueNext,committed);
-                
-                
-                
-                // Solve calculated fields
+                var scheduled = Treatment.Scheduleds.Find(s => s.ScheduledYear == i);
 
-                attributeValueNext = SolveCalculatedFields(attributeValueNext);
+                //If both a committed and scheduled.  No benefit.  Can't do both!
+                if (scheduled != null && committed != null)
+                {
+                    return 0;
+                }
+
+                //Only get here if scheduled and committed do notcollide.
+                if (committed != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(committed.ScheduledTreatmentId))
+                    {
+                        var scheduledTreatment =
+                            SimulationTreatments.Find(f => f.TreatmentID == committed.ScheduledTreatmentId);
+                        attributeValue = ApplyConsequences(scheduledTreatment.ConsequenceList,attributeValue);
+                    }
+                    else
+                    {
+                       
+                        attributeValue = ApplyCommittedConsequences(attributeValue, committed);
+                    }
+                }
+                else if (scheduled != null)
+                {
+                    attributeValue = ApplyConsequences(scheduled.Treatment.ConsequenceList, attributeValue);
+                }
+                else
+                {
+                    attributeValue = ApplyConsequences(NoTreatmentConsequences, attributeValue);
+                }
+
+
+
+                //// Solve calculated fields
+                attributeValue = SolveCalculatedFields(attributeValue);
 
 
 
                 //Look up Method.Benefit variable
-                if (SimulationMessaging.GetAttributeAscending(SimulationMessaging.Method.BenefitAttribute))
+                if (IsBenefitAttributeAscending)
                 {
                     //For attributes that get smaller with deterioration.
-                    if ((double) attributeValueNext[SimulationMessaging.Method.BenefitAttribute] >
+                    if ((double)attributeValue[SimulationMessaging.Method.BenefitAttribute] >
                         SimulationMessaging.Method.BenefitLimit)
                     {
-                        sumBenefit += (double) attributeValueNext[SimulationMessaging.Method.BenefitAttribute] -
+                        sumBenefit += (double)attributeValue[SimulationMessaging.Method.BenefitAttribute] -
                                       SimulationMessaging.Method.BenefitLimit;
                     }
                 }
                 else
                 {
                     //For attributes that get larger with deterioration.
-                    if ((double)attributeValueNext[SimulationMessaging.Method.BenefitAttribute] <
+                    if ((double)attributeValue[SimulationMessaging.Method.BenefitAttribute] <
                         SimulationMessaging.Method.BenefitLimit)
                     {
                         sumBenefit += SimulationMessaging.Method.BenefitLimit -
-                                      (double) attributeValueNext[SimulationMessaging.Method.BenefitAttribute];
+                                      (double)attributeValue[SimulationMessaging.Method.BenefitAttribute.ToUpper()];
 
                     }
                 }
 
-                //Prepare for next iteration.
-                attributeValue = new Hashtable();
-                foreach (var key in attributeValueNext.Keys)
-                {
-                    attributeValue.Add(key, attributeValueNext[key]);
-                }
+
 
             }
 
 
             return sumBenefit;
         }
+
+        private void UpdateCurrentDeteriorate(Hashtable hashInput)
+        {
+            var needsUpdate = false;
+
+            if (CurrentDeteriorate.Count > 0)
+            {
+                foreach (var deteriorate in CurrentDeteriorate)
+                {
+                    if (!deteriorate.IsCriteriaMet(hashInput))
+                    {
+                        needsUpdate = true;
+                    }
+                }
+
+            }
+            else
+            {
+                needsUpdate = true;
+            }
+
+            if (!needsUpdate) return;
+
+            CurrentDeteriorate.Clear();
+            // Deteriorate each non default (may override previous step).
+            foreach (var deteriorate in Deteriorates)
+            {
+                if (deteriorate.Default) continue;
+
+                if (deteriorate.IsCriteriaMet(hashInput))
+                {
+                    CurrentDeteriorate.Add(deteriorate);
+                }
+            }
+
+            //Deteriorate each value that did not have a non-default set (will not override).
+            foreach (var deteriorate in Deteriorates)
+            {
+                if (!deteriorate.Default) continue;
+
+                if(CurrentDeteriorate.All(d => d.Attribute != deteriorate.Attribute))
+                { 
+                    CurrentDeteriorate.Add(deteriorate);
+                }
+            }
+        }
+
+
+
+
+
 
         /// <summary>
         /// Apply consequences from treatment (or no treatment).
@@ -148,6 +229,21 @@ namespace Simulation
         private Hashtable ApplyConsequences(List<Consequences> consequences, Hashtable hashInput)
         {
             object sValue;
+
+            //No Treatment usually only increments age.  If this is the case (and is the only effect of No Treatment solve it quickly.
+            if (consequences.Count == 1 && consequences[0].AttributeChange.Count == 1)
+            {
+                if (consequences[0].AttributeChange[0].Attribute == "AGE")
+                {
+                    sValue = hashInput["AGE"];
+                    hashInput["AGE"] = consequences[0].AttributeChange[0].ApplyChange(sValue);
+                    return hashInput;
+                }
+            }
+
+
+
+            //Otherwise do the whole thing.
             var hashOutput = new Hashtable();
 
             var hashConsequences = new Hashtable();

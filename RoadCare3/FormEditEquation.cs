@@ -905,15 +905,7 @@ namespace RoadCare3
                 textBoxCompile.Text = "Piecewise equation input compile properly.";
             }
 
-            double apparentAge = temp.GetApparentAge(89);
-            AgeValue nextValue = temp.GetNextValue(89,1);
 
-            AgeValue nextValueShift = temp.GetNextValue(89, 10,1);
-            double benefit = temp.GetBenefit(100, 50);
-            double benefitWithShift = temp.GetBenefit(85, 50, 15);
-
-            double remainLife = temp.GetRemainingLife(59, 50);
-            double remainLifeShift = temp.GetRemainingLife(91, 50, 10);
             return true;
         }
 

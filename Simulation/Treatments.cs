@@ -5,6 +5,8 @@ using System.Data;
 using System.Collections;
 using RoadCareGlobalOperations;
 using System.IO;
+using Simulation.Interface;
+
 namespace Simulation
 {
     /// <summary>
@@ -22,7 +24,7 @@ namespace Simulation
         private List<Costs> _costs = new List<Costs>();
         private List<Consequences> _consequences = new List<Consequences>();
         private List<String> _attributes = new List<String>();
-
+        private List<IScheduled> _scheduleds = new List<IScheduled>();
 
         private List<string> m_listBudget = null;
 
@@ -186,6 +188,11 @@ namespace Simulation
         public List<String> Attributes
         {
             get{return _attributes;}
+        }
+
+        public List<IScheduled> Scheduleds
+        {
+            get { return _scheduleds; }
         }
 
         /// <summary>
@@ -520,6 +527,38 @@ namespace Simulation
         }
 
 
+        public bool LoadScheduled(List<Treatments> availableTreatments)
+        {
+            var select = "SELECT SCHEDULEDID, SCHEDULEDTREATMENTID, SCHEDULEDYEAR FROM SCHEDULED WHERE TREATMENTID='" + this.TreatmentID + "'";
+
+            DataSet ds;
+            try
+            {
+                ds = DBMgr.ExecuteQuery(select);
+
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var scheduledid = int.Parse(row["SCHEDULEDID"].ToString());
+                    var scheduledTreatmentId = row["SCHEDULEDTREATMENTID"].ToString();
+                    var scheduledYear = int.Parse(row["SCHEDULEDYEAR"].ToString());
+                    var scheduledTreatment = availableTreatments.Find(t => t.TreatmentID == scheduledTreatmentId);
+
+                    if (scheduledTreatment != null)
+                    {
+                        _scheduleds.Add(new Scheduled(scheduledid, scheduledTreatment, scheduledYear));
+                    }
+
+                }
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(
+                    new SimulationMessage("Fatal Error: Opening SCHEDULED table. SQL Message - " + exception.Message));
+                return false;
+            }
+            return true;
+        }
         
         public bool IsTreatmentCriteriaMet(Hashtable hashAttributeValue)
         {

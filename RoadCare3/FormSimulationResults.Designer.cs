@@ -402,6 +402,7 @@ namespace RoadCare3
             this.btnARAN.TabIndex = 33;
             this.btnARAN.Text = "ARAN View";
             this.btnARAN.UseVisualStyleBackColor = true;
+            this.btnARAN.Visible = false;
             this.btnARAN.Click += new System.EventHandler(this.btnARAN_Click);
             // 
             // menuStripResultsOptions
@@ -411,7 +412,7 @@ namespace RoadCare3
             this.resultsOptionsToolStripMenuItem});
             this.menuStripResultsOptions.Location = new System.Drawing.Point(2, 95);
             this.menuStripResultsOptions.Name = "menuStripResultsOptions";
-            this.menuStripResultsOptions.Size = new System.Drawing.Size(201, 24);
+            this.menuStripResultsOptions.Size = new System.Drawing.Size(109, 24);
             this.menuStripResultsOptions.TabIndex = 34;
             this.menuStripResultsOptions.Text = "Results Options";
             // 

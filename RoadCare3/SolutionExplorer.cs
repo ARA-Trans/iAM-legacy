@@ -147,18 +147,16 @@ namespace RoadCare3
                     {
                         String strAttribute = dataRow["ATTRIBUTE_"].ToString();
                         if (strAttribute == "PCI" || strAttribute == "CLIMATE_PCI" || strAttribute == "LOAD_PCI" || strAttribute == "OTHER_PCI") continue;
-                        if (Global.SecurityOperations.CanViewCalculatedAttribute(strAttribute))
-                        {
-                            SolutionExplorerTreeNode tn = new SolutionExplorerTreeNode(netDef);
-                            tvSolutionExplorer.Nodes[netDef.NetDefName].Nodes["NodeCalculatedFields" + netDef.NetDefName].Nodes.Add(tn);
-                            tn.Name = strAttribute + netDef.NetDefName;
-                            tn.Text = strAttribute;
-                            //TODO: add checking to see if any of these are already open
-                            tn.ImageKey = RoadCare3.Properties.Settings.Default.ATTRIBUTE_IMAGE_KEY;
-                            tn.SelectedImageKey = RoadCare3.Properties.Settings.Default.ATTRIBUTE_IMAGE_KEY_SELECTED;
-                            tn.Tag = strAttribute + netDef.NetDefName;
-                            tn.ContextMenuStrip = cmsCalculatedFields;
-                        }
+
+                        SolutionExplorerTreeNode tn = new SolutionExplorerTreeNode(netDef);
+                        tvSolutionExplorer.Nodes[netDef.NetDefName].Nodes["NodeCalculatedFields" + netDef.NetDefName].Nodes.Add(tn);
+                        tn.Name = strAttribute + netDef.NetDefName;
+                        tn.Text = strAttribute;
+                        //TODO: add checking to see if any of these are already open
+                        tn.ImageKey = RoadCare3.Properties.Settings.Default.ATTRIBUTE_IMAGE_KEY;
+                        tn.SelectedImageKey = RoadCare3.Properties.Settings.Default.ATTRIBUTE_IMAGE_KEY_SELECTED;
+                        tn.Tag = strAttribute + netDef.NetDefName;
+                        tn.ContextMenuStrip = cmsCalculatedFields;
                     }
 
                 }

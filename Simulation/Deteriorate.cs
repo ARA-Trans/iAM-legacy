@@ -432,8 +432,53 @@ namespace Simulation
             }
         }
 
+
+        public double IterateOneYear(Hashtable hashAttributeValues, int apparentAgeHint, out double apparentAge)
+        {
+            if (PiecewiseEquation != null)
+            {
+                return IterateSpanPiecewise(hashAttributeValues, 1, apparentAgeHint, out apparentAge);
+            }
+
+
+            apparentAge = 0;
+            return IterateOneYearEquation(hashAttributeValues, out bool bOutOfRange);
+
+        }
+
+
+        /// <summary>
+        /// New method with Apparent Age Hint
+        /// </summary>
+        /// <param name="hashAttributeValues"></param>
+        /// <param name="span"></param>
+        /// <param name="apparentAgeHint"></param>
+        /// <param name="apparentAge"></param>
+        /// <returns></returns>
+        public double IterateSpanPiecewise(Hashtable hashAttributeValues, double span,int apparentAgeHint, out double  apparentAge)
+        {
+            double dValue = double.Parse(hashAttributeValues[this.Attribute].ToString());
+            double dAnswer = double.NaN;
+            if (Shift)
+            {
+                var dAge = double.Parse(hashAttributeValues["AGE"].ToString());
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge, span,out apparentAge).Value;
+                
+            }
+            else
+            {
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, span,apparentAgeHint, out apparentAge).Value;
+            }
+
+            return dAnswer;
+        }
+
+
+
+
         public double IterateSpanPiecewise(Hashtable hashAttributeValues ,double span, out bool bOutOfRange)
         {
+            double apparentAge = 0;
             bOutOfRange = false;
             double dValue = double.Parse(hashAttributeValues[this.Attribute].ToString());
             double dAnswer = double.NaN;
@@ -441,7 +486,7 @@ namespace Simulation
             if (Shift)
             {
                 dAge = double.Parse(hashAttributeValues["AGE"].ToString());
-                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge,span).Value;
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge,span, out apparentAge).Value;
             }
             else
             {
