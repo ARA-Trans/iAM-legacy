@@ -1277,50 +1277,53 @@ namespace Simulation
 			switch (DBMgr.NativeConnectionParameters.Provider)
 			{
 				case "MSSQL":
-					SqlDataReader dr = DBMgr.CreateDataReader(strSelect);
-					while (dr.Read())
-					{
-						Sections section = new Sections();
-						section.SectionID = dr["SECTIONID"].ToString();
-						section.Facility = dr["FACILITY"].ToString();
-						section.Section = dr["SECTION"].ToString();
-						if (dr["BEGIN_STATION"].ToString().Trim() != "")
-						{
-							section.Begin = float.Parse(dr["BEGIN_STATION"].ToString());
-						}
-
-						if (dr["END_STATION"].ToString().Trim() != "")
-						{
-							section.End = float.Parse(dr["END_STATION"].ToString());
-						}
-
-						section.Direction = dr["DIRECTION"].ToString();
-
-						if (dr["AREA"].ToString().Trim() != "")
-						{
-							section.Area = float.Parse(dr["AREA"].ToString());
-						}
-
-						section.RollToYear = Investment.StartYear;
-						foreach (String str in listColumns)
-						{
-                            //strValue = dr[str].ToString();
-                            if (dr[str] == DBNull.Value) section.AddAttributeValue(str,null);
-                            else section.AddAttributeValue(str, dr[str]);
-						}
-						try
-						{
-							section.RollForward(m_listDeteriorate, m_listAttributes);
-						}
-						catch(Exception exc)
+                    //SqlDataReader dr = DBMgr.CreateDataReader(strSelect);
+                    DataTable simulationResults = DBMgr.CreateDataReader(strSelect);
+                    if (simulationResults.Rows.Count > 0)
+                    {
+                        foreach (DataRow dr in simulationResults.Rows)
                         {
-                            SimulationMessaging.AddMessage(new SimulationMessage("An error occurred rolling forward a section: "+ exc.Message));
+                            Sections section = new Sections();
+                            section.SectionID = dr["SECTIONID"].ToString();
+                            section.Facility = dr["FACILITY"].ToString();
+                            section.Section = dr["SECTION"].ToString();
+                            if (dr["BEGIN_STATION"].ToString().Trim() != "")
+                            {
+                                section.Begin = float.Parse(dr["BEGIN_STATION"].ToString());
+                            }
 
-						}
-						m_listSections.Add(section);
-					}
-					dr.Close();
-					break;
+                            if (dr["END_STATION"].ToString().Trim() != "")
+                            {
+                                section.End = float.Parse(dr["END_STATION"].ToString());
+                            }
+
+                            section.Direction = dr["DIRECTION"].ToString();
+
+                            if (dr["AREA"].ToString().Trim() != "")
+                            {
+                                section.Area = float.Parse(dr["AREA"].ToString());
+                            }
+
+                            section.RollToYear = Investment.StartYear;
+                            foreach (String str in listColumns)
+                            {
+                                //strValue = dr[str].ToString();
+                                if (dr[str] == DBNull.Value) section.AddAttributeValue(str, null);
+                                else section.AddAttributeValue(str, dr[str]);
+                            }
+                            try
+                            {
+                                section.RollForward(m_listDeteriorate, m_listAttributes);
+                            }
+                            catch (Exception exc)
+                            {
+                                SimulationMessaging.AddMessage(new SimulationMessage("An error occurred rolling forward a section: " + exc.Message));
+
+                            }
+                            m_listSections.Add(section);
+                        }
+                    }
+                    break;
 				case "ORACLE":
 					try
 					{
@@ -6376,124 +6379,127 @@ namespace Simulation
 					switch (DBMgr.NativeConnectionParameters.Provider)
 					{
 						case "MSSQL":
-							SqlDataReader dr = DBMgr.CreateDataReader(strSelect);
-							while (dr.Read())
-							{
-								sSectionID = dr["SECTIONID"].ToString();
-								sTreatment = dr["TREATMENT"].ToString();
-								sAny = dr["YEARSANY"].ToString();
-								sSame = dr["YEARSSAME"].ToString();
-								sCost = dr["COST_"].ToString();
-								sRemaining = dr["REMAINING_LIFE"].ToString();
-								sBenefit = dr["BENEFIT"].ToString();
-								sBC = dr["BC_RATIO"].ToString();
-								sConsequenceID = dr["CONSEQUENCEID"].ToString();
-								sRLHash = dr["RLHASH"].ToString();
-                                //This makes sure the like function does not find something goofy for budgets like ("Greggs Budget", "eggs") -> That one budget it a subset of another.
-                                if (!ContainsBudget(dr["BUDGET"].ToString(), strBudget)) continue;
-                            
-								String strTreatmentID = sConsequenceID;
-
-								// Get the section that matches this
-								Sections section = m_listSections.Find(delegate(Sections s)
-								{
-									return s.SectionID == sSectionID;
-								});
-								if (section == null)
-									continue;//Should never happen. TODO: Add error handling.
-
-								//Check if already treated.  Check if treament is in a shadow or will cast a shadow.
-                                // Check for negative BC, if its negative.  Dont spend money on it.
-                                if (Convert.ToDouble(sBC) < 0)
+                            //SqlDataReader dr = DBMgr.CreateDataReader(strSelect);
+                            DataTable budgetResults = DBMgr.CreateDataReader(strSelect);
+                            if (budgetResults.Rows.Count > 0)
+                            {
+                                foreach (DataRow dr in budgetResults.Rows)
                                 {
-                                    //SimulationMessaging.AddMessage(new SimulationMessage("Warning! Applying treatment " + sTreatment + " to section " + section.Section + " produces as negative benefit cost. Please evaluate your treatment consequence parameters. Treatment will not be suggested."));
-                                    //May 16, 2014.  No need to remove this from list.  A continue will work properly here since iterating list.
-                                    //All subsequent treatments in this budget should have negative benefit, so can be ignored.
-                                    //Consider replacing with a break;
-                                    continue;
-                                }
-								if (!section.IsTreatmentAllowed(sTreatment, sAny, sSame, nYear))
-									continue;
+                                    sSectionID = dr["SECTIONID"].ToString();
+                                    sTreatment = dr["TREATMENT"].ToString();
+                                    sAny = dr["YEARSANY"].ToString();
+                                    sSame = dr["YEARSSAME"].ToString();
+                                    sCost = dr["COST_"].ToString();
+                                    sRemaining = dr["REMAINING_LIFE"].ToString();
+                                    sBenefit = dr["BENEFIT"].ToString();
+                                    sBC = dr["BC_RATIO"].ToString();
+                                    sConsequenceID = dr["CONSEQUENCEID"].ToString();
+                                    sRLHash = dr["RLHASH"].ToString();
+                                    //This makes sure the like function does not find something goofy for budgets like ("Greggs Budget", "eggs") -> That one budget it a subset of another.
+                                    if (!ContainsBudget(dr["BUDGET"].ToString(), strBudget)) continue;
 
-								float fAmount = section.Area * float.Parse(sCost) * fInflationMultiplier;
-                                string budgetSelected = "";
-								//Checks budget and priorities
-								if (strBudgetLimit == "None")//No treatments can be spent
-								{
-									continue;
-								}
-                                else if (strBudgetLimit == "") // Check and see if money is available
-                                {
-                                    budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority);
-                                    if (string.IsNullOrWhiteSpace(budgetSelected))
+                                    String strTreatmentID = sConsequenceID;
+
+                                    // Get the section that matches this
+                                    Sections section = m_listSections.Find(delegate (Sections s)
+                                    {
+                                        return s.SectionID == sSectionID;
+                                    });
+                                    if (section == null)
+                                        continue;//Should never happen. TODO: Add error handling.
+
+                                    //Check if already treated.  Check if treament is in a shadow or will cast a shadow.
+                                    // Check for negative BC, if its negative.  Dont spend money on it.
+                                    if (Convert.ToDouble(sBC) < 0)
+                                    {
+                                        //SimulationMessaging.AddMessage(new SimulationMessage("Warning! Applying treatment " + sTreatment + " to section " + section.Section + " produces as negative benefit cost. Please evaluate your treatment consequence parameters. Treatment will not be suggested."));
+                                        //May 16, 2014.  No need to remove this from list.  A continue will work properly here since iterating list.
+                                        //All subsequent treatments in this budget should have negative benefit, so can be ignored.
+                                        //Consider replacing with a break;
                                         continue;
+                                    }
+                                    if (!section.IsTreatmentAllowed(sTreatment, sAny, sSame, nYear))
+                                        continue;
+
+                                    float fAmount = section.Area * float.Parse(sCost) * fInflationMultiplier;
+                                    string budgetSelected = "";
+                                    //Checks budget and priorities
+                                    if (strBudgetLimit == "None")//No treatments can be spent
+                                    {
+                                        continue;
+                                    }
+                                    else if (strBudgetLimit == "") // Check and see if money is available
+                                    {
+                                        budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority);
+                                        if (string.IsNullOrWhiteSpace(budgetSelected))
+                                            continue;
+                                    }
+                                    else//if strBudgetLimit == "Unlimited" there is always budget.
+                                    {
+                                        string[] budgets = strBudget.Split('|');
+                                        if (budgets.Length == 0) continue;
+                                        budgetSelected = budgets[0].Trim();
+                                    }
+
+
+
+                                    //Spend budget.
+                                    Investment.SpendBudget(fAmount, budgetSelected, nYear.ToString());
+
+
+                                    int nAny = 0;
+                                    int.TryParse(sAny, out nAny);
+                                    //Mark treated.
+                                    section.Treated = true;
+                                    section.AnyYear = nYear + nAny;
+
+
+                                    SameTreatment sameTreatment = new SameTreatment();
+                                    sameTreatment.strTreatment = sTreatment;
+                                    int nSame = 0;
+                                    int.TryParse(sSame, out nSame);
+                                    sameTreatment.nYear = nYear + nSame;
+                                    section.m_listSame.Add(sameTreatment);
+
+                                    //Apply consequences.
+                                    String strChangeHash;
+                                    Hashtable hashOutput = ApplyConsequences(section.m_hashNextAttributeValue, strTreatmentID, out strChangeHash, section);// This is the attribute value pair for this year.
+                                    section.m_hashYearAttributeValues.Add(nYear, hashOutput);
+
+                                    float fOldArea = section.Area;
+                                    //Calculate new section area
+                                    section.CalculateArea(nYear);
+                                    float fNewArea = section.Area;
+
+                                    //Update targets.
+                                    UpdateTargetsAndDeficiency(nYear, fOldArea, fNewArea, section.m_hashNextAttributeValue, hashOutput);
+
+                                    //Write report.
+                                    String strOut = ":" + section.SectionID + ":"
+                                                            + nYear.ToString() + ":"
+                                                            + sTreatment + ":"
+                                                            + sAny + ":"
+                                                            + sSame + ":"
+                                                            + budgetSelected + ":"
+                                                            + fAmount.ToString("f") + ":"
+                                                            + sRemaining + ":"
+                                                            + sBenefit + ":"
+                                                            + sBC + ":"
+                                                            + strTreatmentID + ":"
+                                                            + priority.PriorityLevel.ToString() + ":"//Priority
+                                                            + sRLHash + ":"
+                                                            + nCommitOrder.ToString() + ":"   //Commit order.
+                                                            + "0" + ":" //Committed
+                                                            + section.NumberTreatment.ToString() + ":" //number viable treatment
+                                                            + strChangeHash + ":"
+                                                            + fNewArea.ToString() + ":"
+                                                            + "0";
+                                    tw.WriteLine(strOut);
+                                    nCommitOrder++;
+
                                 }
-                                else//if strBudgetLimit == "Unlimited" there is always budget.
-                                {
-                                    string[] budgets = strBudget.Split('|');
-                                    if(budgets.Length == 0) continue;
-                                    budgetSelected = budgets[0].Trim();
-                                }
-								
-
-
-								//Spend budget.
-                                Investment.SpendBudget(fAmount, budgetSelected, nYear.ToString());
-
-
-								int nAny = 0;
-								int.TryParse(sAny, out nAny);
-								//Mark treated.
-								section.Treated = true;
-								section.AnyYear = nYear + nAny;
-
-
-								SameTreatment sameTreatment = new SameTreatment();
-								sameTreatment.strTreatment = sTreatment;
-								int nSame = 0;
-								int.TryParse(sSame, out nSame);
-								sameTreatment.nYear = nYear + nSame;
-								section.m_listSame.Add(sameTreatment);
-
-								//Apply consequences.
-								String strChangeHash;
-								Hashtable hashOutput = ApplyConsequences(section.m_hashNextAttributeValue, strTreatmentID, out strChangeHash,section);// This is the attribute value pair for this year.
-								section.m_hashYearAttributeValues.Add(nYear, hashOutput);
-
-								float fOldArea = section.Area;
-								//Calculate new section area
-								section.CalculateArea(nYear);
-								float fNewArea = section.Area;
-
-								//Update targets.
-								UpdateTargetsAndDeficiency(nYear, fOldArea, fNewArea, section.m_hashNextAttributeValue, hashOutput);
-
-								//Write report.
-								String strOut = ":" + section.SectionID + ":"
-														+ nYear.ToString() + ":"
-														+ sTreatment + ":"
-														+ sAny + ":"
-														+ sSame + ":"
-                                                        + budgetSelected + ":"
-														+ fAmount.ToString("f") + ":"
-														+ sRemaining + ":"
-														+ sBenefit + ":"
-														+ sBC + ":"
-														+ strTreatmentID + ":"
-														+ priority.PriorityLevel.ToString() + ":"//Priority
-														+ sRLHash + ":"
-														+ nCommitOrder.ToString() + ":"   //Commit order.
-														+ "0" + ":" //Committed
-														+ section.NumberTreatment.ToString() + ":" //number viable treatment
-														+ strChangeHash + ":"
-														+ fNewArea.ToString() + ":"
-                                                        + "0";
-								tw.WriteLine(strOut);
-								nCommitOrder++;
-
-							}
-							dr.Close();
-							break;
+                            }
+                            break;
 						case "ORACLE":
 							OleDbDataReader odr = DBMgr.CreateOleDbDataReader(strSelect);
 							while (odr.Read())

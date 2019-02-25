@@ -1290,15 +1290,16 @@ namespace DatabaseManager
         /// <returns>
         ///     The data reader to pull information from the database with.
         /// </returns>
-        public static SqlDataReader CreateDataReader( String strQuery )
+        public static DataTable CreateDataReader( String strQuery )
         {
             return CreateDataReader( strQuery, m_cpNativeParameters ); 
         }
 
-        public static SqlDataReader CreateDataReader( String strQuery, ConnectionParameters cp  )
+        public static DataTable CreateDataReader( String strQuery, ConnectionParameters cp  )
         {
             SqlDataReader dtR = null;
-            if( !cp.IsOleDBConnection )
+            DataTable simulationResults = new DataTable();
+            if ( !cp.IsOleDBConnection )
             {
                 SqlConnection connSqlReader = new SqlConnection();
                 connSqlReader.ConnectionString = cp.ConnectionString;
@@ -1314,6 +1315,8 @@ namespace DatabaseManager
                     try
                     {
                         dtR = command.ExecuteReader( CommandBehavior.Default );
+                        simulationResults.Load(dtR);
+                        connSqlReader.Close();
                     }
                     catch( Exception sqlE )
                     {
@@ -1331,7 +1334,7 @@ namespace DatabaseManager
                 throw new Exception( "Attempted to get MSSQL datareader for OleDB connection." );
             }
 
-            return dtR;
+            return simulationResults;
         }
 
         public static SqlDataReader CreateDataReader( String strQuery, String connString )
