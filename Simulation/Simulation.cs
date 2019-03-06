@@ -13,6 +13,10 @@ using SimulationDataAccess;
 using System.Threading;
 using CalculateEvaluate;
 using System.Threading.Tasks;
+using FireSharp.Config;
+using FireSharp.Interfaces;
+using FireSharp.Response;
+
 namespace Simulation
 {
     public class Simulation
@@ -177,12 +181,19 @@ namespace Simulation
 
         }
 
-
         /// <summary>
         /// Start and run a complete simulation.  Creates necessary Simulation Tables.
         /// </summary>
-        public void CompileSimulation()
+        public void CompileSimulation(object isAPICall)
         {
+            IFirebaseConfig configuration = new FirebaseConfig
+            {
+                AuthSecret = "i2mjdps41gRYAoEBDHG94iqYoAITp52qP6pb7Ijp",
+                BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
+            };
+
+            IFirebaseClient firebaseClient = new FireSharp.FirebaseClient(configuration);            
+
             SimulationMessaging.DateTimeStart = DateTime.Now;
             //Get Attribute types
             _dateTimeLast = DateTime.Now;
@@ -191,9 +202,19 @@ namespace Simulation
             SimulationMessaging.LoadAttributes(m_strSimulationID);
             SimulationMessaging.Method = this.Method;
             SimulationMessaging.AddMessage(new SimulationMessage("Begin compile simulation: " + DateTime.Now.ToString("HH:mm:ss")));
-            
-			// Clear the compound treatments from the new structure.
-			Simulation.CompoundTreatments.Clear();
+
+            var status = new SimulationStatus
+            {
+                Status = "Running"
+            };
+            var simulation = m_strNetworkID + "_" + m_strSimulationID;
+            if (firebaseClient != null && isAPICall.Equals(true))
+            {
+                firebaseClient.SetTaskAsync("simulationStatus/" + simulation, status);
+            }
+
+            // Clear the compound treatments from the new structure.
+            Simulation.CompoundTreatments.Clear();
 
             if (!DropPreviousSimulation(m_strSimulation, m_strNetworkID)) return;
 
@@ -214,13 +235,21 @@ namespace Simulation
             //Create table for each attribute year pair into the future.
             SimulationMessaging.AddMessage(new SimulationMessage("Compile simulation complete: " + DateTime.Now.ToString("HH:mm:ss")));
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning run simulation: " + DateTime.Now.ToString("HH:mm:ss")));
-			try
+            status = new SimulationStatus
+            {
+                Status = "Success"
+            };
+            try
 			{
 				RunSimulation();
 			}
 			catch( Exception ex )
 			{
-				SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
+                status = new SimulationStatus
+                {
+                    Status = "Failed"
+                };
+                SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
 				SimulationMessaging.AddMessage(new SimulationMessage("Aborting simulation." ));
 			}
             _spanAnalysis += DateTime.Now - _dateTimeLast;
@@ -232,6 +261,11 @@ namespace Simulation
 
             //Save the amount of time it took to run the simualtion to the database.
             SaveSimulationRunTime(spanTotal);
+
+            if (isAPICall.Equals(true))
+            {
+                firebaseClient.UpdateTaskAsync("simulationStatus/" + simulation, status);
+            }
 
             return;
         }
@@ -8312,5 +8346,10 @@ namespace Simulation
         
 
 
+    }
+
+    public class SimulationStatus
+    {
+        public string Status { get; set; }
     }
 }
