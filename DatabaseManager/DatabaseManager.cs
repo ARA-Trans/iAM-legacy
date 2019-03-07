@@ -861,7 +861,12 @@ namespace DatabaseManager
                                    tableParam.GetColumnDataType().MaximumLength.ToString() +
                                    ")";
                         }
-
+                        if(tableParam.GetColumnDataType().SqlDataType == SqlDataType.VarCharMax)
+                        {
+                            sql += " (" +
+                                   "MAX" +
+                                   ")";
+                        }
                         if (tableParam.GetIsIdentity()) sql += " IDENTITY(1,1) ";
                         if (!tableParam.GetIsNullable()) sql += " not null";
                     }
