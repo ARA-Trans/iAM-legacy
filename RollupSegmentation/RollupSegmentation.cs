@@ -287,7 +287,7 @@ namespace RollupSegmentation
 				}
 				else
 				{
-					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarChar(4000), true));
+					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarCharMax, true));
 				}
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MINX", DataType.Float, true));
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MAXX", DataType.Float, true));
