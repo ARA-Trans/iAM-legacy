@@ -1931,13 +1931,14 @@ namespace RoadCare3
 				}
 
 				strSimulationID = ds.Tables[0].Rows[0].ItemArray[0].ToString();
-				strInsert = "INSERT INTO INVESTMENTS (SIMULATIONID,FIRSTYEAR,NUMBERYEARS,INFLATIONRATE,DISCOUNTRATE,BUDGETORDER) VALUES('"
+				strInsert = "INSERT INTO INVESTMENTS (SIMULATIONID,FIRSTYEAR,NUMBERYEARS,INFLATIONRATE,DISCOUNTRATE,BUDGETORDER,DESCRIPTION) VALUES('"
 					+ strSimulationID + "','"
 					+ DateTime.Now.Year.ToString() + "','"
 					+ "5','"
 					+ "2','"
 					+ "3','"
-					+ "Rehabilitation,Maintenance,Construction')";
+                    + "Rehabilitation,Maintenance,Construction','"
+                    + "new simulation')";
 
 				try
 				{
