@@ -205,12 +205,12 @@ namespace Simulation
 
             var status = new SimulationStatus
             {
-                Status = "Running"
+                status = "Running"
             };
             var simulation = m_strNetworkID + "_" + m_strSimulationID;
             if (firebaseClient != null && isAPICall.Equals(true))
             {
-                firebaseClient.SetTaskAsync("simulationStatus/" + simulation, status);
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
             }
 
             // Clear the compound treatments from the new structure.
@@ -237,7 +237,7 @@ namespace Simulation
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning run simulation: " + DateTime.Now.ToString("HH:mm:ss")));
             status = new SimulationStatus
             {
-                Status = "Success"
+                status = "Success"
             };
             try
 			{
@@ -247,7 +247,7 @@ namespace Simulation
 			{
                 status = new SimulationStatus
                 {
-                    Status = "Failed"
+                    status = "Failed"
                 };
                 SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
 				SimulationMessaging.AddMessage(new SimulationMessage("Aborting simulation." ));
@@ -264,7 +264,7 @@ namespace Simulation
 
             if (isAPICall.Equals(true))
             {
-                firebaseClient.UpdateTaskAsync("simulationStatus/" + simulation, status);
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
             }
 
             return;
@@ -8350,6 +8350,6 @@ namespace Simulation
 
     public class SimulationStatus
     {
-        public string Status { get; set; }
+        public string status { get; set; }
     }
 }
