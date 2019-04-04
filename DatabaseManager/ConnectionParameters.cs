@@ -117,7 +117,7 @@ namespace DatabaseManager
 				{
 					case "MSSQL":
 						m_bIsOleDbConnection = false;
-						m_connectionString = "Data Source=" + server + ";Initial Catalog=" + databaseName + ";User Id=" + dbUserID + ";Password=" + dbPassword + ";";
+						m_connectionString = "Data Source=" + server + ";Initial Catalog=" + databaseName + ";User Id=" + dbUserID + ";Password=" + dbPassword + ";Persist Security Info=" + true + ";";
 						sqlConn = new SqlConnection(m_connectionString);
 						break;
 					case "ORACLE":
