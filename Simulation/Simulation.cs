@@ -15,7 +15,6 @@ using CalculateEvaluate;
 using System.Threading.Tasks;
 using FireSharp.Config;
 using FireSharp.Interfaces;
-using FireSharp.Response;
 
 namespace Simulation
 {
@@ -205,9 +204,9 @@ namespace Simulation
 
             var status = new SimulationStatus
             {
-                status = "Running"
+                status = "Running simulation"
             };
-            var simulation = m_strNetworkID + "_" + m_strSimulationID;
+            var simulation = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
             if (firebaseClient != null && isAPICall.Equals(true))
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
@@ -247,7 +246,7 @@ namespace Simulation
 			{
                 status = new SimulationStatus
                 {
-                    status = "Failed"
+                    status = "Simulation failed"
                 };
                 SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
 				SimulationMessaging.AddMessage(new SimulationMessage("Aborting simulation." ));

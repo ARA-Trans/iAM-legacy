@@ -16,6 +16,9 @@ using CalculateEvaluate;
 using RoadCareGlobalOperations;
 using DataObjects;
 using System.Text.RegularExpressions;
+using Simulation;
+using FireSharp.Config;
+using FireSharp.Interfaces;
 
 namespace RollupSegmentation
 {
@@ -25,6 +28,12 @@ namespace RollupSegmentation
         String m_strDataSource="";
         String m_strUserID="";
         String m_strPassword="";
+
+        string m_strSimulation = "";
+        string m_strNetworkID = "";
+        string m_strSimulationID = "";
+        bool apiCall = false;
+
         List<String> m_listAttributes;
         Hashtable m_hashAttribute;
         int m_nCountNumber = 0;//Count of Number fields
@@ -80,8 +89,35 @@ namespace RollupSegmentation
 
         }
 
-		public void DoRollup()
+        public RollupSegmentation(String strSimulation, String m_strNetwork, String strSimulationID, String strNetworkID, bool isAPI)
+        {
+            strNetwork = m_strNetwork;
+            m_strSimulation = strSimulation;
+            m_strNetworkID = strNetworkID;
+            m_strSimulationID = strSimulationID;
+            apiCall = isAPI;
+        }
+
+        public void DoRollup()
 		{
+            IFirebaseConfig configuration = new FirebaseConfig
+            {
+                AuthSecret = "i2mjdps41gRYAoEBDHG94iqYoAITp52qP6pb7Ijp",
+                BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
+            };
+
+            var status = new SimulationStatus
+            {
+                status = "Running rollup"
+            };
+
+            var simulationName = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
+            IFirebaseClient firebaseClient = new FireSharp.FirebaseClient(configuration);
+
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
             Boolean isOMS = false;
             String omsConnectionString = DataAccessLayer.ImportOMS.GetOMSConnectionString(DBMgr.GetNativeConnection().ConnectionString);
             if(!String.IsNullOrWhiteSpace(omsConnectionString))
@@ -105,6 +141,14 @@ namespace RollupSegmentation
 			if( !CompileAreaEquation() )
 			{
 				RollupMessaging.AddMessge( "Rollup of network aborted: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
+                if(apiCall == true)
+                {
+                    status = new SimulationStatus
+                    {
+                        status = "Rollup aborted"
+                    };
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
 				return;
 			}
             
@@ -145,7 +189,7 @@ namespace RollupSegmentation
 				catch( Exception exc )
 				{
 					RollupMessaging.AddMessge( "Warning: Drop table " + strTable + " failed. " + exc.Message );
-				}
+                }
 			}
 			bool bPCI = false;
 			String strSelectPCI = "SELECT COUNT(*) FROM PCI";
@@ -160,7 +204,7 @@ namespace RollupSegmentation
 			{
 				RollupMessaging.AddMessge( "Warning: Error retrieving PCI count.  PCI not included in rollup." + exc.Message );
 				bPCI = true;
-			}
+            }
 			DBMgr.ExecuteNonQuery( "DELETE FROM SEGMENT_CONTROL WHERE NETWORKID ='" + strNetworkID + "'" );
 
 			// Get list of all attributes (ATTRIBUTE TABLE) and list of all YEARS (Individual Attribute Tables)
@@ -241,7 +285,7 @@ namespace RollupSegmentation
 				{
 					RollupMessaging.AddMessge( "Error: Could not rollup attribute " + str + ". " + exc.Message );
 					bRollupError = true;
-				}
+                }
 
 				attribute.m_listYears = new List<String>();
 				if( !bRollupError )
@@ -1229,6 +1273,22 @@ namespace RollupSegmentation
 			SummarizeImageLocation(strMyDocumentsFolder);
 			CleanCommittedOnSectionNumberChange( strNetworkID );
 			RollupMessaging.AddMessge( "End rollup of network: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
+
+            if(bRollupError && apiCall == true)
+            {
+                status = new SimulationStatus
+                {
+                    status = "Rollup aborted"
+                };
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                return;
+            }
+
+            if(apiCall == true && !bRollupError)
+            {
+                var simulation = new Simulation.Simulation(m_strSimulation, strNetwork, m_strSimulationID, m_strNetworkID);
+                simulation.CompileSimulation(true);
+            }
 		}
 
 
