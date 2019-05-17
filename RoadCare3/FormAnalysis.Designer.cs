@@ -66,6 +66,8 @@ namespace RoadCare3
             this.timerSimulation = new System.Windows.Forms.Timer(this.components);
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.checkBoxMultipleCost = new System.Windows.Forms.CheckBox();
+            this.radioButtonAcrossBudget = new System.Windows.Forms.RadioButton();
+            this.radioButtonWithinBudget = new System.Windows.Forms.RadioButton();
             this.tabControlAnalysis.SuspendLayout();
             this.tabPagePriority.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPriority)).BeginInit();
@@ -104,6 +106,8 @@ namespace RoadCare3
             // 
             // tabPagePriority
             // 
+            this.tabPagePriority.Controls.Add(this.radioButtonAcrossBudget);
+            this.tabPagePriority.Controls.Add(this.radioButtonWithinBudget);
             this.tabPagePriority.Controls.Add(this.dgvPriority);
             this.tabPagePriority.Location = new System.Drawing.Point(4, 22);
             this.tabPagePriority.Margin = new System.Windows.Forms.Padding(2);
@@ -113,6 +117,7 @@ namespace RoadCare3
             this.tabPagePriority.TabIndex = 0;
             this.tabPagePriority.Text = "Priority";
             this.tabPagePriority.UseVisualStyleBackColor = true;
+            this.tabPagePriority.Click += new System.EventHandler(this.TabPagePriority_Click);
             // 
             // dgvPriority
             // 
@@ -120,11 +125,11 @@ namespace RoadCare3
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvPriority.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPriority.Location = new System.Drawing.Point(0, 0);
+            this.dgvPriority.Location = new System.Drawing.Point(0, 33);
             this.dgvPriority.Margin = new System.Windows.Forms.Padding(2);
             this.dgvPriority.Name = "dgvPriority";
             this.dgvPriority.RowTemplate.Height = 24;
-            this.dgvPriority.Size = new System.Drawing.Size(834, 386);
+            this.dgvPriority.Size = new System.Drawing.Size(834, 353);
             this.dgvPriority.TabIndex = 0;
             this.dgvPriority.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPriority_CellDoubleClick);
             this.dgvPriority.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPriority_CellEnter);
@@ -462,6 +467,30 @@ namespace RoadCare3
             this.checkBoxMultipleCost.UseVisualStyleBackColor = true;
             this.checkBoxMultipleCost.CheckedChanged += new System.EventHandler(this.checkBoxMultipleCost_CheckedChanged);
             // 
+            // radioButtonAcrossBudget
+            // 
+            this.radioButtonAcrossBudget.AutoSize = true;
+            this.radioButtonAcrossBudget.Location = new System.Drawing.Point(193, 9);
+            this.radioButtonAcrossBudget.Name = "radioButtonAcrossBudget";
+            this.radioButtonAcrossBudget.Size = new System.Drawing.Size(174, 17);
+            this.radioButtonAcrossBudget.TabIndex = 27;
+            this.radioButtonAcrossBudget.TabStop = true;
+            this.radioButtonAcrossBudget.Text = "Use extra funds across budgets";
+            this.radioButtonAcrossBudget.UseVisualStyleBackColor = true;
+            this.radioButtonAcrossBudget.CheckedChanged += new System.EventHandler(this.RadioButtonAcrossBudget_CheckedChanged);
+            // 
+            // radioButtonWithinBudget
+            // 
+            this.radioButtonWithinBudget.AutoSize = true;
+            this.radioButtonWithinBudget.Location = new System.Drawing.Point(7, 9);
+            this.radioButtonWithinBudget.Name = "radioButtonWithinBudget";
+            this.radioButtonWithinBudget.Size = new System.Drawing.Size(165, 17);
+            this.radioButtonWithinBudget.TabIndex = 26;
+            this.radioButtonWithinBudget.TabStop = true;
+            this.radioButtonWithinBudget.Text = "Use extra funds within budget";
+            this.radioButtonWithinBudget.UseVisualStyleBackColor = true;
+            this.radioButtonWithinBudget.CheckedChanged += new System.EventHandler(this.RadioButtonWithinBudget_CheckedChanged);
+            // 
             // FormAnalysis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -495,6 +524,7 @@ namespace RoadCare3
             this.Load += new System.EventHandler(this.FormAnalysis_Load);
             this.tabControlAnalysis.ResumeLayout(false);
             this.tabPagePriority.ResumeLayout(false);
+            this.tabPagePriority.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPriority)).EndInit();
             this.tabPageTarget.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvTarget)).EndInit();
@@ -545,5 +575,7 @@ namespace RoadCare3
         private System.Windows.Forms.DataGridViewTextBoxColumn DeficientCriteria;
 		private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.CheckBox checkBoxMultipleCost;
+        private System.Windows.Forms.RadioButton radioButtonAcrossBudget;
+        private System.Windows.Forms.RadioButton radioButtonWithinBudget;
     }
 }

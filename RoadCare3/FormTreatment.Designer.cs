@@ -67,12 +67,12 @@ namespace RoadCare3
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabPageScheduled = new System.Windows.Forms.TabPage();
             this.dataGridViewScheduled = new System.Windows.Forms.DataGridView();
+            this.ScheduledTreatment = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.ScheduledYears = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.contextMenuStripCT = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.editCompoundTreatmentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkedComboBoxBudget = new RoadCare3.CheckedComboBox();
-            this.ScheduledTreatment = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.ScheduledYears = new System.Windows.Forms.DataGridViewComboBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFeasibility)).BeginInit();
             this.contextMenuFeasibility.SuspendLayout();
             this.contextMenuCosts.SuspendLayout();
@@ -478,6 +478,25 @@ namespace RoadCare3
             this.dataGridViewScheduled.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dataGridViewScheduled_RowsRemoved);
             this.dataGridViewScheduled.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dataGridViewScheduled_UserDeletedRow);
             // 
+            // ScheduledTreatment
+            // 
+            this.ScheduledTreatment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ScheduledTreatment.HeaderText = "Treatment";
+            this.ScheduledTreatment.Name = "ScheduledTreatment";
+            this.ScheduledTreatment.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.ScheduledTreatment.Sorted = true;
+            this.ScheduledTreatment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // ScheduledYears
+            // 
+            this.ScheduledYears.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ScheduledYears.HeaderText = "Scheduled Year";
+            this.ScheduledYears.Name = "ScheduledYears";
+            this.ScheduledYears.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.ScheduledYears.Sorted = true;
+            this.ScheduledYears.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.ScheduledYears.ToolTipText = "Number of years before treatment is scheduled.";
+            // 
             // pictureBox1
             // 
             this.pictureBox1.Image = global::RoadCare3.Properties.Resources.bigpink;
@@ -516,25 +535,6 @@ namespace RoadCare3
             this.checkedComboBoxBudget.ValueSeparator = ", ";
             this.checkedComboBoxBudget.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedComboBoxBudget_ItemCheck);
             this.checkedComboBoxBudget.DropDownClosed += new System.EventHandler(this.checkedComboBoxBudget_DropDownClosed);
-            // 
-            // ScheduledTreatment
-            // 
-            this.ScheduledTreatment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ScheduledTreatment.HeaderText = "Treatment";
-            this.ScheduledTreatment.Name = "ScheduledTreatment";
-            this.ScheduledTreatment.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.ScheduledTreatment.Sorted = true;
-            this.ScheduledTreatment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            // 
-            // ScheduledYears
-            // 
-            this.ScheduledYears.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ScheduledYears.HeaderText = "Scheduled Year";
-            this.ScheduledYears.Name = "ScheduledYears";
-            this.ScheduledYears.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.ScheduledYears.Sorted = true;
-            this.ScheduledYears.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            this.ScheduledYears.ToolTipText = "Number of years before treatment is scheduled.";
             // 
             // FormTreatment
             // 

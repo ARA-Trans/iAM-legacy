@@ -526,7 +526,7 @@ namespace Simulation
         public bool GetSimulationMethod()
         {
             //Replace with Method information.
-            String strSelect = "SELECT ANALYSIS, BUDGET_CONSTRAINT,BENEFIT_VARIABLE, BENEFIT_LIMIT,RUN_TIME,USE_CUMULATIVE_COST FROM " + cgOMS.Prefix + "SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            String strSelect = "SELECT ANALYSIS, BUDGET_CONSTRAINT,BENEFIT_VARIABLE, BENEFIT_LIMIT,RUN_TIME,USE_CUMULATIVE_COST,USE_ACROSS_BUDGET FROM " + cgOMS.Prefix + "SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
             try
             {
                 DataSet ds = DBMgr.ExecuteQuery(strSelect);
@@ -543,6 +543,8 @@ namespace Simulation
                     Method.BenefitAttribute = dr["BENEFIT_VARIABLE"].ToString();
                     if (dr["RUN_TIME"] != DBNull.Value) SimulationMessaging.LengthLastRun = Convert.ToDouble(dr["RUN_TIME"]);
                     if (dr["USE_CUMULATIVE_COST"] != DBNull.Value) Method.UseCumulativeCost = Convert.ToBoolean(dr["USE_CUMULATIVE_COST"]);
+                    Method.UseAcrossBudgets = false;
+                    if (dr["USE_ACROSS_BUDGET"] != DBNull.Value) Method.UseAcrossBudgets = Convert.ToBoolean(dr["USE_ACROSS_BUDGET"]);
                     string str = dr["BENEFIT_LIMIT"].ToString();
                     double dLimit = 0;
                     double.TryParse(str, out dLimit) ;
@@ -720,7 +722,9 @@ namespace Simulation
                 }
                 else
                 {
+                    m_listApplyTreatment.Clear();
                     DetermineBenefitCostIterative(nYear);
+                    //DetermineBenefitCost(nYear);
                 }
 
 
@@ -2916,7 +2920,7 @@ namespace Simulation
 
             String sFile;
             TextWriter tw = SimulationMessaging.CreateTextWriter("bc_" + m_strSimulationID + ".txt", out sFile);
-
+            Hashtable nextAttributeValue = null;
             foreach (Sections section in m_listSections)
             {
                 foreach (Treatments treatment in m_listTreatments)
@@ -2927,7 +2931,7 @@ namespace Simulation
                     if (treatment.Treatment.ToUpper() == "NO TREATMENT")
                     {
                         var noTreatmentBenefit = new CalculateBenefit(nYear, treatment, m_listDeteriorate, m_listCalculatedAttribute, treatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                        var b = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue);
+                        var b = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue);
                         noTreatments = treatment;
                         continue;
                     }
@@ -3369,12 +3373,12 @@ namespace Simulation
             
             String sFile;
             TextWriter tw = SimulationMessaging.CreateTextWriter("bc_" + m_strSimulationID +".txt", out sFile);
-
+            Hashtable nextAttributeValue = null;
             foreach (Sections section in m_listSections)
             {
                 var noTreatment = m_listTreatments.Find(t => t.Treatment.ToUpper() == "NO TREATMENT");
                 var noTreatmentBenefit = new CalculateBenefit(nYear, noTreatment, m_listDeteriorate, m_listCalculatedAttribute, noTreatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                var baseBenefit = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue);
+                var baseBenefit = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue, out nextAttributeValue);
 
 
 
@@ -3408,7 +3412,7 @@ namespace Simulation
                         Hashtable hashRL = new Hashtable();
 
                         var treamentBenefit = new CalculateBenefit(nYear, treatment, m_listDeteriorate, m_listCalculatedAttribute, noTreatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                        var benefit = treamentBenefit.Solve(section.m_hashNextAttributeValue);
+                        var benefit = treamentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue);
 
 
 
@@ -3499,7 +3503,7 @@ namespace Simulation
                         int nPrevious = nTargetDeficient;
                         if (bDeficient)
                         {
-                            nTargetDeficient += IsSectionDeficient(section, nYear, section.m_hashNextAttributeValue);
+                            nTargetDeficient += IsSectionDeficient(section, nYear, nextAttributeValue);
                         }
 
                         //Does this section impact a target. (i.e. does its section current value hash meet a target criteria;
@@ -4297,7 +4301,10 @@ namespace Simulation
                                     {
                                         list = new List<String>();
                                         m_hashTargetSectionID.Add(target.ID, list);
-                                        //m_listTargets.Add(target);
+                                        if(!m_listTargets.Contains(target))
+                                        { 
+                                            m_listTargets.Add(target);
+                                        }
                                     }
                                     else
                                     {
@@ -4317,7 +4324,10 @@ namespace Simulation
                                     {
                                         list = new List<String>();
                                         m_hashTargetSectionID.Add(target.ID, list);
-                                        //m_listTargets.Add(target);
+                                        if (!m_listTargets.Contains(target))
+                                        {
+                                            m_listTargets.Add(target);
+                                        }
                                     }
                                     else
                                     {
@@ -5026,559 +5036,10 @@ namespace Simulation
 
         private void SpendUntilTargetsDeficientMet(int nYear)
         {
-            if (SimulationMessaging.IsOMS)
-            {
-                SpendUntilTargetsDeficientMetOMS(nYear);
-
-            }
-            else
-            {
-                SpendUntilTargetsDeficientMetRoadCare(nYear);
-            }
+            SpendUntilTargetsDeficientMetRoadCare(nYear);
         }
 
-        private void SpendUntilTargetsDeficientMetOMS(int nYear)
-        {
-            //Cost inflation calculations
-            bool isDeficient = false;//Is a deficient analysis being performed.
-            bool isTarget = false;// Is a targets analysis being performed
-            if (Method.TypeBudget.Contains("Deficient")) isDeficient = true;
-            if (Method.TypeBudget.Contains("Target")) isTarget = true;
 
-            int nInflationYear = nYear - Investment.StartYear;
-            double dRate = Investment.Inflation;
-            float fInflationMultiplier = (float)Math.Pow(1 + dRate, (double)nInflationYear);
-
-            String sOutFile = "";
-            TextWriter tw = SimulationMessaging.CreateTextWriter("report_" + m_strSimulationID + ".csv", out sOutFile);
-            String strSectionID = "";
-
-            foreach(Treatments treatment in m_listTreatments)
-            {
-                if(treatment.Treatment.ToUpper() == "NO TREATMENT")
-                {
-                    noTreatments = treatment;
-                }
-            }
-
-
-            int nCommitOrder = 0;
-            bool bRemoveTreatedSection = false;
-            AppliedTreatment previousApplied = null;
-            bool isAllTargetsMet = false;
-            while (m_listApplyTreatment.Count > 0 && !isAllTargetsMet)
-            {
-
-                //FOR OMS THIS NEEDS JUST TO REMOVE SOME TREATMENTS.  NOT ALL OF TREATMENTS ATTACHED TO A GIVEN SECTION.
-                if (strSectionID != "" && bRemoveTreatedSection)
-                {
-                    m_listApplyTreatment.RemoveAll(delegate(AppliedTreatment at) { return !at.Available; });
-
-                }
-
-
-
-                //Remove all targets and deficient that are met from
-                try
-                {
-                    CheckTargetsAndRemoveMet(nYear);
-                }
-                catch (Exception e)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Removing targets and deficient error:" + e.Message));
-                    throw e;
-                }
-
-                if (m_listApplyTreatment.Count == 0) continue;
-
-                AppliedTreatment treatment = null;
-                try
-                {
-                    m_listApplyTreatment.Sort(delegate(AppliedTreatment t1, AppliedTreatment t2) { return t2.SelectionWeight.CompareTo(t1.SelectionWeight); });
-                    //Apply first treatment on list
-                    treatment = (AppliedTreatment)m_listApplyTreatment[0];
-                }
-                catch (Exception e)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Error: Sorting and getting best BenefitCost treatment:" + e.Message));
-                    throw e;
-                }
-
-                Hashtable hashOutput = null;
-                //NEED TO LOOP THROUGH MULTIPLE TREATMENTS FOR THE OMS ANALYSIS
-                List<AppliedTreatment> singleTreatments = GetSingleTreatmentsFromMultiple(treatment);
-                foreach (AppliedTreatment appliedTreatment in singleTreatments)
-                {
-
-                    strSectionID = appliedTreatment.SectionID;
-                    String sTreatment = appliedTreatment.Treatment;
-                    int nAny = appliedTreatment.Any;
-                    int nSame = appliedTreatment.Same;
-                    float fCost = appliedTreatment.Cost;
-                    String strMultipleBudget = appliedTreatment.Budget;
-                    string strBudget;
-                    String sRemaining = appliedTreatment.RemainingLife.ToString();
-                    String sBenefit = appliedTreatment.Benefit.ToString();
-                    String sBC = appliedTreatment.BenefitCostRatio.ToString();
-                    String strTreatmentID = appliedTreatment.TreatmentID;
-                    String sRLHash = appliedTreatment.RemainingLifeHash;
-
-                    // Get the section that matches this
-                    Sections section = m_listSections.Find(delegate(Sections s) { return s.SectionID == strSectionID; });
-                    if (section == null) continue;//Should never happen.
-
-
-                    try
-                    {
-                        //Check if already treated.  Check if treament is in a shadow or will cast a shadow.
-                        if (!section.IsOMSTreatmentAllowed(sTreatment, nAny, nSame, nYear))
-                        {
-                            m_listApplyTreatment.Remove(treatment);
-                            bRemoveTreatedSection = false;
-                            continue;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        SimulationMessaging.AddMessage(new SimulationMessage("Error:Checking if treatment is allowed:" + e.Message));
-                        throw e;
-                    }
-
-                    float fAmount = section.Area * fCost * fInflationMultiplier;
-
-                    try
-                    {
-                        if (strMultipleBudget == null) throw new Exception("Budget is equal to null");
-                        strBudget = null;
-                        foreach (Priorities priority in m_listPriorities)
-                        {
-                            if (strBudget == null)
-                            {
-                                strBudget = Investment.IsBudgetAvailable(fAmount, strMultipleBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority);
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        SimulationMessaging.AddMessage(new SimulationMessage("Error: Checking priority in targets and deficient for treatment (" + sTreatment + "):" + e.Message));
-                        throw e;
-                    }
-
-                    //If unlimited budget, just take first budget
-                    if (strBudget == null && Method.IsOMSUnlimited)
-                    {
-                        string[] budgets;
-                        try
-                        {
-                            budgets = strMultipleBudget.Split('|');
-                            strBudget = budgets[0];
-                        }
-                        catch (Exception e)
-                        {
-                            SimulationMessaging.AddMessage(new SimulationMessage("Error: Budget is null." + e.Message));
-                            m_listApplyTreatment.Remove(treatment);
-                            bRemoveTreatedSection = false;
-                            continue;
-                        }
-                    }
-                    else if(strBudget == null)
-                    {
-                        //Budget not available.
-                        m_listApplyTreatment.Remove(treatment);
-                        bRemoveTreatedSection = false;
-                        continue;
-                    }
-
-
-
-                    if (Method.TypeBudget == "Until Targets Met")//If all targets are met... remove the rest of the treatments.
-                    {
-                        List<Targets> listNotMet = m_listTargets.FindAll(delegate(Targets t) { return t.IsTargets == true; });
-                        if (listNotMet.Count == 0)
-                        {
-                            isAllTargetsMet = true;
-                            continue;
-                        }
-                    }
-
-                    if (Method.TypeBudget == "Until Deficient Met")
-                    {
-                        List<Targets> listNotMet = m_listTargets.FindAll(delegate(Targets t) { return t.IsTargets == false; });
-                        if (listNotMet.Count == 0)
-                        {
-                            isAllTargetsMet = true;
-                            continue;
-                        }
-                    }
-
-
-                    if (Method.TypeBudget == "Targets/Deficient Met")
-                    {
-                        if (m_listTargets.Count == 0)
-                        {
-                            isAllTargetsMet = true;
-                            continue;
-                        }
-                    }
-
-
-                    String strChangeHash;
-                    float fNewArea;
-                    try
-                    {
-
-                        //Spend budget.
-                        Investment.SpendBudget(fAmount, strBudget, nYear.ToString());
-
-                        //Mark treated.
-                        section.Treated = true;
-                        section.AnyYear = nYear + nAny;
-
-
-                        SameTreatment sameTreatment = new SameTreatment();
-                        sameTreatment.strTreatment = sTreatment;
-                        sameTreatment.nYear = nYear + nSame;
-                        section.m_listSame.Add(sameTreatment);
-
-                        //Apply consequences.
-                        double oci = (double) section.m_hashNextAttributeValue["OverallConditionIndex"];
-
-                        hashOutput = ApplyConsequences(section.m_hashNextAttributeValue, strTreatmentID, out strChangeHash,section);// This is the attribute value pair for this year.
-                        if(section.m_hashAttributeYearValues.ContainsKey(nYear)) section.m_hashYearAttributeValues.Remove(nYear);
-
-
-                        double deltaOCI = Convert.ToDouble(hashOutput["OverallConditionIndex"]) - oci;
-                        String strPair = "OverallConditionIndex\t" + deltaOCI.ToString() + "\n";
-                        strChangeHash += strPair;
-
-                        if (section.m_hashYearAttributeValues.Contains(nYear)) section.m_hashYearAttributeValues.Remove(nYear);
-                        section.m_hashYearAttributeValues.Add(nYear, hashOutput);
-                        section.OCI.UpdateApparentAge(hashOutput);
-
-                        float fOldArea = section.Area;
-                        //Calculate new section area
-                        section.CalculateArea(nYear);
-                        fNewArea = section.Area;
-
-                        //Update targets.
-                        UpdateTargetsAndDeficiency(nYear, fOldArea, fNewArea, section.m_hashNextAttributeValue, hashOutput);
-                        bRemoveTreatedSection = true;
-                    }
-                    catch (Exception e)
-                    {
-                        SimulationMessaging.AddMessage(new SimulationMessage("Error updating Targets and deficient." + e.Message));
-                        throw e;
-                    }
-
-
-                    //Write report.
-
-                    String strOut;
-                    switch (DBMgr.NativeConnectionParameters.Provider)
-                    {
-                        case "MSSQL":
-                            strOut = ",";
-                            strOut += section.SectionID + ","
-                                                    + nYear.ToString() + ","
-                                                    + sTreatment + ","
-                                                    + nAny.ToString() + ","
-                                                    + nSame.ToString() + ","
-                                                    + strBudget + ","
-                                                    + fAmount.ToString("f") + ","
-                                                    + sRemaining + ","
-                                                    + sBenefit + ","
-                                                    + sBC + ","
-                                                    + strTreatmentID + ","
-                                                    + "0" + ","//Priority
-                                                    + sRLHash + ","
-                                                    + nCommitOrder.ToString() + ","   //Commit order.
-                                                    + "0" + "," //Committed
-                                                    + section.NumberTreatment.ToString() + "," //number viable treatment
-                                                    + strChangeHash + ","
-                                                    + fNewArea.ToString() + ","
-                                                    + "0";
-                            tw.WriteLine(strOut);
-                            break;
-                        case "ORACLE":
-                            strOut = "";
-                            strOut += section.SectionID + ","
-                                                    + nYear.ToString() + ","
-                                                    + sTreatment + ","
-                                                    + nAny.ToString() + ","
-                                                    + nSame.ToString() + ","
-                                                    + strBudget + ","
-                                                    + fAmount.ToString("f") + ","
-                                                    + sRemaining + ","
-                                                    + sBenefit + ","
-                                                    + sBC + ","
-                                                    + strTreatmentID + ","
-                                                    + "0" + ","//Priority
-                                                    + sRLHash + ","
-                                                    + nCommitOrder.ToString() + ","   //Commit order.
-                                                    + "0" + "," //Committed
-                                                    + section.NumberTreatment.ToString() + "," //number viable treatment
-                                                    + strChangeHash + ","
-                                                    + fNewArea.ToString() + ","
-                                                    + "0";
-
-                            tw.Write(strOut);
-                            tw.Write("#ORACLEENDOFLINE#");
-
-                            break;
-                        default:
-                            throw new NotImplementedException("TODO: implement ANSI version of SpendUntilTargetsDeficientMet()");
-                    }
-                    nCommitOrder++;
-
-                    //After treatment applied.  All multiple treatments which contain any part of the applied treatment must be marked as not available in m_listApplyTreatment.  This is done by marking available = false in section;
-                    foreach (AppliedTreatment at in section.AppliedTreatments)
-                    {
-                        List<AppliedTreatment> sectionApplied = GetSingleTreatmentsFromMultiple(at);
-                        foreach (AppliedTreatment single in singleTreatments)
-                        {
-                            AppliedTreatment found = sectionApplied.Find(delegate(AppliedTreatment a) { return a.TreatmentID == single.TreatmentID; });
-                            if (found != null)
-                            {
-                                at.Available = false;
-                            }
-                        }
-                    }
-
-                    //All treatments with available = true need their benefit cost recalculated and main list updated.
-                    foreach (AppliedTreatment at in section.AppliedTreatments)
-                    {
-                        if (!at.Available) continue;
-                        Hashtable hashBeforeTreatment = new Hashtable();
-                        foreach (string key in hashOutput.Keys)
-                        {
-                            hashBeforeTreatment.Add(key, hashOutput[key]);
-                        }
-                        //int numberTargetDeficient = 0;
-                       previousApplied = at;
-                        while (previousApplied != null)
-                        {
-                            //Is this treatment still valid?
-                            string changeHash = null;
-                            double benefit = 0;
-                            int remainingLife = 0;
-                            Treatments updateTreatment = m_listTreatments.Find(delegate(Treatments t) { return t.TreatmentID == previousApplied.TreatmentID; });
-
-                            if (updateTreatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
-                            {
-                                //If yes recalculate BC.
-                                float cost = GetTreatmentCost(section, updateTreatment,out int cumulativeCostId);
-                                Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
-                                section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
-                                int numberTargetDeficient = 0;
-                                
-                                if (isDeficient) numberTargetDeficient += IsSectionDeficient(section, nYear, hashAfterTreatment);//Does this treatment help fix a deficiency
-                                if (isTarget) numberTargetDeficient += IsSectionTarget(section, nYear);  //Does this section impact a target. (i.e. does its section current value hash meet a target criteria;
-                                previousApplied.BenefitCostRatio = benefit / cost;
-                                previousApplied.Cost = cost;
-                                previousApplied.Benefit = benefit;
-                                previousApplied.RemainingLife = remainingLife;
-                                previousApplied.NumberTreatmentDeficient = numberTargetDeficient;
-                                previousApplied = previousApplied.MultipleTreatment;
-                            }
-                            else
-                            {
-                                at.Available = false;
-                                previousApplied = null;
-                            }
-                        }
-                    }
-
-                    //Need to check if for this section that something just became available.
-                    foreach (Treatments newlyAvailbleTreatment in m_listTreatments)
-                    {
-                        string changeHash;
-                        double benefit;
-                        int remainingLife;
-                        if (newlyAvailbleTreatment.Treatment.ToUpper() == "NO TREATMENT") continue;
-                        if (newlyAvailbleTreatment.OMSIsExclusive) continue;
-                        if (newlyAvailbleTreatment.OMSIsRepeat) continue;
-                        AppliedTreatment found = section.AppliedTreatments.Find(delegate(AppliedTreatment a) { return a.TreatmentID == newlyAvailbleTreatment.TreatmentID; });
-                        if (found != null) continue;
-                        Hashtable hashBeforeTreatment = new Hashtable();
-                        foreach (string key in hashOutput.Keys)
-                        {
-                            hashBeforeTreatment.Add(key, hashOutput[key]);
-                        }
-                        if (newlyAvailbleTreatment.IsTreatmentCriteriaMet(hashBeforeTreatment))
-                        {
-                            float cost = GetTreatmentCost(section, newlyAvailbleTreatment,out int cumulativeCostId);
-                            Hashtable hashAfterTreatment = ApplyConsequences(hashBeforeTreatment, treatment.TreatmentID, out changeHash,section);
-                            section.OCI.GetBenefitAndRemainingLife(hashBeforeTreatment, hashAfterTreatment, out benefit, out remainingLife, 30);
-                            AppliedTreatment newAppliedTreatment = MakeAppliedTreatment(section, newlyAvailbleTreatment, cost, benefit, (double)remainingLife, 0);
-                            section.AppliedTreatments.Add(newAppliedTreatment);
-                            m_listApplyTreatment.Add(newAppliedTreatment);
-                        }
-                    }
-
-                    //section.m_hashYearAttributeValues.Remove(nYear);
-                    //section.m_hashYearAttributeValues.Add(nYear, hashOutput);
-
-                }
-            }
-
-            //Loop through all SECTIONS and apply no treatment to sections without treatments
-            try
-            {
-                foreach (Sections section in m_listSections)
-                {
-                    if (section.Treated) continue;
-                    //Apply consequences.
-                    String strChangeHash;
-                    Hashtable hashAttributeValue = ApplyConsequences(section.m_hashNextAttributeValue, noTreatments.TreatmentID, out strChangeHash,section);
-                    section.m_hashYearAttributeValues.Add(nYear, hashAttributeValue);
-
-
-                    Hashtable hashRL = new Hashtable();
-                    double dRemainingLife = 100;
-                    foreach (Deteriorate deteriorate in m_listDeteriorate)
-                    {
-
-                        if (SimulationMessaging.Method.IsConditionalRSL)
-                        {
-
-                            if (!hashRL.Contains(deteriorate.Attribute))
-                            {
-                                hashRL.Add(deteriorate.Attribute, 0); //Add to remain life hash
-                            }
-                            dRemainingLife = 0;
-                        }
-
-                        else
-                        {
-                            if (deteriorate.IsCriteriaMet(hashAttributeValue))
-                            {
-                                double dRL = 0;
-
-                                if (deteriorate.CalculateRemainingLife(hashAttributeValue, hashAttributeValue, out dRL))
-                                {
-                                    if (!hashRL.Contains(deteriorate.Attribute))
-                                    {
-                                        hashRL.Add(deteriorate.Attribute, dRL);
-                                    }
-                                    else
-                                    {
-                                        double dRLOld = (double)hashRL[deteriorate.Attribute];
-                                        if (dRL < dRLOld)
-                                        {
-                                            hashRL.Remove(deteriorate.Attribute);
-                                            hashRL.Add(deteriorate.Attribute, dRL);
-                                        }
-
-                                    }
-                                    if (dRL < dRemainingLife)
-                                    {
-                                        dRemainingLife = dRL;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    String strRLHash = this.CreateRemainingLifeHashString(hashRL);
-
-
-                    //Write report.
-
-                    String strOut;
-                    switch (DBMgr.NativeConnectionParameters.Provider)
-                    {
-                        case "MSSQL":
-                            strOut = ",";
-                            strOut += section.SectionID + ","
-                                                    + nYear.ToString() + ","
-                                                    + noTreatments.Treatment + ","
-                                                    + "0" + ","
-                                                    + "0" + ","
-                                                    + "" + ","
-                                                    + "0" + ","
-                                                    + dRemainingLife.ToString("f") + ","
-                                                    + "0" + ","
-                                                    + "0" + ","
-                                                    + noTreatments.TreatmentID + ","
-                                                    + "0" + ","//Priority
-                                                    + strRLHash + ","
-                                                    + "0" + "," //Commit order.
-                                                    + "0" + "," //bool whether committed or not
-                                                    + section.NumberTreatment.ToString() + ","
-                                                    + strChangeHash + ","
-                                                    + section.Area.ToString() + ","
-                                                    + "0";//(0) Recommended, (1) Committed, (2) Feasible, (3) Repeat, (4) Do not allow
-
-                            tw.WriteLine(strOut);
-
-                            break;
-                        case "ORACLE":
-                            strOut = "";
-                            strOut += section.SectionID + ","
-                                                    + nYear.ToString() + ","
-                                                    + noTreatments.Treatment + ","
-                                                    + "0" + ","
-                                                    + "0" + ","
-                                                    + "" + ","
-                                                    + "0" + ","
-                                                    + dRemainingLife.ToString("f") + ","
-                                                    + "0" + ","
-                                                    + "0" + ","
-                                                    + noTreatments.TreatmentID + ","
-                                                    + "0" + ","//Priority
-                                                    + strRLHash + ","
-                                                    + "0" + "," //Commit order.
-                                                    + "0" + "," //bool whether committed or not
-                                                    + section.NumberTreatment.ToString() + ","
-                                                    + strChangeHash + ","
-                                                    + section.Area.ToString() + ","
-                                                    + "0";
-                            tw.Write(strOut);
-                            tw.Write("#ORACLEENDOFLINE#");
-
-                            break;
-                        default:
-                            throw new NotImplementedException("TODO: implement ANSI version of SpendUntilTargetsDeficientMet()");
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                SimulationMessaging.AddMessage(new SimulationMessage("Error: Applying No Treatment to Targets and Deficient." + e.Message));
-                throw e;
-            }
-            tw.Close();
-            _spanAnalysis += DateTime.Now - _dateTimeLast;
-            _dateTimeLast = DateTime.Now;
-            try
-            {
-
-                switch (DBMgr.NativeConnectionParameters.Provider)
-                {
-                    case "MSSQL":
-                        DBMgr.SQLBulkLoad(SimulationMessaging.ReportTable, sOutFile, ',');
-                        break;
-                    case "ORACLE":
-
-                        //throw new NotImplementedException("TODO: Figure out columns for SpendUnitTargetDeficientMet");
-                        List<string> reportColumns = DBMgr.GetTableColumns(SimulationMessaging.ReportTable);
-                        reportColumns.Remove("ID_");
-                        DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, SimulationMessaging.ReportTable, sOutFile, reportColumns, ",", " \"str '#ORACLEENDOFLINE#'\"");
-                        break;
-                    default:
-                        throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-                    //break;
-                }
-            }
-            catch (Exception e)
-            {
-
-                SimulationMessaging.AddMessage(new SimulationMessage("Error: Bulk loading results from year = " + nYear.ToString() + ". " + e.Message));
-                throw e;
-            }
-
-            _spanReport += DateTime.Now - _dateTimeLast;
-            _dateTimeLast = DateTime.Now;
-        }
 
         private void SpendUntilTargetsDeficientMetRoadCare(int nYear)
         {
@@ -6999,6 +6460,11 @@ namespace Simulation
                             nCommitOrder++;
 
 
+                        }
+                        //If spend across budgets is enabled.  Move money to the next budget.
+                        if (Method.UseAcrossBudgets)
+                        {
+                            Investment.MoveBudgetAcross(strBudget, nYear.ToString(), priority);
                         }
                     }
                 }

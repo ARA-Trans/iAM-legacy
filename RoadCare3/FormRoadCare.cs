@@ -67,7 +67,7 @@ namespace RoadCare3
 
                 // Show the solution explorer
                 m_solutionExplorer = new SolutionExplorer(ref dockPanelMain);
-                m_solutionExplorer.TabText = "BridgeCare Explorer";
+                m_solutionExplorer.TabText = "RoadCare Explorer";
                 FormManager.AddSolutionExplorer(m_solutionExplorer);
 
                 String myDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -108,7 +108,7 @@ namespace RoadCare3
                     m_formOutputWindow.Show(dockPanelMain, DockState.DockBottom);
 
                 }
-                this.Text = "DSS BridgeCare:" + DBMgr.GetNativeConnection().Database.ToString();
+                this.Text = "DSS RoadCare:" + DBMgr.GetNativeConnection().Database.ToString();
                 if (!Global.SecurityOperations.CanLoadBinaries())
                 {
                     loadBinariesToolStripMenuItem.Enabled = false;

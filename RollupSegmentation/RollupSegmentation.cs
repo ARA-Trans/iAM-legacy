@@ -16,6 +16,7 @@ using CalculateEvaluate;
 using RoadCareGlobalOperations;
 using DataObjects;
 using System.Text.RegularExpressions;
+using DataAccessLayer;
 
 namespace RollupSegmentation
 {
@@ -592,7 +593,7 @@ namespace RollupSegmentation
 											 + "\t" + dr["SECTION"].ToString()
 											 + "\t" + area.ToString()
 											 + "\tft^2";// +dr["AREATYPE"].ToString();
-				if( dr["GEOMETRY"] != null )
+				if( dr["GEOMETRY"] != DBNull.Value )
 				{
 					strRow += "\t" + dr["GEOMETRY"].ToString()
 					+ "\t" + dr["Envelope_MinX"].ToString()
@@ -602,7 +603,7 @@ namespace RollupSegmentation
 				}
 				else
 				{
-					strRow += "\t\t\t\t";
+					strRow += "\t\t\t\t\t";
 				}
 				listSectionSRS.Add(new DataPoint(nSection.ToString(), dr["FACILITY"].ToString(), dr["SECTION"].ToString(), area.ToString(), "1"));
 

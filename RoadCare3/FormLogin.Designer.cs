@@ -1013,7 +1013,7 @@
             this.groupBox15.Size = new System.Drawing.Size(357, 81);
             this.groupBox15.TabIndex = 0;
             this.groupBox15.TabStop = false;
-            this.groupBox15.Text = "BridgeCare Authentication";
+            this.groupBox15.Text = "RoadCare Authentication";
             // 
             // tbRoadCareUserName
             // 
@@ -1089,7 +1089,7 @@
             this.groupBox7.Size = new System.Drawing.Size(373, 38);
             this.groupBox7.TabIndex = 997;
             this.groupBox7.TabStop = false;
-            this.groupBox7.Text = "About BridgeCare";
+            this.groupBox7.Text = "About RoadCare";
             // 
             // btnActivate
             // 
@@ -1143,7 +1143,7 @@
             this.KeyPreview = true;
             this.Name = "FormLogin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "BridgeCare";
+            this.Text = "RoadCare";
             this.Load += new System.EventHandler(this.FormLogin_Load);
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormLogin_KeyPress);
             this.gbxSqlServer3.ResumeLayout(false);

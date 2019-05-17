@@ -120,13 +120,14 @@ namespace RoadCare3
                 textBoxDescription.Text = "";
 
             }
-
-            for (var i = 1; i < 100; i++)
-            {
-                ScheduledYears.Items.Add(i.ToString());
-            }
+           // Disabled for MDSHA
+               for (var i = 1; i < 100; i++)
+                {
+                    ScheduledYears.Items.Add(i.ToString());
+                }
 
             UpdateScheduledTreatments();
+            //    tabControlFeasibility.TabPages.Remove(tabPageScheduled);
         }
 
         private void UpdateScheduledTreatments()
@@ -353,23 +354,23 @@ namespace RoadCare3
                 }
             }
 
-            strSelect =
-                "SELECT SCHEDULEDID, SCHEDULEDYEAR, SCHEDULEDTREATMENTID FROM SCHEDULED WHERE TREATMENTID='" +
-                strTag + "'";
-            ds = DBMgr.ExecuteQuery(strSelect);
-            foreach (DataRow dr in ds.Tables[0].Rows)
-            {
-                var scheduledId = dr["SCHEDULEDID"].ToString();
-                var scheduledTreatmentId = dr["SCHEDULEDTREATMENTID"].ToString();
-                var scheduledYear = dr["SCHEDULEDYEAR"].ToString();
+            //strSelect =
+            //    "SELECT SCHEDULEDID, SCHEDULEDYEAR, SCHEDULEDTREATMENTID FROM SCHEDULED WHERE TREATMENTID='" +
+            //    strTag + "'";
+            //ds = DBMgr.ExecuteQuery(strSelect);
+            //foreach (DataRow dr in ds.Tables[0].Rows)
+            //{
+            //    var scheduledId = dr["SCHEDULEDID"].ToString();
+            //    var scheduledTreatmentId = dr["SCHEDULEDTREATMENTID"].ToString();
+            //    var scheduledYear = dr["SCHEDULEDYEAR"].ToString();
 
-                if (m_hashTreatment.Contains(scheduledTreatmentId))
-                {
-                    var treatment = (Treatment) m_hashTreatment[scheduledTreatmentId];
-                    var rowIndex = dataGridViewScheduled.Rows.Add(treatment.m_strTreatment, scheduledYear);
-                    dataGridViewScheduled.Rows[rowIndex].Tag = scheduledId;
-                }
-            }
+            //    if (m_hashTreatment.Contains(scheduledTreatmentId))
+            //    {
+            //        var treatment = (Treatment) m_hashTreatment[scheduledTreatmentId];
+            //        var rowIndex = dataGridViewScheduled.Rows.Add(treatment.m_strTreatment, scheduledYear);
+            //        dataGridViewScheduled.Rows[rowIndex].Tag = scheduledId;
+            //    }
+            //}
         }
 
 

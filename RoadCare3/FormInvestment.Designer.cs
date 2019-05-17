@@ -152,8 +152,8 @@ namespace RoadCare3
             this.textBoxInflation.Name = "textBoxInflation";
             this.textBoxInflation.Size = new System.Drawing.Size(42, 20);
             this.textBoxInflation.TabIndex = 3;
-            this.textBoxInflation.Validated += new System.EventHandler(this.textBoxInflation_Validated);
             this.textBoxInflation.Enter += new System.EventHandler(this.textBoxInflation_Enter);
+            this.textBoxInflation.Validated += new System.EventHandler(this.textBoxInflation_Validated);
             // 
             // label1
             // 
@@ -182,27 +182,27 @@ namespace RoadCare3
             this.textBoxDiscount.Name = "textBoxDiscount";
             this.textBoxDiscount.Size = new System.Drawing.Size(42, 20);
             this.textBoxDiscount.TabIndex = 5;
-            this.textBoxDiscount.Validated += new System.EventHandler(this.textBoxDiscount_Validated);
             this.textBoxDiscount.Enter += new System.EventHandler(this.textBoxDiscount_Enter);
+            this.textBoxDiscount.Validated += new System.EventHandler(this.textBoxDiscount_Validated);
             // 
             // dgvBudget
             // 
             this.dgvBudget.AllowUserToAddRows = false;
             this.dgvBudget.AllowUserToDeleteRows = false;
-            this.dgvBudget.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvBudget.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvBudget.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvBudget.ContextMenuStrip = this.contextMenuStripInvesment;
-            this.dgvBudget.Location = new System.Drawing.Point(3, 94);
+            this.dgvBudget.Location = new System.Drawing.Point(3, 85);
             this.dgvBudget.Margin = new System.Windows.Forms.Padding(2);
             this.dgvBudget.Name = "dgvBudget";
             this.dgvBudget.RowTemplate.Height = 24;
-            this.dgvBudget.Size = new System.Drawing.Size(653, 341);
+            this.dgvBudget.Size = new System.Drawing.Size(653, 350);
             this.dgvBudget.TabIndex = 7;
+            this.dgvBudget.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBudget_CellEnter);
             this.dgvBudget.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBudget_CellValueChanged);
             this.dgvBudget.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvBudget_KeyDown);
-            this.dgvBudget.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBudget_CellEnter);
             // 
             // contextMenuStripInvesment
             // 
@@ -211,32 +211,32 @@ namespace RoadCare3
             this.copyToolStripMenuItem,
             this.pasteToolStripMenuItem});
             this.contextMenuStripInvesment.Name = "contextMenuStripInvesment";
-            this.contextMenuStripInvesment.Size = new System.Drawing.Size(117, 70);
+            this.contextMenuStripInvesment.Size = new System.Drawing.Size(108, 70);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.copyToolStripMenuItem.Text = "Copy";
             this.copyToolStripMenuItem.Click += new System.EventHandler(this.copyToolStripMenuItem_Click);
             // 
             // pasteToolStripMenuItem
             // 
             this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
-            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.pasteToolStripMenuItem.Text = "Paste";
             this.pasteToolStripMenuItem.Click += new System.EventHandler(this.pasteToolStripMenuItem_Click);
             // 
             // textBoxBudgetOrder
             // 
-            this.textBoxBudgetOrder.Location = new System.Drawing.Point(92, 67);
+            this.textBoxBudgetOrder.Location = new System.Drawing.Point(92, 61);
             this.textBoxBudgetOrder.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxBudgetOrder.Name = "textBoxBudgetOrder";
             this.textBoxBudgetOrder.ReadOnly = true;
@@ -247,7 +247,7 @@ namespace RoadCare3
             // 
             // buttonEditOrder
             // 
-            this.buttonEditOrder.Location = new System.Drawing.Point(549, 68);
+            this.buttonEditOrder.Location = new System.Drawing.Point(549, 62);
             this.buttonEditOrder.Margin = new System.Windows.Forms.Padding(2);
             this.buttonEditOrder.Name = "buttonEditOrder";
             this.buttonEditOrder.Size = new System.Drawing.Size(27, 19);
@@ -259,7 +259,7 @@ namespace RoadCare3
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(3, 67);
+            this.label3.Location = new System.Drawing.Point(3, 65);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(73, 13);
@@ -318,8 +318,8 @@ namespace RoadCare3
             this.Name = "FormInvestment";
             this.TabText = "FormInvestment";
             this.Text = "FormInvestment";
-            this.Load += new System.EventHandler(this.FormInvestment_Load);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormInvestment_FormClosed);
+            this.Load += new System.EventHandler(this.FormInvestment_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBudget)).EndInit();
             this.contextMenuStripInvesment.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();

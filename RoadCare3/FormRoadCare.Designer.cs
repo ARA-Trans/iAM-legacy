@@ -495,7 +495,7 @@ namespace RoadCare3
             this.IsMdiContainer = true;
             this.MainMenuStrip = this.menuMain;
             this.Name = "FormRoadCare";
-            this.Text = "BridgeCare Decision Support System";
+            this.Text = "RoadCare Decision Support System";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormRoadCare_FormClosed);
             this.Load += new System.EventHandler(this.formRoadCare_Load);

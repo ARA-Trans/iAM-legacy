@@ -35,7 +35,7 @@ namespace RoadCare3
 
             ActiveControl = btnLogin;
 
-            label7.Text = $"Version {Assembly.GetExecutingAssembly().GetName().Version} for {Global.YearOfLicense}";
+            label7.Text = $"Version {Assembly.GetExecutingAssembly().GetName().Version} for March 2019";
         }
 
         private void btnLogin_Click(object sender, EventArgs e)

@@ -1948,9 +1948,34 @@
             UpdateRoadCareForFunctionEquationTables();//  Adds the necessary columns to tables with equations for allowing use of complete functions for equations.
             UpdateRoadCareForConditionalRsl();
             UpdateRoadCareForCumulativeCost();
+            UpdateRoadCareForAcrossBudgets();
         }
 
-	    private static void UpdateRoadCareForCumulativeCost()
+        private static void UpdateRoadCareForAcrossBudgets()
+        {
+            var ds = DBMgr.GetTableColumnsWithTypes("SIMULATIONS");
+            bool isCumulativeCost = false;
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                if (row["column_name"].ToString().ToUpper() == "USE_ACROSS_BUDGET")
+                {
+                    isCumulativeCost = true;
+                }
+            }
+            if (!isCumulativeCost)
+            {
+                if (DBMgr.NativeConnectionParameters.Provider == "ORACLE")
+                {
+                    DBMgr.ExecuteNonQuery("ALTER TABLE SIMULATIONS ADD USE_ACROSS_BUDGET NUMBER(1) NULL");
+                }
+                else
+                {
+                    DBMgr.ExecuteNonQuery("ALTER TABLE SIMULATIONS ADD USE_ACROSS_BUDGET BIT NULL");
+                }
+            }
+        }
+
+        private static void UpdateRoadCareForCumulativeCost()
 	    {
 	        var ds = DBMgr.GetTableColumnsWithTypes("SIMULATIONS");
 	        bool isCumulativeCost = false;

@@ -212,7 +212,7 @@ namespace RoadCare3
                 }
             }
 
-            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT,USE_CUMULATIVE_COST FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT,USE_CUMULATIVE_COST,USE_ACROSS_BUDGET FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
             ds = new DataSet();
 
             try
@@ -239,10 +239,27 @@ namespace RoadCare3
             {
                 useCumulativeCost = Convert.ToBoolean(ds.Tables[0].Rows[0]["USE_CUMULATIVE_COST"]);
             }
+
+            var useAcrossBudget = false;
+
+            if (ds.Tables[0].Rows[0]["USE_ACROSS_BUDGET"] != DBNull.Value)
+            {
+                useAcrossBudget = Convert.ToBoolean(ds.Tables[0].Rows[0]["USE_ACROSS_BUDGET"]);
+            }
+
+
             checkBoxMultipleCost.Checked = useCumulativeCost;
 
+            if (useAcrossBudget)
+            {
+                radioButtonAcrossBudget.Checked = true;
+            }
+            else
+            {
+                radioButtonWithinBudget.Checked = true;
+            }
 
-            cbBenefit.Text = strBenefitVariable.ToString();
+                cbBenefit.Text = strBenefitVariable.ToString();
             cbBudget.Text = strBudgetConstraint.ToString();
             cbOptimization.Text = strAnalysis.ToString();
             cbWeighting.Text = strWeighting.ToString();
@@ -1340,6 +1357,38 @@ namespace RoadCare3
                 return;
             }
 
+        }
+
+        private void TabPagePriority_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RadioButtonWithinBudget_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RadioButtonAcrossBudget_CheckedChanged(object sender, EventArgs e)
+        {
+            var update = "";
+            if (radioButtonAcrossBudget.Checked)
+            {
+                update = "UPDATE SIMULATIONS SET USE_ACROSS_BUDGET='1' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            else
+            {
+                update = "UPDATE SIMULATIONS SET USE_ACROSS_BUDGET='0' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            try
+            {
+                DBMgr.ExecuteNonQuery(update);
+            }
+            catch (Exception exception)
+            {
+                Global.WriteOutput("Error updating apply budget: " + exception.Message.ToString());
+                return;
+            }
         }
     }
 }
