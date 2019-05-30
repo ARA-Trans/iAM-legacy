@@ -1627,8 +1627,9 @@ namespace RoadCare3
 
 						FormInvestment formInvestment;
 						if (!FormManager.IsFormInvestmentOpen(strSimID, out formInvestment))
-						{
-							formInvestment = new FormInvestment(strNetworkName, strSimulationName, strSimID);
+                        {
+                            Hashtable hashAttributeYear = Global.GetAttributeYear(tvSolutionExplorer.SelectedNode.Parent.Parent.Parent.Tag.ToString());
+                            formInvestment = new FormInvestment(strNetworkName, strSimulationName, strSimID, hashAttributeYear);
 							formInvestment.Tag = strSimID;
 							FormManager.AddFormInvestment(formInvestment);
 							formInvestment.TabText = strSimulationName + "-Investment";

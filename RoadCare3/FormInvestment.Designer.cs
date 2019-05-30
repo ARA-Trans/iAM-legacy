@@ -47,9 +47,18 @@ namespace RoadCare3
             this.label4 = new System.Windows.Forms.Label();
             this.textBoxStartYear = new System.Windows.Forms.TextBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.dataGridViewBudgetCriteria = new System.Windows.Forms.DataGridView();
+            this.Budget = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.BudgetCriteria = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.splitContainerInvestments = new System.Windows.Forms.SplitContainer();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBudget)).BeginInit();
             this.contextMenuStripInvesment.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewBudgetCriteria)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerInvestments)).BeginInit();
+            this.splitContainerInvestments.Panel1.SuspendLayout();
+            this.splitContainerInvestments.Panel2.SuspendLayout();
+            this.splitContainerInvestments.SuspendLayout();
             this.SuspendLayout();
             // 
             // labelInvestment
@@ -189,16 +198,14 @@ namespace RoadCare3
             // 
             this.dgvBudget.AllowUserToAddRows = false;
             this.dgvBudget.AllowUserToDeleteRows = false;
-            this.dgvBudget.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvBudget.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvBudget.ContextMenuStrip = this.contextMenuStripInvesment;
-            this.dgvBudget.Location = new System.Drawing.Point(3, 85);
+            this.dgvBudget.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvBudget.Location = new System.Drawing.Point(0, 0);
             this.dgvBudget.Margin = new System.Windows.Forms.Padding(2);
             this.dgvBudget.Name = "dgvBudget";
             this.dgvBudget.RowTemplate.Height = 24;
-            this.dgvBudget.Size = new System.Drawing.Size(653, 350);
+            this.dgvBudget.Size = new System.Drawing.Size(647, 168);
             this.dgvBudget.TabIndex = 7;
             this.dgvBudget.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBudget_CellEnter);
             this.dgvBudget.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBudget_CellValueChanged);
@@ -295,18 +302,68 @@ namespace RoadCare3
             this.pictureBox1.TabIndex = 23;
             this.pictureBox1.TabStop = false;
             // 
+            // dataGridViewBudgetCriteria
+            // 
+            this.dataGridViewBudgetCriteria.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewBudgetCriteria.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Budget,
+            this.BudgetCriteria});
+            this.dataGridViewBudgetCriteria.ContextMenuStrip = this.contextMenuStripInvesment;
+            this.dataGridViewBudgetCriteria.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewBudgetCriteria.Location = new System.Drawing.Point(0, 0);
+            this.dataGridViewBudgetCriteria.Margin = new System.Windows.Forms.Padding(2);
+            this.dataGridViewBudgetCriteria.Name = "dataGridViewBudgetCriteria";
+            this.dataGridViewBudgetCriteria.RowTemplate.Height = 24;
+            this.dataGridViewBudgetCriteria.Size = new System.Drawing.Size(647, 165);
+            this.dataGridViewBudgetCriteria.TabIndex = 24;
+            this.dataGridViewBudgetCriteria.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewBudgetCriteria_CellMouseDoubleClick);
+            this.dataGridViewBudgetCriteria.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewBudgetCriteria_CellValidated);
+            this.dataGridViewBudgetCriteria.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.DataGridViewBudgetCriteria_UserDeletedRow);
+            // 
+            // Budget
+            // 
+            this.Budget.HeaderText = "Budget";
+            this.Budget.Name = "Budget";
+            this.Budget.Width = 200;
+            // 
+            // BudgetCriteria
+            // 
+            this.BudgetCriteria.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.BudgetCriteria.HeaderText = "Budget Critiera";
+            this.BudgetCriteria.Name = "BudgetCriteria";
+            // 
+            // splitContainerInvestments
+            // 
+            this.splitContainerInvestments.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainerInvestments.Location = new System.Drawing.Point(6, 86);
+            this.splitContainerInvestments.Name = "splitContainerInvestments";
+            this.splitContainerInvestments.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerInvestments.Panel1
+            // 
+            this.splitContainerInvestments.Panel1.Controls.Add(this.dgvBudget);
+            // 
+            // splitContainerInvestments.Panel2
+            // 
+            this.splitContainerInvestments.Panel2.Controls.Add(this.dataGridViewBudgetCriteria);
+            this.splitContainerInvestments.Size = new System.Drawing.Size(647, 337);
+            this.splitContainerInvestments.SplitterDistance = 168;
+            this.splitContainerInvestments.TabIndex = 25;
+            // 
             // FormInvestment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(659, 435);
+            this.Controls.Add(this.splitContainerInvestments);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.textBoxStartYear);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.buttonEditOrder);
             this.Controls.Add(this.textBoxBudgetOrder);
-            this.Controls.Add(this.dgvBudget);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.textBoxDiscount);
             this.Controls.Add(this.label1);
@@ -323,6 +380,11 @@ namespace RoadCare3
             ((System.ComponentModel.ISupportInitialize)(this.dgvBudget)).EndInit();
             this.contextMenuStripInvesment.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewBudgetCriteria)).EndInit();
+            this.splitContainerInvestments.Panel1.ResumeLayout(false);
+            this.splitContainerInvestments.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerInvestments)).EndInit();
+            this.splitContainerInvestments.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -348,5 +410,9 @@ namespace RoadCare3
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
 		private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.DataGridView dataGridViewBudgetCriteria;
+        private System.Windows.Forms.SplitContainer splitContainerInvestments;
+        private System.Windows.Forms.DataGridViewComboBoxColumn Budget;
+        private System.Windows.Forms.DataGridViewTextBoxColumn BudgetCriteria;
     }
 }

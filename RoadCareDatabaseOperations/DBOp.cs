@@ -1949,7 +1949,77 @@
             UpdateRoadCareForConditionalRsl();
             UpdateRoadCareForCumulativeCost();
             UpdateRoadCareForAcrossBudgets();
+            UpdateRoadCareForBudgetCriteria();
+            UpdateRoadCareForScheduled();
+            UpdateRoadCareForSupersede();
         }
+
+        private static void UpdateRoadCareForBudgetCriteria()
+        {
+            if (!DBMgr.IsTableInDatabase("BUDGET_CRITERIA"))
+            {
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        DBMgr.ExecuteNonQuery("CREATE TABLE [dbo].[BUDGET_CRITERIA]([BUDGET_CRITERIA_ID] [int] IDENTITY(1,1) NOT NULL,	[SIMULATIONID] [int] NOT NULL,[BUDGET_NAME] [varchar](50) NOT NULL,	[CRITERIA] [varchar](max) NULL, CONSTRAINT [BUDGETCRITERIAPK] PRIMARY KEY CLUSTERED ([BUDGET_CRITERIA_ID] ASC) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[BUDGET_CRITERIA]  WITH CHECK ADD  CONSTRAINT [FK_BUDGETCRITERIA_SIMULATIONS] FOREIGN KEY([SIMULATIONID])REFERENCES [dbo].[SIMULATIONS] ([SIMULATIONID]) ON UPDATE CASCADE ON DELETE CASCADE");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[BUDGET_CRITERIA] CHECK CONSTRAINT [FK_BUDGETCRITERIA_SIMULATIONS]");
+                        break;
+                    case "ORACLE":
+                        throw new NotImplementedException("TODO: Implement Oracle version of BudgetCriteria");
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Implement ANSI version of CheckMultiUserTable()");
+                }
+            }
+
+        }
+
+
+        private static void UpdateRoadCareForScheduled()
+        {
+            if (!DBMgr.IsTableInDatabase("SCHEDULED"))
+            {
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        DBMgr.ExecuteNonQuery("CREATE TABLE [dbo].[SCHEDULED](	[SCHEDULEDID] [int] IDENTITY(1,1) NOT NULL,	[TREATMENTID] [int] NOT NULL,	[SCHEDULEDYEAR] [int] NOT NULL,	[SCHEDULEDTREATMENTID] [int] NOT NULL, CONSTRAINT [PK_SCHEDULED] PRIMARY KEY CLUSTERED ([SCHEDULEDID] ASC) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SCHEDULED]  WITH CHECK ADD  CONSTRAINT [FK_SCHEDULED_TREATMENTS] FOREIGN KEY([TREATMENTID])REFERENCES [dbo].[TREATMENTS] ([TREATMENTID])ON DELETE CASCADE");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SCHEDULED] CHECK CONSTRAINT [FK_SCHEDULED_TREATMENTS]");
+             
+                        break;
+                    case "ORACLE":
+                        throw new NotImplementedException("TODO: Implement Oracle version of SCHEDULED");
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Implement ANSI version of SCHEDULED");
+                }
+            }
+        }
+
+        private static void UpdateRoadCareForSupersede()
+        {
+            if (!DBMgr.IsTableInDatabase("SUPERSEDES"))
+            {
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        DBMgr.ExecuteNonQuery("CREATE TABLE [dbo].[SUPERSEDES]([SUPERSEDE_ID] [int] IDENTITY(1,1) NOT NULL,[TREATMENT_ID] [int] NULL,[SUPERSEDE_TREATMENT_ID] [int] NULL,[CRITERIA] [varchar](max) NULL) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SUPERSEDES]  WITH CHECK ADD  CONSTRAINT [FK_SUPERSEDES_TREATMENTS] FOREIGN KEY([TREATMENT_ID]) REFERENCES [dbo].[TREATMENTS] ([TREATMENTID]) ON UPDATE CASCADE ON DELETE CASCADE");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SUPERSEDES] CHECK CONSTRAINT [FK_SUPERSEDES_TREATMENTS]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SUPERSEDES]  WITH CHECK ADD  CONSTRAINT [FK_SUPERSEDES_TREATMENTS_COMPONENT] FOREIGN KEY([SUPERSEDE_TREATMENT_ID]) REFERENCES [dbo].[TREATMENTS] ([TREATMENTID])");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[SUPERSEDES] CHECK CONSTRAINT [FK_SUPERSEDES_TREATMENTS_COMPONENT]");
+                        
+                        break;
+                    case "ORACLE":
+                        throw new NotImplementedException("TODO: Implement Oracle version of SUPERSEDE");
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Implement ANSI version of SUPERSEDE");
+                }
+            }
+        }
+
 
         private static void UpdateRoadCareForAcrossBudgets()
         {

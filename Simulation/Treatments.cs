@@ -421,6 +421,8 @@ namespace Simulation
                 return false;
             }
 
+            var consequenceCount = 0;
+
             foreach (DataRow row in ds.Tables[0].Rows)
             {
                 string id = row["CONSEQUENCEID"].ToString();
@@ -431,7 +433,11 @@ namespace Simulation
                 String strEquation = row["EQUATION"].ToString();
                 consequence.TreatmentID = this.TreatmentID;
                 consequence.Treatment = this.Treatment;
-                
+
+                SimulationMessaging.AddMessage(new SimulationMessage("Compiling treatment consequence " + consequenceCount));
+                consequenceCount++;
+
+
                 if (strCriteria.Trim().Length == 0)
                 {
                     consequence.Default = true;

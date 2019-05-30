@@ -837,7 +837,7 @@ namespace DatabaseManager
 
                 using (
                     SqlConnection connection =
-                        new SqlConnection(GetNativeConnection().ConnectionString))
+                        new SqlConnection(DBMgr.NativeConnectionParameters.ConnectionString))
                 {
                     string sql = "CREATE TABLE dbo." + strTableName + "(";
 

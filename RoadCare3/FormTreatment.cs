@@ -126,16 +126,19 @@ namespace RoadCare3
                     ScheduledYears.Items.Add(i.ToString());
                 }
 
-            UpdateScheduledTreatments();
+            UpdateTreatments();
             //    tabControlFeasibility.TabPages.Remove(tabPageScheduled);
+
         }
 
-        private void UpdateScheduledTreatments()
+        private void UpdateTreatments()
         {
             ScheduledTreatment.Items.Clear();
+            SUPERCEDES.Items.Clear();
             foreach (var key in m_hashTreatment.Keys)
             {
                 var treatment = (Treatment)m_hashTreatment[key];
+                SUPERCEDES.Items.Add(treatment.m_strTreatment);
                 ScheduledTreatment.Items.Add(treatment.m_strTreatment);
             }
 
@@ -148,7 +151,7 @@ namespace RoadCare3
 			LockDataGridView( dgvTreatment );
 			dgvTreatment.RowsRemoved += new DataGridViewRowsRemovedEventHandler( dgvTreatment_RowsRemoved );
 			LockDataGridView( dgvFeasibility );
-			LockDataGridView( dgvCost );
+			//LockDataGridView( dgvCost );
 			LockDataGridView( dgvConsequences );
 			LockTextBox( textBoxAny );
 			LockTextBox( textBoxSame );
@@ -251,13 +254,14 @@ namespace RoadCare3
 
         private void LoadFeasibility(String strTag)
         {
-
+            if (strTag == null) return;
             m_strLastTag = strTag;
             m_bDeleteFeasible = false;
             dgvFeasibility.Rows.Clear();
             dgvCost.Rows.Clear();
             dgvConsequences.Rows.Clear();
             dataGridViewScheduled.Rows.Clear();
+            dataGridViewSupersede.Rows.Clear();
 
             dgvFeasibility.Columns[0].ReadOnly = true;
             dgvCost.Columns[0].ReadOnly = true;
@@ -265,6 +269,7 @@ namespace RoadCare3
             dgvConsequences.Columns[2].ReadOnly = true;
             dgvConsequences.Columns[3].ReadOnly = true;
 
+            dataGridViewSupersede.Columns[1].ReadOnly = true;
             m_bDeleteFeasible = true;
             this.Attribute.Items.Clear();
             foreach (String strAttribute in Global.Attributes)
@@ -354,23 +359,40 @@ namespace RoadCare3
                 }
             }
 
-            //strSelect =
-            //    "SELECT SCHEDULEDID, SCHEDULEDYEAR, SCHEDULEDTREATMENTID FROM SCHEDULED WHERE TREATMENTID='" +
-            //    strTag + "'";
-            //ds = DBMgr.ExecuteQuery(strSelect);
-            //foreach (DataRow dr in ds.Tables[0].Rows)
-            //{
-            //    var scheduledId = dr["SCHEDULEDID"].ToString();
-            //    var scheduledTreatmentId = dr["SCHEDULEDTREATMENTID"].ToString();
-            //    var scheduledYear = dr["SCHEDULEDYEAR"].ToString();
+            strSelect =
+                "SELECT SCHEDULEDID, SCHEDULEDYEAR, SCHEDULEDTREATMENTID FROM SCHEDULED WHERE TREATMENTID='" +
+                strTag + "'";
+            ds = DBMgr.ExecuteQuery(strSelect);
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                var scheduledId = dr["SCHEDULEDID"].ToString();
+                var scheduledTreatmentId = dr["SCHEDULEDTREATMENTID"].ToString();
+                var scheduledYear = dr["SCHEDULEDYEAR"].ToString();
 
-            //    if (m_hashTreatment.Contains(scheduledTreatmentId))
-            //    {
-            //        var treatment = (Treatment) m_hashTreatment[scheduledTreatmentId];
-            //        var rowIndex = dataGridViewScheduled.Rows.Add(treatment.m_strTreatment, scheduledYear);
-            //        dataGridViewScheduled.Rows[rowIndex].Tag = scheduledId;
-            //    }
-            //}
+                if (m_hashTreatment.Contains(scheduledTreatmentId))
+                {
+                    var treatment = (Treatment)m_hashTreatment[scheduledTreatmentId];
+                    var rowIndex = dataGridViewScheduled.Rows.Add(treatment.m_strTreatment, scheduledYear);
+                    dataGridViewScheduled.Rows[rowIndex].Tag = scheduledId;
+                }
+            }
+
+            var select ="SELECT SUPERSEDE_ID,  SUPERSEDE_TREATMENT_ID, CRITERIA FROM SUPERSEDES WHERE TREATMENT_ID='" +
+                strTag + "'";
+            ds = DBMgr.ExecuteQuery(select);
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                var supersedeId = dr["SUPERSEDE_ID"].ToString();
+                var supersedeTreatmentId = dr["SUPERSEDE_TREATMENT_ID"].ToString();
+                var criteria = dr["CRITERIA"].ToString();
+
+                if (m_hashTreatment.Contains(supersedeTreatmentId))
+                {
+                    var treatment = (Treatment)m_hashTreatment[supersedeTreatmentId];
+                    var rowIndex = dataGridViewSupersede.Rows.Add(treatment.m_strTreatment, criteria.Replace("|","'"));
+                    dataGridViewSupersede.Rows[rowIndex].Tag = supersedeId;
+                }
+            }
         }
 
 
@@ -454,7 +476,7 @@ namespace RoadCare3
                     }
                 }
             }
-            UpdateScheduledTreatments();
+            UpdateTreatments();
         }
 
 
@@ -479,6 +501,8 @@ namespace RoadCare3
 
                         }
                     }
+                    var treatment = (Treatment) m_hashTreatment[strTag];
+                    treatment.m_strTreatment = strTreatment;
                 }
                 else// New insert
                 {
@@ -531,7 +555,10 @@ namespace RoadCare3
                 }
             }
 
-            UpdateScheduledTreatments();
+            UpdateTreatments();
+            LoadFeasibility(m_strLastTag);
+ 
+
         }
 
 
@@ -893,6 +920,7 @@ namespace RoadCare3
                         DataSet ds = DBMgr.ExecuteQuery(strIdentity);
                         strIdentity = ds.Tables[0].Rows[0].ItemArray[0].ToString();
                         dgvCost.Rows[e.RowIndex].Tag = strIdentity;
+
                     }
                     catch (Exception except)
                     {
@@ -1365,6 +1393,12 @@ namespace RoadCare3
                             {
                                 Global.WriteOutput("Error: Updating Costs Criteria." + except.Message);
                             }
+
+
+                            if (dgvCost.Rows.Count - 1 == e.RowIndex)
+                            {
+                                LoadFeasibility(m_strLastTag);
+                            }
                             dgvCost.Update();
 						}
 					}
@@ -1379,9 +1413,17 @@ namespace RoadCare3
 						{
 							dgvCost[e.ColumnIndex, e.RowIndex].Value = formAdvancedSearch.GetWhereClause();
                             dgvCost.Update();
-						}
-					}
+
+
+                            if (dgvCost.Rows.Count - 1 == e.RowIndex)
+                            {
+                                LoadFeasibility(m_strLastTag);
+                            }
+                        }
+
+                    }
 				}
+
 			}
         }
 
@@ -1725,6 +1767,197 @@ namespace RoadCare3
                 catch (Exception except)
                 {
                     Global.WriteOutput("Error Deleting Scheduled Treatment:" + except.Message.ToString());
+                }
+            }
+        }
+
+        private void DataGridViewSupersede_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            if (e.Row.Tag == null) return;
+            var delete = "DELETE FROM SUPERSEDES WHERE SUPERSEDE_ID='" + e.Row.Tag + "'";
+            try
+            {
+                DBMgr.ExecuteNonQuery(delete);
+            }
+            catch (Exception except)
+            {
+                Global.WriteOutput("Error Deleting Supersedes Treatment:" + except.Message.ToString());
+            }
+        }
+
+        private void DataGridViewSupersede_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+
+            if (e.RowIndex > -1)
+            {
+                var strValue = "";
+                if (dataGridViewSupersede.Rows[e.RowIndex].Tag == null)
+                {
+                    var strTreatmentId = "";
+                    if (dgvTreatment.SelectedCells.Count > 0)
+                    {
+                        strTreatmentId = dgvTreatment.Rows[dgvTreatment.SelectedCells[0].RowIndex].Tag.ToString();
+                    }
+                    else if (dgvTreatment.SelectedRows.Count > 0)
+                    {
+                        strTreatmentId = dgvTreatment.SelectedRows[0].Tag.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    if (dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+
+                    var strInsert = "";
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            foreach (var key in m_hashTreatment.Keys)
+                            {
+                                var treatment = (Treatment)m_hashTreatment[key];
+                                if (treatment.m_strTreatment == strValue)
+                                {
+                                    strInsert =
+                                        "INSERT INTO SUPERSEDES (TREATMENT_ID,SUPERSEDE_TREATMENT_ID) VALUES ('" +
+                                        strTreatmentId + "','" + treatment.m_strID + "')";
+                                }
+                            }
+                            break;
+                        case 1:
+                            strValue = strValue.Trim();
+                            strValue = strValue.Replace("'", "|");
+                            strInsert = "INSERT INTO SUPERSEDES (TREATMENT_ID,CRITERIA) VALUES ('" + strTreatmentId + "','" + strValue + "')";
+                            break;
+                        default:
+                            return;
+                    }
+
+
+
+                    try
+                    {
+                        String strIdentity;
+                        DBMgr.ExecuteNonQuery(strInsert);
+                        switch (DBMgr.NativeConnectionParameters.Provider)
+                        {
+                            case "MSSQL":
+                                strIdentity = "SELECT IDENT_CURRENT ('SUPERSEDES') FROM SUPERSEDES";
+                                break;
+                            case "ORACLE":
+                                strIdentity = "SELECT MAX(SUPERSEDE_ID) FROM SUPERSEDES";
+                                break;
+                            default:
+                                throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                                //break;
+                        }
+
+                        var ds = DBMgr.ExecuteQuery(strIdentity);
+                        dataGridViewSupersede.Rows[e.RowIndex].Tag = ds.Tables[0].Rows[0].ItemArray[0].ToString();
+
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error:" + except.Message.ToString());
+                    }
+                }
+                else
+                {
+                    String strTag = dataGridViewSupersede.Rows[e.RowIndex].Tag.ToString();
+                    String strUpdate = "";
+
+
+                    if (dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            foreach (var key in m_hashTreatment.Keys)
+                            {
+                                var treatment = (Treatment)m_hashTreatment[key];
+                                if (treatment.m_strTreatment == strValue)
+                                {
+                                    strUpdate = "UPDATE SUPERSEDES SET SUPERSEDE_TREATMENT_ID='" + treatment.m_strID + "' WHERE SUPERSEDE_ID='" + strTag + "'";
+                                }
+                            }
+                            break;
+                        case 1:
+                            strValue = strValue.Trim();
+                            strValue = strValue.Replace("'", "|");
+                            strUpdate = "UPDATE SUPERSEDES SET CRITERIA ='" + strValue + "' WHERE SUPERSEDE_ID='" + strTag + "'";
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(strUpdate))
+                        {
+                            DBMgr.ExecuteNonQuery(strUpdate);
+                        }
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error: " + except.Message.ToString());
+
+                    }
+                }
+            }
+
+
+
+
+        }
+
+        private void DataGridViewSupersede_DoubleClick(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DataGridViewSupersede_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex == 1 && e.RowIndex != -1)
+            {
+                if (Global.SecurityOperations.CanModifySimulationTreatment(m_strNetworkID, m_strSimID))
+                {
+                    String strCriteria = "";
+                    if (dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strCriteria = dataGridViewSupersede.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    FormAdvancedSearch formAdvancedSearch = new FormAdvancedSearch(m_strNetwork, m_hashAttributeYear, strCriteria, true);
+                    if (formAdvancedSearch.ShowDialog() == DialogResult.OK)
+                    {
+                        dataGridViewSupersede[e.ColumnIndex, e.RowIndex].Value = formAdvancedSearch.GetWhereClause();
+                        try
+                        {
+                            string strID = dataGridViewSupersede.Rows[e.RowIndex].Tag.ToString();
+                        }
+                        catch (Exception except)
+                        {
+                            Global.WriteOutput("Error: Updating Consequence Criteria." + except.Message);
+                        }
+
+                    }
+                    dataGridViewSupersede.Update();
                 }
             }
         }

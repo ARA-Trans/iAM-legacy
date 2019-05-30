@@ -69,6 +69,10 @@ namespace RoadCare3
             this.dataGridViewScheduled = new System.Windows.Forms.DataGridView();
             this.ScheduledTreatment = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ScheduledYears = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.tabPageSupercedes = new System.Windows.Forms.TabPage();
+            this.dataGridViewSupersede = new System.Windows.Forms.DataGridView();
+            this.SUPERCEDES = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.SUPERCEDES_CRITERIA = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.contextMenuStripCT = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.editCompoundTreatmentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -86,6 +90,8 @@ namespace RoadCare3
             this.tabPage3.SuspendLayout();
             this.tabPageScheduled.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewScheduled)).BeginInit();
+            this.tabPageSupercedes.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSupersede)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.contextMenuStripCT.SuspendLayout();
             this.SuspendLayout();
@@ -405,6 +411,7 @@ namespace RoadCare3
             this.tabControlFeasibility.Controls.Add(this.tabPageCost);
             this.tabControlFeasibility.Controls.Add(this.tabPage3);
             this.tabControlFeasibility.Controls.Add(this.tabPageScheduled);
+            this.tabControlFeasibility.Controls.Add(this.tabPageSupercedes);
             this.tabControlFeasibility.Location = new System.Drawing.Point(188, 93);
             this.tabControlFeasibility.Margin = new System.Windows.Forms.Padding(2);
             this.tabControlFeasibility.Name = "tabControlFeasibility";
@@ -497,6 +504,47 @@ namespace RoadCare3
             this.ScheduledYears.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             this.ScheduledYears.ToolTipText = "Number of years before treatment is scheduled.";
             // 
+            // tabPageSupercedes
+            // 
+            this.tabPageSupercedes.Controls.Add(this.dataGridViewSupersede);
+            this.tabPageSupercedes.Location = new System.Drawing.Point(4, 22);
+            this.tabPageSupercedes.Name = "tabPageSupercedes";
+            this.tabPageSupercedes.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageSupercedes.Size = new System.Drawing.Size(758, 398);
+            this.tabPageSupercedes.TabIndex = 4;
+            this.tabPageSupercedes.Text = "Supercedes";
+            this.tabPageSupercedes.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewSupersede
+            // 
+            this.dataGridViewSupersede.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewSupersede.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.SUPERCEDES,
+            this.SUPERCEDES_CRITERIA});
+            this.dataGridViewSupersede.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewSupersede.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewSupersede.Name = "dataGridViewSupersede";
+            this.dataGridViewSupersede.Size = new System.Drawing.Size(752, 392);
+            this.dataGridViewSupersede.TabIndex = 0;
+            this.dataGridViewSupersede.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewSupersede_CellMouseDoubleClick);
+            this.dataGridViewSupersede.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewSupersede_CellValidated);
+            this.dataGridViewSupersede.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.DataGridViewSupersede_UserDeletedRow);
+            this.dataGridViewSupersede.DoubleClick += new System.EventHandler(this.DataGridViewSupersede_DoubleClick);
+            // 
+            // SUPERCEDES
+            // 
+            this.SUPERCEDES.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SUPERCEDES.HeaderText = "Supercedes";
+            this.SUPERCEDES.Name = "SUPERCEDES";
+            this.SUPERCEDES.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.SUPERCEDES.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // SUPERCEDES_CRITERIA
+            // 
+            this.SUPERCEDES_CRITERIA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SUPERCEDES_CRITERIA.HeaderText = "Criteria";
+            this.SUPERCEDES_CRITERIA.Name = "SUPERCEDES_CRITERIA";
+            // 
             // pictureBox1
             // 
             this.pictureBox1.Image = global::RoadCare3.Properties.Resources.bigpink;
@@ -574,6 +622,8 @@ namespace RoadCare3
             this.tabPage3.ResumeLayout(false);
             this.tabPageScheduled.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewScheduled)).EndInit();
+            this.tabPageSupercedes.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSupersede)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.contextMenuStripCT.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -627,5 +677,9 @@ namespace RoadCare3
         private System.Windows.Forms.DataGridView dataGridViewScheduled;
         private System.Windows.Forms.DataGridViewComboBoxColumn ScheduledTreatment;
         private System.Windows.Forms.DataGridViewComboBoxColumn ScheduledYears;
+        private System.Windows.Forms.TabPage tabPageSupercedes;
+        private System.Windows.Forms.DataGridView dataGridViewSupersede;
+        private System.Windows.Forms.DataGridViewComboBoxColumn SUPERCEDES;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SUPERCEDES_CRITERIA;
     }
 }

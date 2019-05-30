@@ -11,6 +11,8 @@ using WeifenLuo.WinFormsUI.Docking;
 
 using System.Data.SqlClient;
 using System.Collections;
+using System.Runtime.InteropServices;
+using System.Security.Policy;
 using RoadCare3.Properties;
 using RoadCareDatabaseOperations;
 
@@ -30,15 +32,16 @@ namespace RoadCare3
         private String m_strInflation;
         private String m_strDiscout;
         private String m_strStartYear;
+        private List<string> Budgets = new List<string>();
+        private Hashtable m_hashAttributeYear;
 
-
-        public FormInvestment(String strNetwork, String strSimulation,String strSimID)
+        public FormInvestment(String strNetwork, String strSimulation,String strSimID, Hashtable hashAttributeYear)
         {
             m_strNetwork = strNetwork;
 			m_strNetworkID = DBOp.GetNetworkIDFromName( strNetwork );
             m_strSimulation = strSimulation;
             m_strSimID = strSimID;
-
+            m_hashAttributeYear = hashAttributeYear;
             InitializeComponent();
 
         }
@@ -72,6 +75,7 @@ namespace RoadCare3
             textBoxBudgetOrder.Text = ds.Tables[0].Rows[0].ItemArray[4].ToString();
             m_bUpdate = true;
             UpdateInvestmentGrid();
+            UpdateBudgetCriteria();
 
         }
 
@@ -99,6 +103,7 @@ namespace RoadCare3
         {
             dgvBudget.Rows.Clear();
             dgvBudget.Columns.Clear();
+            dataGridViewBudgetCriteria.Columns[1].ReadOnly = true;
             m_bChange = false;
 
             DataGridViewTextBoxColumn column = new DataGridViewTextBoxColumn();
@@ -113,6 +118,9 @@ namespace RoadCare3
             int nNumberYear = int.Parse(strNumberYear);
 
             string[] listBudgets = textBoxBudgetOrder.Text.Split(',');
+
+            Budgets.Clear();
+
             foreach (string str in listBudgets)
             {
                 column = new DataGridViewTextBoxColumn();
@@ -122,13 +130,14 @@ namespace RoadCare3
                 int nCol = dgvBudget.Columns.Add(column);
                 dgvBudget.Columns[nCol].DefaultCellStyle.Format = "c";
                 dgvBudget.Columns[nCol].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                Budgets.Add(str);
             }
-            
-          
+
+
 
             for (int nYear = nStartYear; nYear < nStartYear + nNumberYear; nYear++)
             {
-                string[] strDataRow = { nYear.ToString() };
+                string[] strDataRow = {nYear.ToString()};
                 int nIndex = dgvBudget.Rows.Add(strDataRow);
                 dgvBudget.Rows[nIndex].Tag = nYear.ToString();
 
@@ -136,21 +145,22 @@ namespace RoadCare3
 
             List<String> listDelete = new List<String>();
 
-            String strSelect = "SELECT YEARID,YEAR_,BUDGETNAME,AMOUNT FROM YEARLYINVESTMENT WHERE SIMULATIONID='" + m_strSimID + "' ORDER BY YEAR_";
+            String strSelect = "SELECT YEARID,YEAR_,BUDGETNAME,AMOUNT FROM YEARLYINVESTMENT WHERE SIMULATIONID='" +
+                               m_strSimID + "' ORDER BY YEAR_";
             DataSet ds = DBMgr.ExecuteQuery(strSelect);
             foreach (DataRow row in ds.Tables[0].Rows)
             {
                 String strYearID = row[0].ToString();
-                strYear  = row[1].ToString();
+                strYear = row[1].ToString();
                 String strBudget = row[2].ToString();
                 String strAmount = row[3].ToString();
 
-                if(dgvBudget.Columns.Contains(strBudget))
+                if (dgvBudget.Columns.Contains(strBudget))
                 {
                     bool bYear = false;
-                    foreach(DataGridViewRow dr in dgvBudget.Rows)
+                    foreach (DataGridViewRow dr in dgvBudget.Rows)
                     {
-                        if(dr.Tag.ToString() == strYear)
+                        if (dr.Tag.ToString() == strYear)
                         {
                             bYear = true;
                             float fAmount = 0;
@@ -159,7 +169,8 @@ namespace RoadCare3
                             dr.Cells[strBudget].Tag = strYearID;
                         }
                     }
-                    if(!bYear)
+
+                    if (!bYear)
                     {
                         listDelete.Add(strYearID);
                     }
@@ -170,7 +181,7 @@ namespace RoadCare3
                 }
             }
 
-            foreach(String strID in listDelete)
+            foreach (String strID in listDelete)
             {
                 String strDelete = "DELETE FROM YEARLYINVESTMENT WHERE YEARID='" + strID + "'";
                 try
@@ -179,11 +190,74 @@ namespace RoadCare3
                 }
                 catch (Exception except)
                 {
-                    Global.WriteOutput("Error: " + except.Message); 
+                    Global.WriteOutput("Error: " + except.Message);
                 }
             }
+
+
+
+
+
+
+
             m_bChange = true;
+
+            //Delete extra budgets
+            var delete = "DELETE FROM BUDGET_CRITERIA WHERE SIMULATIONID=" + m_strSimID;
+            if (Budgets.Count > 0)
+            {
+                delete += " AND NOT (";
+                var index = 0;
+                foreach (var budget in Budgets)
+                {
+                    if (index > 0) delete += " OR ";
+                    delete += "BUDGET_NAME='" + budget + "'";
+                    index++;
+                }
+
+                delete += ")";
+
+                try
+                {
+                    DBMgr.ExecuteNonQuery(delete);
+                }
+                catch (Exception except)
+                {
+                    Global.WriteOutput("Error deleting budgets from budget criteria: " + except.Message);
+                }
+            }
+
+            //Build budget criteria
+            dataGridViewBudgetCriteria.Rows.Clear();
+            var select =
+                "SELECT BUDGET_CRITERIA_ID, BUDGET_NAME, CRITERIA FROM BUDGET_CRITERIA WHERE SIMULATIONID='" +
+                m_strSimID + "'";
+
+            ds = DBMgr.ExecuteQuery(select);
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                var budgetCriteriaId = row["BUDGET_CRITERIA_ID"].ToString();
+                var budgetName = row["BUDGET_NAME"].ToString();
+                var criteria = "";
+                if(row["CRITERIA"] != DBNull.Value) criteria = row["CRITERIA"].ToString();
+
+                var rowIndex = dataGridViewBudgetCriteria.Rows.Add(budgetName, criteria.Replace("|","'"));
+                dataGridViewBudgetCriteria.Rows[rowIndex].Tag = budgetCriteriaId;
+            }
         }
+
+        private void UpdateBudgetCriteria()
+        {
+            var comboBoxColumn = (DataGridViewComboBoxColumn)dataGridViewBudgetCriteria.Columns[0];
+            comboBoxColumn.Items.Clear();
+            foreach (var budget in Budgets)
+            {
+                comboBoxColumn.Items.Add(budget);
+            }
+
+
+        }
+
 
         private void buttonEditOrder_Click(object sender, EventArgs e)
         {
@@ -195,6 +269,7 @@ namespace RoadCare3
                 {
                     textBoxBudgetOrder.Text = formBudgets.m_strBudget.ToString();
                     UpdateBudget();
+                    UpdateBudgetCriteria();
                 }
             }
         }
@@ -243,6 +318,7 @@ namespace RoadCare3
                 return;
             }
             UpdateInvestmentGrid();
+
 
         }
 
@@ -578,9 +654,155 @@ namespace RoadCare3
 
 
             }
+        }
 
 
 
+
+
+
+        private void DataGridViewBudgetCriteria_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            if (e.Row.Tag != null)
+            {
+                String strDelete = "DELETE FROM BUDGET_CRITERIA WHERE BUDGET_CRITERIA_ID='" + e.Row.Tag.ToString() + "'";
+                try
+                {
+                    DBMgr.ExecuteNonQuery(strDelete);
+                }
+                catch (Exception except)
+                {
+                    Global.WriteOutput("Error Deleting Budget Criteria:" + except.Message.ToString());
+                }
+            }
+        }
+
+        private void DataGridViewBudgetCriteria_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex == 1 && e.RowIndex != -1)
+            {
+                if (Global.SecurityOperations.CanModifySimulationTreatment(m_strNetworkID, m_strSimID))
+                {
+                    var strCriteria = "";
+                    if (dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strCriteria = dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    var formAdvancedSearch = new FormAdvancedSearch(m_strNetwork, m_hashAttributeYear, strCriteria, true);
+                    if (formAdvancedSearch.ShowDialog() == DialogResult.OK)
+                    {
+                        dataGridViewBudgetCriteria[e.ColumnIndex, e.RowIndex].Value = formAdvancedSearch.GetWhereClause();
+                    }
+                    dataGridViewBudgetCriteria.Update();
+                }
+            }
+        }
+
+        private void DataGridViewBudgetCriteria_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex > -1)
+            {
+                var strValue = "";
+                if (dataGridViewBudgetCriteria.Rows[e.RowIndex].Tag == null)
+                {
+
+
+                    if (dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+
+                    var insert = "";
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+                            insert = "INSERT INTO BUDGET_CRITERIA (SIMULATIONID, BUDGET_NAME) VALUES ('" +
+                                     m_strSimID + "','" + strValue + "')";
+                            break;
+                        case 1:
+                            insert = "INSERT INTO BUDGET_CRITERIA (SIMULATIONID, CRITERIA) VALUES ('" +
+                                     m_strSimID + "','" + strValue.Replace("'","|") + "')";
+
+                            break;
+                        default:
+                            return;
+                    }
+
+
+
+                    try
+                    {
+                        String strIdentity;
+                        DBMgr.ExecuteNonQuery(insert);
+                        switch (DBMgr.NativeConnectionParameters.Provider)
+                        {
+                            case "MSSQL":
+                                strIdentity = "SELECT IDENT_CURRENT ('BUDGET_CRITERIA') FROM BUDGET_CRITERIA";
+                                break;
+                            case "ORACLE":
+                                strIdentity = "SELECT MAX(BUDGET_CRITERIA_ID) FROM BUDGET_CRITERIA";
+                                break;
+                            default:
+                                throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                                //break;
+                        }
+
+                        DataSet ds = DBMgr.ExecuteQuery(strIdentity);
+                        dataGridViewBudgetCriteria.Rows[e.RowIndex].Tag = ds.Tables[0].Rows[0].ItemArray[0].ToString();
+
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error insert budget criteria:" + except.Message.ToString());
+                    }
+                }
+                else
+                {
+                    String strTag = dataGridViewBudgetCriteria.Rows[e.RowIndex].Tag.ToString();
+                    String strUpdate = "";
+
+
+                    if (dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewBudgetCriteria.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            strUpdate = "UPDATE BUDGET_CRITERIA SET BUDGET_NAME='" + strValue + "' WHERE BUDGET_CRITERIA_ID='" + strTag + "'";
+                            break;
+                        case 1:
+                            strUpdate = "UPDATE BUDGET_CRITERIA SET CRITERIA='" + strValue.Replace("'","|") + "' WHERE BUDGET_CRITERIA_ID='" + strTag + "'";
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(strUpdate))
+                        {
+                            DBMgr.ExecuteNonQuery(strUpdate);
+                        }
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error: " + except.Message.ToString());
+
+                    }
+                }
+            }
         }
     }
 }
