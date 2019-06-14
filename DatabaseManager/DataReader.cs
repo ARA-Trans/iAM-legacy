@@ -44,7 +44,7 @@ namespace DatabaseManager
 					readerConn.Open();
 					SqlCommand command = new SqlCommand( strQuery, readerConn );
 					command.CommandTimeout = 500000;
-					SDR = command.ExecuteReader( CommandBehavior.Default );
+					SDR = command.ExecuteReader( CommandBehavior.CloseConnection );
 				//}
                 //catch( Exception sqlE )
                 //{

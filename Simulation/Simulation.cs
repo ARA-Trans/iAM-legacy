@@ -205,6 +205,10 @@ namespace Simulation
             public DateTime? LastRun { get; set; }
         }
 
+        public string SimulationNode;
+        public IFirebaseClient firebaseClient;
+        public object APICall;
+
         /// <summary>
         /// Start and run a complete simulation.  Creates necessary Simulation Tables.
         /// </summary>
@@ -216,7 +220,9 @@ namespace Simulation
                 BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
             };
 
-            IFirebaseClient firebaseClient = new FireSharp.FirebaseClient(configuration);            
+            firebaseClient = new FireSharp.FirebaseClient(configuration);
+
+            APICall = isAPICall;
 
             SimulationMessaging.DateTimeStart = DateTime.Now;
             //Get Attribute types
@@ -232,7 +238,7 @@ namespace Simulation
                 status = "Running simulation"
             };
             UpdateDefinition<SimulationModel> updateStatus;
-            var simulation = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
+            SimulationNode = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
             if (firebaseClient != null && isAPICall.Equals(true))
             {
                 updateStatus = Builders<SimulationModel>.Update
@@ -648,6 +654,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error in initializing analysis: " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error in initializing analysis"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -662,6 +676,14 @@ namespace Simulation
                     case "Incremental Benefit/Cost":
                     case "Multi-year Incremental Benefit/Cost":
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Before running a benefit cost analysis, a Benefit variable must be selected."));
+                        var status = new SimulationStatus
+                        {
+                            status = "Error: Benefit variable must be selected"
+                        };
+                        if (APICall.Equals(true))
+                        {
+                            firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                        }
                         return false;
                         //break;
                     default:
@@ -983,6 +1005,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
             }
@@ -1014,6 +1044,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
             }
@@ -1045,6 +1083,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
             }
@@ -1076,6 +1122,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
             }
@@ -1160,6 +1214,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 //SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation benefit cost table " + strTable + " with SQL Message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Creating simulation benefit cost table"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -1193,6 +1255,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation report table " + strTable + " with SQL Message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Creating simulation benefit report table"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -1212,6 +1282,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation Target table " + strTable + " with SQL Message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Fatal Error: Creating simulation Target table " + strTable
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -1633,6 +1711,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error in compiling AREA function"
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
             }
@@ -1645,6 +1731,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error in compiling AREA function"
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
@@ -1677,6 +1771,14 @@ namespace Simulation
             if (SimulationMessaging.Area.m_listError.Count > 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + SimulationMessaging.Area.m_listError[0].ToString()));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Error in compiling AREA function."
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
             string[] listAreaParameters = strArea.Split(']');
@@ -1700,6 +1802,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in retrieving JURISDICTION from SIMULATIONS table. SQL message - " + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error in retrieving JURISDICTION from SIMULATIONS"
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
                 m_strJurisdiction = ds.Tables[0].Rows[0].ItemArray[0].ToString();
@@ -1918,6 +2028,14 @@ namespace Simulation
             catch(Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Performance data. SQL Message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Retrieving Performance data"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
             
@@ -1972,6 +2090,14 @@ namespace Simulation
                 if(row["EQUATION"].ToString() == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: A equation must be entered for every PERFORMANCE variable. " + row[0].ToString()));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error: A equation must be entered for every PERFORMANCE variable."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
@@ -2010,12 +2136,28 @@ namespace Simulation
                 foreach (String str in deteriorate.Errors)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Compile error PERFORMANCE curve " + deteriorate.Attribute + "|" + deteriorate.Group + " " + str));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error: Compile error PERFORMANCE curve"
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
                 if (deteriorate.CriteriaAttributes == null)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Unknown variable in PERFORMANCE CRITERIA. " + row[2].ToString() ));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error: Unknown variable in PERFORMANCE CRITERIA."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
@@ -2030,6 +2172,14 @@ namespace Simulation
                 if (deteriorate.EquationAttributes == null)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Unknown variable in PERFORMANCE Equation. " + row[3].ToString()));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error: Unknown variable in PERFORMANCE CRITERIA."
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
@@ -2089,6 +2239,14 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Calculated Field data. SQL Message - " + exception.Message));
+                    var status = new SimulationStatus
+                    {
+                        status = "Error: Retrieving Calculated Field data"
+                    };
+                    if (APICall.Equals(true))
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                    }
                     return false;
                 }
 
@@ -2183,6 +2341,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open TREATMENTS table for Analysis.  SQL message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error:  Unable to open TREATMENTS table for Analysis"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
                 
@@ -2245,6 +2411,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open PRIORITY table for Analysis.  SQL message - " + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Unable to open PRIORITY table for Analysis"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -2252,6 +2426,14 @@ namespace Simulation
             if (ds.Tables[0].Rows.Count == 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  At least one priority level must be entered."));
+                var status = new SimulationStatus
+                {
+                    status = "Error:  At least one priority level must be entered"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -2336,6 +2518,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing INVESTMENTS table. SQL message -" + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Accessing INVESTMENTS table."
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
             DataRow row = ds.Tables[0].Rows[0];
@@ -2392,6 +2582,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing TARGETS table. SQL message -" + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Accessing TARGETS table."
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 
@@ -2572,6 +2770,14 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing DEFICIENTS table. SQL message -" + exception.Message));
+                var status = new SimulationStatus
+                {
+                    status = "Error: Accessing DEFICIENTS table"
+                };
+                if (APICall.Equals(true))
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+                }
                 return false;
             }
 

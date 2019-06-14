@@ -226,7 +226,17 @@ namespace RollupSegmentation
 
 			// Get list of all attributes (ATTRIBUTE TABLE) and list of all YEARS (Individual Attribute Tables)
             RollupMessaging.AddMessge("Getting ATTRIBUTE list from ATTRIBUTES table...");
-			String strSelectAttribute = "SELECT ATTRIBUTE_,NATIVE_,TYPE_,FORMAT FROM ATTRIBUTES_ WHERE CALCULATED='0' OR CALCULATED IS NULL";
+
+            status = new SimulationStatus
+            {
+                status = "Getting ATTRIBUTE list from ATTRIBUTES table"
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
+
+            String strSelectAttribute = "SELECT ATTRIBUTE_,NATIVE_,TYPE_,FORMAT FROM ATTRIBUTES_ WHERE CALCULATED='0' OR CALCULATED IS NULL";
 			if( bPCI )
 				strSelectAttribute += " OR ATTRIBUTE_ = 'PCI' ORDER BY ATTRIBUTE_";
 			else
@@ -266,9 +276,19 @@ namespace RollupSegmentation
 				}
 			}
 			RollupMessaging.AddMessge("Finished selection of all ATTIRBUTES for all YEARS");
-#region Create Attribute Tables LRS and SRS
 
-			bool bRollupError = false;
+            status = new SimulationStatus
+            {
+                status = "Finished selection of all ATTIRBUTES"
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
+
+            #region Create Attribute Tables LRS and SRS
+
+            bool bRollupError = false;
 			m_nCountString = 0;
 			m_nCountNumber = 0;
 
@@ -378,7 +398,17 @@ namespace RollupSegmentation
 				strTable = "SEGMENT_" + strNetworkID + "_NS0";
 				m_strSegmentTable = strTable;
 				RollupMessaging.AddMessge("Inserting SEGMENT_ table attributes into segment control");
-				foreach( String str in m_listAttributes )
+
+                status = new SimulationStatus
+                {
+                    status = "Inserting SEGMENT_ table attributes"
+                };
+                if (apiCall == true)
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
+
+                foreach ( String str in m_listAttributes )
 				{
 					
 					DBMgr.ExecuteNonQuery( "INSERT INTO SEGMENT_CONTROL (NETWORKID,SEGMENT_TABLE,ATTRIBUTE_) VALUES ('" + strNetworkID + "','" + strTable + "','" + str + "')" );
@@ -462,7 +492,17 @@ namespace RollupSegmentation
 			// Start reading through the dynamic seg table.
 			Geometry testGeometry;
 			RollupMessaging.AddMessge("Starting through dynamic segmentation table for geometries.");
-			while( dr.Read() )
+
+            status = new SimulationStatus
+            {
+                status = "Starting through dynamic segmentation table for geometries"
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
+
+            while ( dr.Read() )
 			{
 				double logicalBegin = double.Parse( dr["BEGIN_STATION"].ToString() );
 				double logicalEnd = double.Parse( dr["END_STATION"].ToString() );
@@ -512,7 +552,16 @@ namespace RollupSegmentation
 									catch( Exception exc )
 									{
 										RollupMessaging.AddMessge( "Error processing LINESTRING segment. " + exc.Message );
-									}
+
+                                        status = new SimulationStatus
+                                        {
+                                            status = "Error processing LINESTRING segment"
+                                        };
+                                        if (apiCall == true)
+                                        {
+                                            firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                                        }
+                                    }
 								}
 							}
 							else
@@ -555,7 +604,16 @@ namespace RollupSegmentation
 				nSection++;
 			}
 			RollupMessaging.AddMessge("Finished Geometries");
-			dr.Close();
+
+            status = new SimulationStatus
+            {
+                status = "Finished Geometries"
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
+            dr.Close();
 			drGeometry.Close();
 
 		    //foreach (var section in listSections)
@@ -677,8 +735,17 @@ namespace RollupSegmentation
 			//dsmelser
 			//needed for Oracle
 			RollupMessaging.AddMessge("Bulk loading SECTION_ table.");
-			
-			if (listSectionSRS.Count > 0)
+
+            status = new SimulationStatus
+            {
+                status = "Bulk loading SECTION_ table."
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
+
+            if (listSectionSRS.Count > 0)
 			{
 				switch (DBMgr.NativeConnectionParameters.Provider)
 				{
@@ -708,12 +775,22 @@ namespace RollupSegmentation
 				}
 			}
 			RollupMessaging.AddMessge("Finished Bulk Loading SECTION_ table.");
-#endregion
 
-#region LRS AND SRS ATTRIBUTES
+            status = new SimulationStatus
+            {
+                status = "Finished Bulk Loading SECTION_ table"
+            };
+            if (apiCall == true)
+            {
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+            }
 
-			//Only load one tables worth of attributes at a time.  SO... need to get list of tables and attributes therein.
-			List<String> listAttributeInTable;
+            #endregion
+
+            #region LRS AND SRS ATTRIBUTES
+
+            //Only load one tables worth of attributes at a time.  SO... need to get list of tables and attributes therein.
+            List<String> listAttributeInTable;
 			foreach( String strSegmentTable in m_listSegmentTables )
 			{
 				listAttributeInTable = new List<String>();
@@ -955,8 +1032,16 @@ namespace RollupSegmentation
 
 				String strMessage = "Linear attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
+                status = new SimulationStatus
+                {
+                    status = "Linear attribute rollup complete"
+                };
+                if (apiCall == true)
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
 
-				strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
+                strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
 				tw = new StreamWriter( strOutFile );
 
 				TextReader tr;
@@ -998,7 +1083,16 @@ namespace RollupSegmentation
 				strMessage = "Linear Calculated Field rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-				String strMessageLRSBulk = "LRS Bulk Load beginning: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
+                status = new SimulationStatus
+                {
+                    status = "Linear Calculated Field rollup complete"
+                };
+                if (apiCall == true)
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
+
+                String strMessageLRSBulk = "LRS Bulk Load beginning: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
 				RollupMessaging.AddMessge( strMessageLRSBulk );
 
@@ -1074,7 +1168,16 @@ namespace RollupSegmentation
 					{
 					}
 					RollupMessaging.AddMessge( "Rolling up Section Attribute:" + attribute + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
-					bRollupError = false;
+
+                    status = new SimulationStatus
+                    {
+                        status = "Rolling up Section Attribute"
+                    };
+                    if (apiCall == true)
+                    {
+                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                    }
+                    bRollupError = false;
 					ConnectionParameters cp;
 					String strSelect;
 
@@ -1157,7 +1260,16 @@ namespace RollupSegmentation
 				strMessage = "Section attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-				strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
+                status = new SimulationStatus
+                {
+                    status = "Section attribute rollup complete"
+                };
+                if (apiCall == true)
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
+
+                strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
 				tw = new StreamWriter( strOutFile );
 
 
@@ -1200,8 +1312,17 @@ namespace RollupSegmentation
 				strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
 				RollupMessaging.AddMessge( strMessageSRSBulk );
 
+                status = new SimulationStatus
+                {
+                    status = "SRS Bulk Load beginning"
+                };
+                if (apiCall == true)
+                {
+                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+                }
 
-				if( listSectionSRS.Count > 0 )
+
+                if ( listSectionSRS.Count > 0 )
 				{
 
 						switch( DBMgr.NativeConnectionParameters.Provider )
