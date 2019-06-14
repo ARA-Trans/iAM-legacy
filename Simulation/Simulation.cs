@@ -245,7 +245,7 @@ namespace Simulation
                     .Set(s => s.Status, "Running simulation");
                 Simulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
 
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
             // Clear the compound treatments from the new structure.
@@ -307,7 +307,7 @@ namespace Simulation
             {
                 Simulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
 
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
+                firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
             return;
