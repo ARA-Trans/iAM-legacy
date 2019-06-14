@@ -15,6 +15,7 @@ using CalculateEvaluate;
 using System.Threading.Tasks;
 using FireSharp.Config;
 using FireSharp.Interfaces;
+using MongoDB.Driver;
 
 namespace Simulation
 {
@@ -63,6 +64,8 @@ namespace Simulation
         int _yearOMS;
         bool _isUpdateOMS = false;
         bool _omsEnforceBudget = false;
+
+        private IMongoCollection<SimulationModel> Simulations;
 
         public bool IsUpdateOMS
         {
@@ -179,6 +182,28 @@ namespace Simulation
             cgOMS.Prefix = "cgDE_";
 
         }
+        public Simulation(string strSimulation, string strNetwork, int simulationID, int networkID, IMongoCollection<SimulationModel> simulations)
+        {
+            m_strNetwork = strNetwork;
+            m_strSimulation = strSimulation;
+            m_strNetworkID = simulationID.ToString();
+            m_strSimulationID = networkID.ToString();
+            Simulations = simulations;
+            _isUpdateOMS = false;
+        }
+
+        public class SimulationModel
+        {
+            public int SimulationId { get; set; }
+            public string SimulationName { get; set; }
+            public string NetworkName { get; set; }
+            public int NetworkId { get; set; }
+            public string Status { get; set; }
+
+            public DateTime? Created { get; set; }
+
+            public DateTime? LastRun { get; set; }
+        }
 
         /// <summary>
         /// Start and run a complete simulation.  Creates necessary Simulation Tables.
@@ -206,9 +231,14 @@ namespace Simulation
             {
                 status = "Running simulation"
             };
+            UpdateDefinition<SimulationModel> updateStatus;
             var simulation = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
             if (firebaseClient != null && isAPICall.Equals(true))
             {
+                updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Running simulation");
+                Simulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
             }
 
@@ -238,6 +268,8 @@ namespace Simulation
             {
                 status = "Success"
             };
+            updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Success");
             try
 			{
 				RunSimulation();
@@ -248,6 +280,10 @@ namespace Simulation
                 {
                     status = "Simulation failed"
                 };
+
+                updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Simulation failed");
+
                 SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
 				SimulationMessaging.AddMessage(new SimulationMessage("Aborting simulation." ));
 			}
@@ -263,6 +299,8 @@ namespace Simulation
 
             if (isAPICall.Equals(true))
             {
+                Simulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulation, status);
             }
 

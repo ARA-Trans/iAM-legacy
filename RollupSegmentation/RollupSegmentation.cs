@@ -19,6 +19,8 @@ using System.Text.RegularExpressions;
 using Simulation;
 using FireSharp.Config;
 using FireSharp.Interfaces;
+using MongoDB.Driver;
+using static Simulation.Simulation;
 
 namespace RollupSegmentation
 {
@@ -33,6 +35,7 @@ namespace RollupSegmentation
         string m_strNetworkID = "";
         string m_strSimulationID = "";
         bool apiCall = false;
+        string mongoConnection = "";
 
         List<String> m_listAttributes;
         Hashtable m_hashAttribute;
@@ -89,14 +92,18 @@ namespace RollupSegmentation
 
         }
 
-        public RollupSegmentation(String strSimulation, String m_strNetwork, String strSimulationID, String strNetworkID, bool isAPI)
+        public RollupSegmentation(String strSimulation, String m_strNetwork, String strSimulationID, String strNetworkID, bool isAPI, string connection)
         {
             strNetwork = m_strNetwork;
             m_strSimulation = strSimulation;
             m_strNetworkID = strNetworkID;
             m_strSimulationID = strSimulationID;
             apiCall = isAPI;
+            mongoConnection = connection;
         }
+
+        public IMongoDatabase MongoDatabase;
+        public IMongoCollection<SimulationModel> AllSimulations;
 
         public void DoRollup()
 		{
@@ -105,6 +112,10 @@ namespace RollupSegmentation
                 AuthSecret = "i2mjdps41gRYAoEBDHG94iqYoAITp52qP6pb7Ijp",
                 BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
             };
+            MongoClient client = new MongoClient(mongoConnection);
+
+            MongoDatabase = client.GetDatabase("BridgeCare");
+            AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
 
             var status = new SimulationStatus
             {
@@ -116,6 +127,9 @@ namespace RollupSegmentation
 
             if (apiCall == true)
             {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Running rollup");
+                AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
             }
             Boolean isOMS = false;
@@ -143,6 +157,9 @@ namespace RollupSegmentation
 				RollupMessaging.AddMessge( "Rollup of network aborted: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
                 if(apiCall == true)
                 {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Rollup aborted");
+                    AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     status = new SimulationStatus
                     {
                         status = "Rollup aborted"
@@ -249,7 +266,7 @@ namespace RollupSegmentation
 				}
 			}
 			RollupMessaging.AddMessge("Finished selection of all ATTIRBUTES for all YEARS");
-			#region Create Attribute Tables LRS and SRS
+#region Create Attribute Tables LRS and SRS
 
 			bool bRollupError = false;
 			m_nCountString = 0;
@@ -399,9 +416,9 @@ namespace RollupSegmentation
 				int nStringTable = m_nCountString / columnLimit;
 			}
 
-			#endregion
+#endregion
 
-			#region Create Section ID for LRS AND SRS
+#region Create Section ID for LRS AND SRS
 			//At this point all necessary tables for this network rollup have been created and stored in SEGMENT_CONTROL
 
 			//Take data from Dynamic Segmentation Table (LRS) or from (RAWSECTIONALIAS) and put in the
@@ -691,9 +708,9 @@ namespace RollupSegmentation
 				}
 			}
 			RollupMessaging.AddMessge("Finished Bulk Loading SECTION_ table.");
-			#endregion
+#endregion
 
-			#region LRS AND SRS ATTRIBUTES
+#region LRS AND SRS ATTRIBUTES
 
 			//Only load one tables worth of attributes at a time.  SO... need to get list of tables and attributes therein.
 			List<String> listAttributeInTable;
@@ -1253,7 +1270,7 @@ namespace RollupSegmentation
 
 
 
-			#endregion
+#endregion
 
 			//#region LRS AND SRS PCI
 
@@ -1276,6 +1293,9 @@ namespace RollupSegmentation
 
             if(bRollupError && apiCall == true)
             {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.Status, "Rollup aborted");
+                AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 status = new SimulationStatus
                 {
                     status = "Rollup aborted"
@@ -1286,7 +1306,7 @@ namespace RollupSegmentation
 
             if(apiCall == true && !bRollupError)
             {
-                var simulation = new Simulation.Simulation(m_strSimulation, strNetwork, m_strSimulationID, m_strNetworkID);
+                var simulation = new Simulation.Simulation(m_strSimulation, strNetwork, Convert.ToInt32(m_strSimulationID), Convert.ToInt32(m_strNetworkID), AllSimulations);
                 simulation.CompileSimulation(true);
             }
 		}
