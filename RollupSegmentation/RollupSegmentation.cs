@@ -128,8 +128,8 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.Status, "Running rollup");
-                AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    .Set(s => s.status, "Running rollup");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
             }
             Boolean isOMS = false;
@@ -158,8 +158,8 @@ namespace RollupSegmentation
                 if(apiCall == true)
                 {
                     var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.Status, "Rollup aborted");
-                    AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    .Set(s => s.status, "Rollup aborted");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     status = new SimulationStatus
                     {
                         status = "Rollup aborted"
@@ -234,6 +234,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Getting ATTRIBUTE list from ATTRIBUTES table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
             String strSelectAttribute = "SELECT ATTRIBUTE_,NATIVE_,TYPE_,FORMAT FROM ATTRIBUTES_ WHERE CALCULATED='0' OR CALCULATED IS NULL";
@@ -284,6 +288,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished selection of all ATTIRBUTES");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
             #region Create Attribute Tables LRS and SRS
@@ -406,6 +414,10 @@ namespace RollupSegmentation
                 if (apiCall == true)
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Inserting SEGMENT_ table attributes");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
 
                 foreach ( String str in m_listAttributes )
@@ -500,6 +512,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Starting through dynamic segmentation table for geometries");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
             while ( dr.Read() )
@@ -560,6 +576,10 @@ namespace RollupSegmentation
                                         if (apiCall == true)
                                         {
                                             firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                                            var updateStatus = Builders<SimulationModel>.Update
+                                                 .Set(s => s.status, "Error processing INESTRING segment");
+                                            AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                                         }
                                     }
 								}
@@ -612,6 +632,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished Geometries");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
             dr.Close();
 			drGeometry.Close();
@@ -743,6 +767,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Bulk loading SECTION_ table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
             if (listSectionSRS.Count > 0)
@@ -783,6 +811,10 @@ namespace RollupSegmentation
             if (apiCall == true)
             {
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished Bulk Loading SECTION_ table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
             #endregion
@@ -1039,6 +1071,10 @@ namespace RollupSegmentation
                 if (apiCall == true)
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Linear attribute rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
 
                 strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
@@ -1090,6 +1126,10 @@ namespace RollupSegmentation
                 if (apiCall == true)
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Linear Calculated Field rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
 
                 String strMessageLRSBulk = "LRS Bulk Load beginning: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
@@ -1176,6 +1216,10 @@ namespace RollupSegmentation
                     if (apiCall == true)
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Rolling up Section Attribute");
+                        AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     bRollupError = false;
 					ConnectionParameters cp;
@@ -1267,6 +1311,10 @@ namespace RollupSegmentation
                 if (apiCall == true)
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Section attribute rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
 
                 strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
@@ -1319,6 +1367,10 @@ namespace RollupSegmentation
                 if (apiCall == true)
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "SRS Bulk Load beginning");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
 
 
@@ -1415,8 +1467,8 @@ namespace RollupSegmentation
             if(bRollupError && apiCall == true)
             {
                 var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.Status, "Rollup aborted");
-                AllSimulations.UpdateOne(s => s.SimulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    .Set(s => s.status, "Rollup aborted");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 status = new SimulationStatus
                 {
                     status = "Rollup aborted"
