@@ -15,6 +15,7 @@ using CalculateEvaluate;
 using System.Threading.Tasks;
 using FireSharp.Config;
 using FireSharp.Interfaces;
+using MongoDB.Driver;
 
 namespace Simulation
 {
@@ -63,6 +64,8 @@ namespace Simulation
         int _yearOMS;
         bool _isUpdateOMS = false;
         bool _omsEnforceBudget = false;
+
+        private IMongoCollection<SimulationModel> Simulations;
 
         public bool IsUpdateOMS
         {
@@ -179,6 +182,28 @@ namespace Simulation
             cgOMS.Prefix = "cgDE_";
 
         }
+        public Simulation(string strSimulation, string strNetwork, int simulationID, int networkID, IMongoCollection<SimulationModel> simulations)
+        {
+            m_strNetwork = strNetwork;
+            m_strSimulation = strSimulation;
+            m_strNetworkID = networkID.ToString();
+            m_strSimulationID = simulationID.ToString();
+            Simulations = simulations;
+            _isUpdateOMS = false;
+        }
+
+        public class SimulationModel
+        {
+            public int simulationId { get; set; }
+            public string simulationName { get; set; }
+            public string networkName { get; set; }
+            public int networkId { get; set; }
+            public string status { get; set; }
+
+            public DateTime? Created { get; set; }
+
+            public DateTime? LastRun { get; set; }
+        }
 
         public string SimulationNode;
         public IFirebaseClient firebaseClient;
@@ -212,9 +237,14 @@ namespace Simulation
             {
                 status = "Running simulation"
             };
+            UpdateDefinition<SimulationModel> updateStatus;
             SimulationNode = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
             if (firebaseClient != null && isAPICall.Equals(true))
             {
+                updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Running simulation");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
@@ -244,6 +274,8 @@ namespace Simulation
             {
                 status = "Success"
             };
+            updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Success");
             try
 			{
 				RunSimulation();
@@ -254,6 +286,10 @@ namespace Simulation
                 {
                     status = "Simulation failed"
                 };
+
+                updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Simulation failed");
+
                 SimulationMessaging.AddMessage(new SimulationMessage("ERROR: [" + ex.Message + "]" ));
 				SimulationMessaging.AddMessage(new SimulationMessage("Aborting simulation." ));
 			}
@@ -269,6 +305,8 @@ namespace Simulation
 
             if (isAPICall.Equals(true))
             {
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+
                 firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
@@ -623,6 +661,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in initializing analysis");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -645,6 +687,10 @@ namespace Simulation
                         if (APICall.Equals(true))
                         {
                             firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                            var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Benefit variable must be selected");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                         }
                         return false;
                         //break;
@@ -721,8 +767,20 @@ namespace Simulation
             // Users are expected to enter query with year modifier (i.e DISTRICT_2006 = 'M-11')
 
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning to ROLL FORWARD missing simulation attribute data and LOAD existing attribute data at " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Starting to roll forward missing and existing simulation attribute data");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             if (!FillSectionList()) return;
             SimulationMessaging.AddMessage(new SimulationMessage("Complete ROLL FORWARD of missing simulation attribute data and LOAD of existing attribute data at " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Complete roll forward missing and existing simulation attribute data");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
             if (!FillCommittedProjects()) return;
 
@@ -752,13 +810,25 @@ namespace Simulation
 
 
                 //Apply Deteriorate/Performance curves.
-                SimulationMessaging.AddMessage(new SimulationMessage("Applying Performance/Deterioration equations for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss"))); 
+                SimulationMessaging.AddMessage(new SimulationMessage("Applying Performance/Deterioration equations for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Applying Performance/Deterioration equations for" + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 ApplyDeterioration(nYear);
 
 
 
                 //Determine Benefit/Cost
                 SimulationMessaging.AddMessage(new SimulationMessage("Determining Treament Feasibilty and calculating benefit/remaining life versus cost ratios for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Calculating benefit/remaining life versus cost ratios for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 if (SimulationMessaging.IsOMS)
                 {
                     DetermineBenefitCostOMS(nYear);
@@ -772,6 +842,12 @@ namespace Simulation
                 //Load Committed Projects.  These get comitted (and spent) regardless of budget.
                 //Apply committed projects
                 SimulationMessaging.AddMessage(new SimulationMessage("Applying committed projects for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Applying committed projects for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 ApplyCommitted(nYear);
 
 
@@ -779,6 +855,12 @@ namespace Simulation
                 DetermineTargetAndDeficient(nYear);          
                 
                 SimulationMessaging.AddMessage(new SimulationMessage("Spending Budget and evaluating Targets for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Spending Budget and evaluating Targets for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 if (Method.TypeAnalysis.Contains("Multi"))
                 {
                     //MULTIBUDGET FIX
@@ -805,12 +887,24 @@ namespace Simulation
                     }
                 }
                 SimulationMessaging.AddMessage(new SimulationMessage("Creating Deficiency and Network Average Report for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Creating Deficiency and Network Average Report for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 ReportTargetDeficient(nYear);
 
                 //ResetSectionForNextYear();
             }
 
             SimulationMessaging.AddMessage(new SimulationMessage("Output per section per attribute report for all years at " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Output per section per attribute report for all years");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             if (!CreateSimulationTable(m_strNetworkID, m_strSimulationID)) return;
             String sOutFile;
             TextWriter tw = SimulationMessaging.CreateTextWriter("simulation_" + m_strSimulationID + ".csv", out sOutFile);
@@ -974,6 +1068,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1013,6 +1111,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1052,6 +1154,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1091,6 +1197,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1183,6 +1293,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Creating simulation benefit cost table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -1224,6 +1338,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Creating simulation benefit report table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -1251,6 +1369,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Fatal Error: Creating simulation Target table " + strTable);
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -1680,6 +1802,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in compiling AREA function");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1700,6 +1826,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in compiling AREA function");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1740,6 +1870,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in compiling AREA function");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -1771,6 +1905,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in retrieving JURISDICTION from SIMULATIONS");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -1997,6 +2135,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Retrieving Performance data");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2054,11 +2196,15 @@ namespace Simulation
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: A equation must be entered for every PERFORMANCE variable. " + row[0].ToString()));
                     var status = new SimulationStatus
                     {
-                        status = "Error: A equation must be entered for every PERFORMANCE variable."
+                        status = "Error: An equation must be entered for every PERFORMANCE variable."
                     };
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: An equation must be entered for every PERFORMANCE variable");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -2105,6 +2251,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Compile error PERFORMANCE curve");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -2119,6 +2269,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Unknown variable in PERFORMANCE CRITERIA");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -2141,6 +2295,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Unknown variable in PERFORMANCE CRITERIA");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -2178,6 +2336,9 @@ namespace Simulation
                             }
                         }
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: At least one deterioration equation must be set for the Benefit variable."));
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: At least one deterioration equation must be set for the Benefit variable");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                         return false;
                     //break;
                     default:
@@ -2208,6 +2369,10 @@ namespace Simulation
                     if (APICall.Equals(true))
                     {
                         firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Retrieving Calculated Field data");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                     }
                     return false;
                 }
@@ -2305,11 +2470,15 @@ namespace Simulation
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open TREATMENTS table for Analysis.  SQL message - " + exception.Message));
                 var status = new SimulationStatus
                 {
-                    status = "Error:  Unable to open TREATMENTS table for Analysis"
+                    status = "Error: Unable to open TREATMENTS table for Analysis"
                 };
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error:  Unable to open TREATMENTS table for Analysis");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2380,6 +2549,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Unable to open PRIORITY table for Analysis");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2390,11 +2563,15 @@ namespace Simulation
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  At least one priority level must be entered."));
                 var status = new SimulationStatus
                 {
-                    status = "Error:  At least one priority level must be entered"
+                    status = "Error: At least one priority level must be entered"
                 };
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: At least one priority level must be entered");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2487,6 +2664,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Accessing INVESTMENTS table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2551,6 +2732,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Accessing TARGETS table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
@@ -2739,6 +2924,10 @@ namespace Simulation
                 if (APICall.Equals(true))
                 {
                     firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
+
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Accessing DEFICIENTS table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
                 }
                 return false;
             }
