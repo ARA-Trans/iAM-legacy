@@ -13,8 +13,6 @@ using SimulationDataAccess;
 using System.Threading;
 using CalculateEvaluate;
 using System.Threading.Tasks;
-using FireSharp.Config;
-using FireSharp.Interfaces;
 using MongoDB.Driver;
 
 namespace Simulation
@@ -206,7 +204,6 @@ namespace Simulation
         }
 
         public string SimulationNode;
-        public IFirebaseClient firebaseClient;
         public object APICall;
 
         /// <summary>
@@ -214,14 +211,6 @@ namespace Simulation
         /// </summary>
         public void CompileSimulation(object isAPICall)
         {
-            IFirebaseConfig configuration = new FirebaseConfig
-            {
-                AuthSecret = "i2mjdps41gRYAoEBDHG94iqYoAITp52qP6pb7Ijp",
-                BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
-            };
-
-            firebaseClient = new FireSharp.FirebaseClient(configuration);
-
             APICall = isAPICall;
 
             SimulationMessaging.DateTimeStart = DateTime.Now;
@@ -233,19 +222,13 @@ namespace Simulation
             SimulationMessaging.Method = this.Method;
             SimulationMessaging.AddMessage(new SimulationMessage("Begin compile simulation: " + DateTime.Now.ToString("HH:mm:ss")));
 
-            var status = new SimulationStatus
-            {
-                status = "Running simulation"
-            };
             UpdateDefinition<SimulationModel> updateStatus;
             SimulationNode = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
-            if (firebaseClient != null && isAPICall.Equals(true))
+            if (isAPICall.Equals(true))
             {
                 updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Running simulation");
                 Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
             // Clear the compound treatments from the new structure.
@@ -270,10 +253,7 @@ namespace Simulation
             //Create table for each attribute year pair into the future.
             SimulationMessaging.AddMessage(new SimulationMessage("Compile simulation complete: " + DateTime.Now.ToString("HH:mm:ss")));
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning run simulation: " + DateTime.Now.ToString("HH:mm:ss")));
-            status = new SimulationStatus
-            {
-                status = "Success"
-            };
+
             updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Success");
             try
@@ -282,11 +262,6 @@ namespace Simulation
 			}
 			catch( Exception ex )
 			{
-                status = new SimulationStatus
-                {
-                    status = "Simulation failed"
-                };
-
                 updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Simulation failed");
 
@@ -306,8 +281,6 @@ namespace Simulation
             if (isAPICall.Equals(true))
             {
                 Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
             }
 
             return;
@@ -654,14 +627,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error in initializing analysis: " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error in initializing analysis"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error in initializing analysis");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -680,14 +648,9 @@ namespace Simulation
                     case "Incremental Benefit/Cost":
                     case "Multi-year Incremental Benefit/Cost":
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Before running a benefit cost analysis, a Benefit variable must be selected."));
-                        var status = new SimulationStatus
-                        {
-                            status = "Error: Benefit variable must be selected"
-                        };
+
                         if (APICall.Equals(true))
                         {
-                            firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                             var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Benefit variable must be selected");
                             Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1061,14 +1024,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Simulation table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1104,14 +1062,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1147,14 +1100,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1190,14 +1138,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1286,14 +1229,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 //SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation benefit cost table " + strTable + " with SQL Message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Creating simulation benefit cost table"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Creating simulation benefit cost table");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1331,14 +1269,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation report table " + strTable + " with SQL Message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Creating simulation benefit report table"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Creating simulation benefit report table");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1362,14 +1295,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation Target table " + strTable + " with SQL Message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Fatal Error: Creating simulation Target table " + strTable
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Fatal Error: Creating simulation Target table " + strTable);
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1795,14 +1723,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error in compiling AREA function"
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error in compiling AREA function");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1819,14 +1742,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error in compiling AREA function"
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error in compiling AREA function");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1863,14 +1781,9 @@ namespace Simulation
             if (SimulationMessaging.Area.m_listError.Count > 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + SimulationMessaging.Area.m_listError[0].ToString()));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Error in compiling AREA function."
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error in compiling AREA function");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1898,14 +1811,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in retrieving JURISDICTION from SIMULATIONS table. SQL message - " + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error in retrieving JURISDICTION from SIMULATIONS"
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error in retrieving JURISDICTION from SIMULATIONS");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2128,14 +2036,9 @@ namespace Simulation
             catch(Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Performance data. SQL Message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Retrieving Performance data"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Retrieving Performance data");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2194,14 +2097,9 @@ namespace Simulation
                 if(row["EQUATION"].ToString() == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: A equation must be entered for every PERFORMANCE variable. " + row[0].ToString()));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error: An equation must be entered for every PERFORMANCE variable."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: An equation must be entered for every PERFORMANCE variable");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2244,14 +2142,9 @@ namespace Simulation
                 foreach (String str in deteriorate.Errors)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Compile error PERFORMANCE curve " + deteriorate.Attribute + "|" + deteriorate.Group + " " + str));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error: Compile error PERFORMANCE curve"
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Compile error PERFORMANCE curve");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2262,14 +2155,9 @@ namespace Simulation
                 if (deteriorate.CriteriaAttributes == null)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Unknown variable in PERFORMANCE CRITERIA. " + row[2].ToString() ));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error: Unknown variable in PERFORMANCE CRITERIA."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Unknown variable in PERFORMANCE CRITERIA");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2288,14 +2176,9 @@ namespace Simulation
                 if (deteriorate.EquationAttributes == null)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Unknown variable in PERFORMANCE Equation. " + row[3].ToString()));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error: Unknown variable in PERFORMANCE CRITERIA."
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Unknown variable in PERFORMANCE CRITERIA");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2362,14 +2245,9 @@ namespace Simulation
                 catch (Exception exception)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving Calculated Field data. SQL Message - " + exception.Message));
-                    var status = new SimulationStatus
-                    {
-                        status = "Error: Retrieving Calculated Field data"
-                    };
+
                     if (APICall.Equals(true))
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Retrieving Calculated Field data");
                         Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2468,14 +2346,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open TREATMENTS table for Analysis.  SQL message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Unable to open TREATMENTS table for Analysis"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error:  Unable to open TREATMENTS table for Analysis");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2542,14 +2415,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  Unable to open PRIORITY table for Analysis.  SQL message - " + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Unable to open PRIORITY table for Analysis"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Unable to open PRIORITY table for Analysis");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2561,14 +2429,9 @@ namespace Simulation
             if (ds.Tables[0].Rows.Count == 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error:  At least one priority level must be entered."));
-                var status = new SimulationStatus
-                {
-                    status = "Error: At least one priority level must be entered"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: At least one priority level must be entered");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2657,14 +2520,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing INVESTMENTS table. SQL message -" + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Accessing INVESTMENTS table."
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Accessing INVESTMENTS table");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2725,14 +2583,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing TARGETS table. SQL message -" + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Accessing TARGETS table."
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Accessing TARGETS table");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -2917,14 +2770,9 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing DEFICIENTS table. SQL message -" + exception.Message));
-                var status = new SimulationStatus
-                {
-                    status = "Error: Accessing DEFICIENTS table"
-                };
+
                 if (APICall.Equals(true))
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + SimulationNode, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Error: Accessing DEFICIENTS table");
                     Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -8740,10 +8588,5 @@ namespace Simulation
         
 
 
-    }
-
-    public class SimulationStatus
-    {
-        public string status { get; set; }
     }
 }

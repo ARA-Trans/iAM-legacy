@@ -255,12 +255,6 @@
     <Reference Include="DnsClient, Version=1.2.0.0, Culture=neutral, PublicKeyToken=4574bb5573c51424, processorArchitecture=MSIL">
       <HintPath>..\packages\DnsClient.1.2.0\lib\net471\DnsClient.dll</HintPath>
     </Reference>
-    <Reference Include="FireSharp, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\FireSharp.1.1.0\lib\net45\FireSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="FireSharp.Serialization.JsonNet, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\FireSharp.Serialization.JsonNet.1.1.0\lib\net45\FireSharp.Serialization.JsonNet.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.SqlServer.Smo, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Microsoft SQL Server assemblies\2012 (v11)\Microsoft.SqlServer.Smo.dll</HintPath>

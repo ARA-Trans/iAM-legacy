@@ -16,9 +16,6 @@ using CalculateEvaluate;
 using RoadCareGlobalOperations;
 using DataObjects;
 using System.Text.RegularExpressions;
-using Simulation;
-using FireSharp.Config;
-using FireSharp.Interfaces;
 using MongoDB.Driver;
 using static Simulation.Simulation;
 
@@ -107,30 +104,16 @@ namespace RollupSegmentation
 
         public void DoRollup()
 		{
-            IFirebaseConfig configuration = new FirebaseConfig
-            {
-                AuthSecret = "i2mjdps41gRYAoEBDHG94iqYoAITp52qP6pb7Ijp",
-                BasePath = "https://bridgecareapp-ca3ed.firebaseio.com/"
-            };
             MongoClient client = new MongoClient(mongoConnection);
 
             MongoDatabase = client.GetDatabase("BridgeCare");
             AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
-
-            var status = new SimulationStatus
-            {
-                status = "Running rollup"
-            };
-
-            var simulationName = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
-            IFirebaseClient firebaseClient = new FireSharp.FirebaseClient(configuration);
 
             if (apiCall == true)
             {
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Running rollup");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
             }
             Boolean isOMS = false;
             String omsConnectionString = DataAccessLayer.ImportOMS.GetOMSConnectionString(DBMgr.GetNativeConnection().ConnectionString);
@@ -160,11 +143,6 @@ namespace RollupSegmentation
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Rollup aborted");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                    status = new SimulationStatus
-                    {
-                        status = "Rollup aborted"
-                    };
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
                 }
 				return;
 			}
@@ -227,14 +205,8 @@ namespace RollupSegmentation
 			// Get list of all attributes (ATTRIBUTE TABLE) and list of all YEARS (Individual Attribute Tables)
             RollupMessaging.AddMessge("Getting ATTRIBUTE list from ATTRIBUTES table...");
 
-            status = new SimulationStatus
-            {
-                status = "Getting ATTRIBUTE list from ATTRIBUTES table"
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Getting ATTRIBUTE list from ATTRIBUTES table");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -281,14 +253,8 @@ namespace RollupSegmentation
 			}
 			RollupMessaging.AddMessge("Finished selection of all ATTIRBUTES for all YEARS");
 
-            status = new SimulationStatus
-            {
-                status = "Finished selection of all ATTIRBUTES"
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Finished selection of all ATTIRBUTES");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -407,14 +373,8 @@ namespace RollupSegmentation
 				m_strSegmentTable = strTable;
 				RollupMessaging.AddMessge("Inserting SEGMENT_ table attributes into segment control");
 
-                status = new SimulationStatus
-                {
-                    status = "Inserting SEGMENT_ table attributes"
-                };
                 if (apiCall == true)
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Inserting SEGMENT_ table attributes");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -505,14 +465,8 @@ namespace RollupSegmentation
 			Geometry testGeometry;
 			RollupMessaging.AddMessge("Starting through dynamic segmentation table for geometries.");
 
-            status = new SimulationStatus
-            {
-                status = "Starting through dynamic segmentation table for geometries"
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Starting through dynamic segmentation table for geometries");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -569,14 +523,8 @@ namespace RollupSegmentation
 									{
 										RollupMessaging.AddMessge( "Error processing LINESTRING segment. " + exc.Message );
 
-                                        status = new SimulationStatus
-                                        {
-                                            status = "Error processing LINESTRING segment"
-                                        };
                                         if (apiCall == true)
                                         {
-                                            firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                                             var updateStatus = Builders<SimulationModel>.Update
                                                  .Set(s => s.status, "Error processing INESTRING segment");
                                             AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -625,14 +573,8 @@ namespace RollupSegmentation
 			}
 			RollupMessaging.AddMessge("Finished Geometries");
 
-            status = new SimulationStatus
-            {
-                status = "Finished Geometries"
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Finished Geometries");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -760,14 +702,8 @@ namespace RollupSegmentation
 			//needed for Oracle
 			RollupMessaging.AddMessge("Bulk loading SECTION_ table.");
 
-            status = new SimulationStatus
-            {
-                status = "Bulk loading SECTION_ table."
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Bulk loading SECTION_ table");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -804,14 +740,8 @@ namespace RollupSegmentation
 			}
 			RollupMessaging.AddMessge("Finished Bulk Loading SECTION_ table.");
 
-            status = new SimulationStatus
-            {
-                status = "Finished Bulk Loading SECTION_ table"
-            };
             if (apiCall == true)
             {
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Finished Bulk Loading SECTION_ table");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1064,14 +994,9 @@ namespace RollupSegmentation
 
 				String strMessage = "Linear attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
-                status = new SimulationStatus
-                {
-                    status = "Linear attribute rollup complete"
-                };
+
                 if (apiCall == true)
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Linear attribute rollup complete");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1119,14 +1044,8 @@ namespace RollupSegmentation
 				strMessage = "Linear Calculated Field rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-                status = new SimulationStatus
-                {
-                    status = "Linear Calculated Field rollup complete"
-                };
                 if (apiCall == true)
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Linear Calculated Field rollup complete");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1209,14 +1128,8 @@ namespace RollupSegmentation
 					}
 					RollupMessaging.AddMessge( "Rolling up Section Attribute:" + attribute + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
 
-                    status = new SimulationStatus
-                    {
-                        status = "Rolling up Section Attribute"
-                    };
                     if (apiCall == true)
                     {
-                        firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                         var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Rolling up Section Attribute");
                         AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1304,14 +1217,8 @@ namespace RollupSegmentation
 				strMessage = "Section attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-                status = new SimulationStatus
-                {
-                    status = "Section attribute rollup complete"
-                };
                 if (apiCall == true)
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Section attribute rollup complete");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1360,14 +1267,8 @@ namespace RollupSegmentation
 				strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
 				RollupMessaging.AddMessge( strMessageSRSBulk );
 
-                status = new SimulationStatus
-                {
-                    status = "SRS Bulk Load beginning"
-                };
                 if (apiCall == true)
                 {
-                    firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
-
                     var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "SRS Bulk Load beginning");
                     AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -1469,11 +1370,7 @@ namespace RollupSegmentation
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Rollup aborted");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                status = new SimulationStatus
-                {
-                    status = "Rollup aborted"
-                };
-                firebaseClient.UpdateTaskAsync("scenarioStatus/" + simulationName, status);
+
                 return;
             }
 
