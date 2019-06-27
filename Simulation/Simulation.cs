@@ -227,7 +227,7 @@ namespace Simulation
             if (isAPICall.Equals(true))
             {
                 updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "Running simulation");
+                    .Set(s => s.status, "Begin compile simulation");
                 Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
             }
 
@@ -253,6 +253,13 @@ namespace Simulation
             //Create table for each attribute year pair into the future.
             SimulationMessaging.AddMessage(new SimulationMessage("Compile simulation complete: " + DateTime.Now.ToString("HH:mm:ss")));
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning run simulation: " + DateTime.Now.ToString("HH:mm:ss")));
+
+            if (isAPICall.Equals(true))
+            {
+                updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Beginning run simulation");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
             updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Success");
@@ -1886,6 +1893,13 @@ namespace Simulation
                 
                 SimulationMessaging.AddMessage(new SimulationMessage("Initializing simulation complete: " + DateTime.Now.ToString("HH:mm:ss")));
 
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Initialized simulation");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+
                 //SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 1");
                 ///Check for LANES.  This is used to calculate area
                 CheckForLanes();
@@ -1903,7 +1917,15 @@ namespace Simulation
 			//SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 3");
 
 			SimulationMessaging.AddMessage(new SimulationMessage("Verifying Performance Equations and Criteria complete: " + DateTime.Now.ToString("HH:mm:ss")));
-			//SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 4");
+
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Verified Performance Equations and Criteria");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
+            //SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 4");
             SimulationMessaging.GetUniqueDeteriorateAttributes(m_strSimulationID);
 			//SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 5");
 
@@ -1912,6 +1934,13 @@ namespace Simulation
 			//SimulationMessaging.AddMessage("DEBUGGING GetSimulationAttributes(): POINT 6");
 
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Investments complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Verified Investments");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
             ////Get Target Data
             //if (!IsUpdateOMS)
@@ -1922,6 +1951,13 @@ namespace Simulation
             SimulationMessaging.Targets = m_hashTargets;
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Targets and deficiency complete: " + DateTime.Now.ToString("HH:mm:ss")));
 
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Verified Targets and deficiency");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
             if (!IsUpdateOMS)
             {
                 if (!CreateAdditionalSimulationTable(m_strNetworkID, m_strSimulationID)) return false;
@@ -1931,6 +1967,13 @@ namespace Simulation
             //Creates list of Treatments
             if( !GetTreatmentData()) return false;
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Treatments complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Verified Treatments");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
             if (!IsUpdateOMS)
             {
@@ -1943,6 +1986,13 @@ namespace Simulation
                 //Creates a list of Priority objects (which will be run though). Iterated every year when Budgets are spent.
                 if (!GetPriorityData()) return false;
                 SimulationMessaging.AddMessage(new SimulationMessage("Verifying Priorities complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Verified Priorities");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
 
                 SimulationMessaging.crs = new CRS();
             }
