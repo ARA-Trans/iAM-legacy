@@ -2288,20 +2288,7 @@ namespace Simulation
                 DataSet ds;
                 try
                 {
-                    if (APICall.Equals(true))
-                    {
-                        var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "Retrieving Calculated Field data");
-                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                    }
                     ds = DBMgr.ExecuteQuery(strSelect);
-
-                    if (APICall.Equals(true))
-                    {
-                        var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "Retrieved Calculated Field data");
-                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                    }
                 }
                 catch (Exception exception)
                 {
@@ -2471,20 +2458,7 @@ namespace Simulation
             DataSet ds;
             try
             {
-                if (APICall.Equals(true))
-                {
-                    var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "opened PRIORITY table for Analysis");
-                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                }
                 ds = DBMgr.ExecuteQuery(strSelect);
-
-                if (APICall.Equals(true))
-                {
-                    var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "running priorities");
-                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                }
             }
             catch (Exception exception)
             {
