@@ -4,6 +4,8 @@ using System.Text;
 using System.Data;
 using DatabaseManager;
 using System.Collections;
+using MongoDB.Driver;
+using static Simulation.Simulation;
 
 namespace Simulation
 {
@@ -78,7 +80,8 @@ namespace Simulation
             criteria = new Criterias(_table, _column, id);
         }
 
-        public bool LoadBudgetPercentages(List<String> listBudgets)
+        public bool LoadBudgetPercentages(List<String> listBudgets, object APICall,
+            IMongoCollection<SimulationModel> Simulations, string m_strSimulationID)
         {
             //Cleanup unused Budgets
             String strDelete = "DELETE FROM " + cgOMS.Prefix + "PRIORITYFUND WHERE PRIORITYID='" + this.PriorityID + "'";
@@ -99,6 +102,12 @@ namespace Simulation
             }
             catch (Exception except)
             {
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, $"Fatal Error: Error removing non-used budget priorities");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Error removing non-used budget priorities. " + except.Message));
                 return false;
 
@@ -120,12 +129,24 @@ namespace Simulation
                     ds = DBMgr.ExecuteQuery(strSelect);
                     if (ds.Tables[0].Rows.Count != listBudgets.Count)
                     {
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, $"Error: Each budget must have a funding level for each priority level");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Each budget must have a funding level for each priority level."));
                         return false;
                     }
                 }
                 catch
                 {
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, $"Error: Filling Priority budgets and funding");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Filling Priority budgets and funding"));
                     return false;
                 }

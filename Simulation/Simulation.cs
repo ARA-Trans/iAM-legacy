@@ -203,7 +203,6 @@ namespace Simulation
             public DateTime? LastRun { get; set; }
         }
 
-        public string SimulationNode;
         public object APICall;
 
         /// <summary>
@@ -223,7 +222,6 @@ namespace Simulation
             SimulationMessaging.AddMessage(new SimulationMessage("Begin compile simulation: " + DateTime.Now.ToString("HH:mm:ss")));
 
             UpdateDefinition<SimulationModel> updateStatus;
-            SimulationNode = "Scenario" + "_" + m_strNetworkID + "_" + m_strSimulationID;
             if (isAPICall.Equals(true))
             {
                 updateStatus = Builders<SimulationModel>.Update
@@ -2505,6 +2503,12 @@ namespace Simulation
                 }
 
                 SimulationMessaging.AddMessage(new SimulationMessage("Compiling Priority Level " + row["PRIORITYLEVEL"].ToString()));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, $"Compiling Priority Level - {row["PRIORITYLEVEL"].ToString()}");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 if (row[0].ToString().Trim() == "")
                 {
                     priority.IsAllSections = true;
@@ -2527,6 +2531,12 @@ namespace Simulation
                     if (priority.Criteria.Errors.Count > 0)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Error: " + priority.Criteria.Errors[0].ToString()));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, $"Error: {priority.Criteria.Errors[0].ToString()}");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         priority.IsAllSections = true;
                     }   
                     else
@@ -2534,7 +2544,7 @@ namespace Simulation
                         priority.IsAllSections = false;
                     }
                 }
-                if(!priority.LoadBudgetPercentages(Investment.BudgetOrder))return false;
+                if(!priority.LoadBudgetPercentages(Investment.BudgetOrder, APICall, Simulations, m_strSimulationID))return false;
 
                 if (!priority.IsAllSections)
                 {
