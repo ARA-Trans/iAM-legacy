@@ -205,7 +205,7 @@ namespace RollupSegmentation
 					m_hashAttribute.Add(strAttribute, attribute);
 				}
 			}
-			RollupMessaging.AddMessge("Finished selection of all ATTIRBUTES for all YEARS");
+			RollupMessaging.AddMessge("Finished selection of all ATTRIBUTES for all YEARS");
 			#region Create Attribute Tables LRS and SRS
 
 			bool bRollupError = false;
@@ -1010,9 +1010,6 @@ namespace RollupSegmentation
 
 				foreach( String attribute in listAttributeInTable )
 				{
-					if (attribute == "E1")
-					{
-					}
 					RollupMessaging.AddMessge( "Rolling up Section Attribute:" + attribute + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
 					bRollupError = false;
 					ConnectionParameters cp;
@@ -3817,6 +3814,17 @@ namespace RollupSegmentation
         public String m_strMinY;
         public String m_strMaxY;
 
+        public override string ToString()
+        {
+            if(m_strSection != null)
+            {
+                return m_strRoutes + " " + m_strSection + " " + m_strData;
+            }
+            else
+            {
+                return m_strRoutes + "(" + m_strBegin + "-" + m_strEnd + ")" + m_strDirection + " " + m_strData;
+            }
+        }
 
         public DataPoint(String strSectionID, String strFacility, String strSection, String strArea, String strUnit)
         {

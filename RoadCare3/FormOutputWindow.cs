@@ -14,6 +14,7 @@ namespace RoadCare3
     public partial class FormOutputWindow : ToolWindow
     {
         TextWriter m_writer;
+        private int _lastProgress = 0;
 
         public FormOutputWindow()
         {
@@ -34,7 +35,7 @@ namespace RoadCare3
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.ScrollToCaret();
 			richTextBox1.Refresh();
-
+            _lastProgress = 0;
             if (m_writer != null)
             {
                 try
@@ -45,6 +46,50 @@ namespace RoadCare3
             }
         
         }
+
+        public void ReplaceOutputText(String strSetText)
+        {
+            if(_lastProgress > 0)
+            {
+                richTextBox1.ReadOnly = false;
+                richTextBox1.SelectionStart = _lastProgress;
+                richTextBox1.SelectionLength = richTextBox1.Text.Length - _lastProgress;
+                richTextBox1.SelectedText = "";
+                richTextBox1.ReadOnly = true;
+            }
+            else
+            {
+                _lastProgress = richTextBox1.Text.Length;
+            }
+
+
+
+
+
+
+
+            if (!strSetText.Contains("\n"))
+            {
+                richTextBox1.Text += strSetText + "\r\n";
+            }
+            else
+            {
+                richTextBox1.Text += strSetText;
+            }
+
+
+
+
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToCaret();
+          //  richTextBox1.Refresh();
+
+
+        }
+
+
+
+
         public void ClearWindow()
         {
             richTextBox1.Clear();

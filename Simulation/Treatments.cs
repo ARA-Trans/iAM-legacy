@@ -25,7 +25,7 @@ namespace Simulation
         private List<Consequences> _consequences = new List<Consequences>();
         private List<String> _attributes = new List<String>();
         private List<IScheduled> _scheduleds = new List<IScheduled>();
-
+        private List<ISupersede> _supersedes = new List<ISupersede>();
         private List<string> m_listBudget = null;
 
         //Values for caching dll's
@@ -194,6 +194,12 @@ namespace Simulation
         {
             get { return _scheduleds; }
         }
+
+        public List<ISupersede> Supersedes
+        {
+            get { return _supersedes; }
+        }
+
 
         /// <summary>
         /// Loads all feasibility criteria for this treatment in for this treatment ID.
@@ -532,6 +538,51 @@ namespace Simulation
             return true;
         }
 
+        public bool LoadSupersedes()
+        {
+
+
+            try
+            {
+                var select = "SELECT SUPERSEDE_ID, SUPERSEDE_TREATMENT_ID, CRITERIA FROM SUPERSEDES WHERE TREATMENT_ID='" + this.TreatmentID + "'";
+                DataSet ds = DBMgr.ExecuteQuery(select);
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var supersedeId = int.Parse(row["SUPERSEDE_ID"].ToString());
+                    var supersedeTreatmentId = int.Parse(row["SUPERSEDE_TREATMENT_ID"].ToString());
+                    var criteria = "";
+
+                    if(row["CRITERIA"] != DBNull.Value)    criteria =row["CRITERIA"].ToString();
+
+                    Supersedes.Add(new Supersede(supersedeId, supersedeTreatmentId,criteria));
+                }
+
+
+                foreach (var supersede in Supersedes)
+                {
+                    foreach (String str in supersede.Criteria.CriteriaAttributes)
+                    {
+                        if (!SimulationMessaging.IsAttribute(str))
+                        {
+                            SimulationMessaging.AddMessage(new SimulationMessage("Error: " + str + " which is used by the Supersede criteria is not present in the database."));
+                        }
+                        if (!_attributes.Contains(str))
+                        {
+                            _attributes.Add(str);
+                        }
+                    }
+                }
+
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(
+                    new SimulationMessage("Fatal Error: Opening SUPERSEDE table. SQL Message - " + exception.Message));
+                return false;
+            }
+            return true;
+        }
 
         public bool LoadScheduled(List<Treatments> availableTreatments)
         {
@@ -545,14 +596,14 @@ namespace Simulation
 
                 foreach (DataRow row in ds.Tables[0].Rows)
                 {
-                    var scheduledid = int.Parse(row["SCHEDULEDID"].ToString());
+                    var scheduledId = int.Parse(row["SCHEDULEDID"].ToString());
                     var scheduledTreatmentId = row["SCHEDULEDTREATMENTID"].ToString();
                     var scheduledYear = int.Parse(row["SCHEDULEDYEAR"].ToString());
                     var scheduledTreatment = availableTreatments.Find(t => t.TreatmentID == scheduledTreatmentId);
 
                     if (scheduledTreatment != null)
                     {
-                        _scheduleds.Add(new Scheduled(scheduledid, scheduledTreatment, scheduledYear));
+                        _scheduleds.Add(new Scheduled(scheduledId, scheduledTreatment, scheduledYear));
                     }
 
                 }

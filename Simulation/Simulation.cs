@@ -51,6 +51,9 @@ namespace Simulation
         private Dictionary<string, List<AttributeChange>> m_dictionaryCommittedConsequences; //Stores all the committed project consequences for the simulation
         private List<CalculatedAttribute> m_listCalculatedAttribute;//List of all calculated attributes.
 
+        
+
+
         TimeSpan _spanRead = new TimeSpan();
         TimeSpan _spanAnalysis = new TimeSpan();
         TimeSpan _spanReport = new TimeSpan();
@@ -338,8 +341,19 @@ namespace Simulation
                 if (!GetTargetData()) return false;
             }
             SimulationMessaging.Targets = m_hashTargets;
-
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Targets and deficiency complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+
+            if (SimulationMessaging.RemainingLifes == null)
+            {
+                if (!GetRemainingLifes()) return false;
+            }
+
+            SimulationMessaging.AddMessage(new SimulationMessage("Verifying Remaining Life Limits complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+
+
+
 
             //Treatments
             //Adds to the list of Simulation Attibutes
@@ -778,8 +792,15 @@ namespace Simulation
                 String strOut = section.WriteSimulation(Investment.StartYear, Investment.StartYear + Investment.AnalysisPeriod - 1);
                 tw.WriteLine(strOut);
             }
-                
             tw.Close();
+            //        String sOutFile;
+            //      WriteSimulationResult(m_listSections,out  sOutFile);
+
+            //           UpdateSimulationView();
+
+
+
+
 
             _spanAnalysis += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
@@ -813,6 +834,117 @@ namespace Simulation
 
             SimulationMessaging.AddMessage(new SimulationMessage("Simulation complete at " + DateTime.Now.ToString("HH:mm:ss"),100));
                         Thread.Sleep(1000);
+        }
+
+        private void UpdateSimulationView()
+        {
+            var dropView = "DROP VIEW IF EXISTS SIMULATION_" + m_strNetworkID + "_" + m_strSimulationID;
+
+            try
+            {
+                DBMgr.ExecuteNonQuery(dropView);
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Dropping simulation view. " + exception.Message));
+                return;
+            }
+
+
+            var createView = "CREATE VIEW SIMULATION_" + m_strNetworkID + "_" + m_strSimulationID + " AS SELECT * FROM(SELECT[SECTIONID], [ATTRIBUTE_VALUE], CONCAT([ATTRIBUTE_], '_',[YEAR_]) AS ATTRIBUTE_YEAR FROM SIMULATION_RESULT WHERE SIMULATION_ID = '" + m_strSimulationID + "')";
+            createView += " AS REDUCED_TABLE PIVOT(max(ATTRIBUTE_VALUE) FOR ATTRIBUTE_YEAR IN (";
+
+            int index = 0;
+            foreach(var attribute in m_listAttributes)
+            {
+                if (index > 0) createView += ",";
+                createView += "[" + attribute + "_0]";
+
+                for (int nYear = Investment.StartYear; nYear < Investment.StartYear + Investment.AnalysisPeriod; nYear++)
+                {
+                    createView += ",[" + attribute + "_" + nYear + "]";
+                }
+
+                index++;
+            }
+            
+            
+            
+            createView += ")) AS data_";
+
+            try
+            {
+                DBMgr.ExecuteNonQuery(createView);
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Creating simulation view. " + exception.Message));
+                return;
+            }
+
+
+
+        }
+
+        private void WriteSimulationResult(List<Sections> sections,  out string sOutFile)
+        {
+            sOutFile="";
+            TextWriter tw = SimulationMessaging.CreateTextWriter("simulation_results.csv", out sOutFile);
+            foreach (var section in sections)
+            {
+
+
+
+                for (int nYear = Investment.StartYear; nYear <= Investment.StartYear + Investment.AnalysisPeriod; nYear++)
+                {
+                    var outputYear = nYear;
+                    if (outputYear == Investment.StartYear + Investment.AnalysisPeriod)
+                    {
+                        outputYear = 0;
+                    }
+
+                    var hashAttributeValue = (Hashtable)section.m_hashYearAttributeValues[outputYear];
+                    foreach (String sAttribute in SimulationMessaging.ListAttributes)
+                    {
+                        if (sAttribute == "SECTIONID") continue;
+
+                        var result = "\t"+ m_strSimulationID + "\t" + section.SectionID.ToString() + "\t" + sAttribute + "\t" + outputYear + "\t";
+
+                        if (hashAttributeValue[sAttribute] != null) //Values can remain null in OMS analysis
+                        {
+                            String sValue = hashAttributeValue[sAttribute].ToString();
+                            if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
+                            {
+                                String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
+                                float fValue = float.NaN;
+                                try
+                                {
+                                    fValue = float.Parse(sValue);
+                                }
+                                catch
+                                {
+                                    fValue = float.NaN;
+                                }
+                                if (fValue == 0) sValue = "0";
+                                else sValue = fValue.ToString(sFormat);
+                                result += sValue;
+                            }
+                            else
+                            {
+                                if (hashAttributeValue[sAttribute] != null)
+                                {
+                                    result += hashAttributeValue[sAttribute].ToString();
+                                }
+                            }
+                        }
+
+                        tw.WriteLine(result);
+                    }
+                }
+            }
+            tw.Close();
+
+
         }
 
         private void LoadConditionalRSL()
@@ -1804,6 +1936,15 @@ namespace Simulation
             SimulationMessaging.Targets = m_hashTargets;
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Targets and deficiency complete: " + DateTime.Now.ToString("HH:mm:ss")));
 
+            if (!GetRemainingLifes()) return false;
+            SimulationMessaging.AddMessage(new SimulationMessage("Verifying Remaining Life Limits complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+            if (!GetBudgetCriterias()) return false;
+            SimulationMessaging.AddMessage(new SimulationMessage("Verifying Budget Criteria complete: " + DateTime.Now.ToString("HH:mm:ss")));
+
+
+
+
             if (!IsUpdateOMS)
             {
                 if (!CreateAdditionalSimulationTable(m_strNetworkID, m_strSimulationID)) return false;
@@ -2209,6 +2350,9 @@ namespace Simulation
                 if (!treatments.LoadCost()) return false;
                 //SimulationMessaging.AddMessage("Loading Consequences");
                 if (!treatments.LoadConsequences()) return false;
+
+                if (!treatments.LoadSupersedes()) return false;
+
 				//if (!treatments.LoadExclusion()) return false;
                 foreach (String str in treatments.Attributes)
                 {
@@ -2408,6 +2552,86 @@ namespace Simulation
             return true;
 
         }
+
+        public bool GetRemainingLifes()
+        {
+            SimulationMessaging.RemainingLifes = new List<RemainingLife>();
+            String select = "SELECT REMAINING_LIFE_ID, ATTRIBUTE_, REMAINING_LIFE_LIMIT, CRITERIA FROM " + cgOMS.Prefix + "REMAINING_LIFE_LIMITS WHERE SIMULATION_ID='" + m_strSimulationID + "'";
+            DataSet ds;
+            try
+            {
+                ds = DBMgr.ExecuteQuery(select);
+
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing REMAINING_LIFE_LIMITS table. SQL message -" + exception.Message));
+                return false;
+            }
+
+            foreach(DataRow row in ds.Tables[0].Rows)
+            {
+                var remainingLifeId = Convert.ToInt32(row["REMAINING_LIFE_ID"]);
+                var attribute = row["ATTRIBUTE_"].ToString();
+                var remainingLifeLimit = Convert.ToDouble(row["REMAINING_LIFE_LIMIT"]);
+                var criteria = "";
+                if (row["CRITERIA"] != DBNull.Value) criteria = row["CRITERIA"].ToString();
+                var remainingLife = new RemainingLife(remainingLifeId, attribute, remainingLifeLimit, criteria);
+                SimulationMessaging.RemainingLifes.Add(remainingLife);
+
+                if (!m_listAttributes.Contains(attribute)) m_listAttributes.Add(attribute);
+                
+                if(remainingLife.Criteria != null && remainingLife.Criteria.CriteriaAttributes != null)
+                {
+                    foreach(var criteriaAttribute in remainingLife.Criteria.CriteriaAttributes)
+                    {
+                        if (!m_listAttributes.Contains(criteriaAttribute)) m_listAttributes.Add(criteriaAttribute);
+                    }
+                }
+            }
+            return true;
+        }
+
+        public bool GetBudgetCriterias()
+        {
+            SimulationMessaging.BudgetCriterias = new List<BudgetCriteria>();
+            String select = "SELECT BUDGET_CRITERIA_ID, BUDGET_NAME, CRITERIA FROM " + cgOMS.Prefix + "BUDGET_CRITERIA WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            DataSet ds;
+            try
+            {
+                ds = DBMgr.ExecuteQuery(select);
+
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Accessing BUDGET_CRITERIA table. SQL message -" + exception.Message));
+                return false;
+            }
+
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+                var budgetCriteriaId = Convert.ToInt32(row["BUDGET_CRITERIA_ID"]);
+                var budgetName = row["BUDGET_NAME"].ToString();
+                var criteria = "";
+                if (row["CRITERIA"] != DBNull.Value) criteria = row["CRITERIA"].ToString();
+                var budgetCriteria = new BudgetCriteria(budgetCriteriaId, budgetName, criteria);
+                SimulationMessaging.BudgetCriterias.Add(budgetCriteria);
+
+   
+                if (budgetCriteria.Criteria != null && budgetCriteria.Criteria.CriteriaAttributes != null)
+                {
+                    foreach (var criteriaAttribute in budgetCriteria.Criteria.CriteriaAttributes)
+                    {
+                        if (!m_listAttributes.Contains(criteriaAttribute)) m_listAttributes.Add(criteriaAttribute);
+                    }
+                }
+
+
+            }
+            return true;
+        }
+
+
 
         /// <summary>
         /// Gets targets and deficents
@@ -2928,10 +3152,11 @@ namespace Simulation
 
 
                     int nTargetDeficient = 0;
+                    string temp = "";
                     if (treatment.Treatment.ToUpper() == "NO TREATMENT")
                     {
                         var noTreatmentBenefit = new CalculateBenefit(nYear, treatment, m_listDeteriorate, m_listCalculatedAttribute, treatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                        var b = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue);
+                        var b = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue,out temp);
                         noTreatments = treatment;
                         continue;
                     }
@@ -3332,6 +3557,7 @@ namespace Simulation
 
         public void DetermineBenefitCostIterative(int nYear)
         {
+            noTreatments = m_listTreatments.Find(t => t.Treatment.ToUpper() == "NO TREATMENT");
             bool bDeficient = false;
             bool bTarget = false;
             bool bMultipleYear = false;
@@ -3374,25 +3600,59 @@ namespace Simulation
             String sFile;
             TextWriter tw = SimulationMessaging.CreateTextWriter("bc_" + m_strSimulationID +".txt", out sFile);
             Hashtable nextAttributeValue = null;
+            SimulationMessaging.NoTreatmentRemainingLife = new Dictionary<string, string>();
+
+            var index = 0;
+
             foreach (Sections section in m_listSections)
             {
+                if(index%10 == 0)
+                {
+                    var percentage = 100 * Convert.ToDouble(index)/Convert.ToDouble(m_listSections.Count);
+                    SimulationMessaging.AddMessage(new SimulationMessage("Determining benefit/cost " + percentage.ToString("0.#") + "% complete.",true));
+                }
+
+                index++;
+                var noTreatmentRemainLifeHash = "";
                 var noTreatment = m_listTreatments.Find(t => t.Treatment.ToUpper() == "NO TREATMENT");
                 var noTreatmentBenefit = new CalculateBenefit(nYear, noTreatment, m_listDeteriorate, m_listCalculatedAttribute, noTreatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                var baseBenefit = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue, out nextAttributeValue);
+                var baseBenefit = noTreatmentBenefit.Solve(section.m_hashNextAttributeValue, out nextAttributeValue, out noTreatmentRemainLifeHash);
+                SimulationMessaging.NoTreatmentRemainingLife.Add(section.SectionID, noTreatmentRemainLifeHash);
 
 
-
+                //Loop through treatments to get rid of treatments that are going to be superseded.
+                var possibleBeforeSupersede = new List<Treatments>();
+                var possibleAfterSupersede = new List<Treatments>();
                 foreach (Treatments treatment in m_listTreatments)
                 {
-                    
 
-                    int nTargetDeficient = 0;
                     if (treatment.Treatment.ToUpper() == "NO TREATMENT")
                     {
-                        noTreatments = treatment;
                         continue;
                     }
+                    if (treatment.IsTreatmentCriteriaMet(section.m_hashNextAttributeValue))
+                    {
+                        possibleBeforeSupersede.Add(treatment);
+                        possibleAfterSupersede.Add(treatment);
+                    }
+                }
+                //At this point apply the supersede rules and remove from possibleAfterSupersede
+                foreach (var before in possibleBeforeSupersede)
+                {
+                    foreach (var supersede in before.Supersedes)
+                    {
+                        if (supersede.Criteria.IsCriteriaMet(section.m_hashNextAttributeValue))
+                        {
+                            possibleAfterSupersede.RemoveAll(after => after.TreatmentID == supersede.SupersedeTreatmentId.ToString());
+                        }
+                    }
+                }
 
+
+
+                foreach (Treatments treatment in possibleAfterSupersede)
+                {
+                    int nTargetDeficient = 0;
 
                     if (treatment.IsTreatmentCriteriaMet(section.m_hashNextAttributeValue))
                     {
@@ -3407,29 +3667,21 @@ namespace Simulation
                         //Calculate new deterioration using the new hashtable
                         double dBenefit = 0;
                         double deltaBenefit = 0;
-                        double dRemainingLife = 100;
-                        double deltaRemainingLife = 0;
+   
                         Hashtable hashRL = new Hashtable();
-
+                        string strRLHash = "";
                         var treamentBenefit = new CalculateBenefit(nYear, treatment, m_listDeteriorate, m_listCalculatedAttribute, noTreatment.ConsequenceList, section.YearCommit, m_dictionaryCommittedConsequences, m_dictionaryCommittedEquations,m_listTreatments);
-                        var benefit = treamentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue);
 
+                        var benefit = treamentBenefit.Solve(section.m_hashNextAttributeValue,out nextAttributeValue,out strRLHash);
 
-
-
-                        //Subtract off the base remaining life change.
-                        if (dRemainingLife < 0) dRemainingLife = 0;
-                        if (section.RemainingLife < 0) section.RemainingLife = 0;
-
-                        deltaRemainingLife = dRemainingLife - section.RemainingLife;
                         deltaBenefit = benefit - baseBenefit;
 
-                        if (!bAscending)
+                        if (!bAscending && !SimulationMessaging.Method.IsRemainingLife)
                         {
                             deltaBenefit = deltaBenefit * -1;
                         }
 
-                        String strRLHash = this.CreateRemainingLifeHashString(hashRL);
+
                         double dBCRatio;
 
                         double dWeighting = 1;
@@ -3457,7 +3709,7 @@ namespace Simulation
                             case "Multi-year Remaining Life/Cost":
                                 if (fCost > 0)
                                 {
-                                    dBCRatio = deltaRemainingLife / (double)fCost;
+                                    dBCRatio = deltaBenefit / (double)fCost;
                                 }
                                 else
                                 {
@@ -3467,7 +3719,7 @@ namespace Simulation
                             case "Conditional RSL/Cost":
                                 if (fCost > 0)
                                 {
-                                    dBCRatio = dRemainingLife / (double)fCost;
+                                    dBCRatio = deltaBenefit / (double)fCost;
                                 }
                                 else
                                 {
@@ -3478,7 +3730,7 @@ namespace Simulation
                             
                             case "Maximum Remaining Life":
                             case "Multi-year Maximum Life":
-                                dBCRatio = deltaRemainingLife;
+                                dBCRatio = deltaBenefit;
                                 break;
                             case "Incremental Benefit/Cost":
                             case "Multi-year Incremental Benefit/Cost":
@@ -3511,6 +3763,7 @@ namespace Simulation
                         {
                             nTargetDeficient += IsSectionTarget(section, nYear);
                         }
+
                         //At this point have Benefit/RL, Base Benefit/RL, Cost, ConsquenceID
                         //Calculate B/C or RL/C or both (RL*B)/C
                         //Insert in BC table with Batch  Load.
@@ -3525,7 +3778,7 @@ namespace Simulation
                                     + treatment.SameTreatment.ToString() + ":"
                                     + treatment.Budget + ":"
                                     + fCost.ToString() + ":"
-                                    + deltaRemainingLife.ToString() + ":"
+                                    + deltaBenefit.ToString() + ":"
                                     + deltaBenefit.ToString() + ":"
                                     + dBCRatio.ToString() + ":"
                                     + treatment.TreatmentID.ToString() + ":"
@@ -3543,7 +3796,7 @@ namespace Simulation
                                     + treatment.SameTreatment.ToString() + ":"
                                     + treatment.Budget + ":"
                                     + fCost.ToString() + ":"
-                                    + deltaRemainingLife.ToString() + ":"
+                                    + deltaBenefit.ToString() + ":"
                                     + deltaBenefit.ToString() + ":"
                                     + dBCRatio.ToString() + ":"
                                     + treatment.TreatmentID.ToString() + ":"
@@ -3567,14 +3820,13 @@ namespace Simulation
                         applyTreatment.Any = treatment.AnyTreatment;
                         applyTreatment.Same = treatment.SameTreatment;
                         applyTreatment.Budget = treatment.Budget;
-                        applyTreatment.RemainingLife = dRemainingLife;
+                        applyTreatment.RemainingLife = deltaBenefit;
                         applyTreatment.Benefit = dBenefit;
                         applyTreatment.BenefitCostRatio = dBCRatio;
                         applyTreatment.NumberTreatmentDeficient = nTargetDeficient;
                         applyTreatment.RemainingLifeHash = strRLHash;
                         applyTreatment.SelectionWeight = (double)nTargetDeficient * dBCRatio;
                         applyTreatment.IsExclusive = treatment.OMSIsExclusive;
-
                         m_listApplyTreatment.Add(applyTreatment);
 
                         if (bMultipleYear)
@@ -3586,6 +3838,12 @@ namespace Simulation
                         }
                     }
                 }
+
+
+                
+
+
+
             }
             //SimulationMessaging.AddMessage(new SimulationMessage("Closing TW for BC ratios..."));
             tw.Close();
@@ -3714,7 +3972,7 @@ namespace Simulation
                         {
                             if (cost.Criteria.IsCriteriaMet(section.m_hashNextAttributeValue))
                             {
-                                if (fCost >= 0)
+                                if (fCost >= 0 && !Method.UseCumulativeCost)
                                 {
                                     SimulationMessaging.AddMessage(new SimulationMessage("Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section + ".  The more expensive (conservative)is used."));
                                 }
@@ -6486,37 +6744,37 @@ namespace Simulation
 
                 Hashtable hashRL = new Hashtable();
                 double dRemainingLife = 100;
-                foreach (Deteriorate deteriorate in m_listDeteriorate)
-                {
-                    if (SimulationMessaging.Method.IsConditionalRSL)
-                    {
-                        if (!hashRL.Contains(deteriorate.Attribute))
-                        {
-                            hashRL.Add(deteriorate.Attribute, 0); //Add to remain life hash
-                        }
-                        dRemainingLife = 0;
-                    }
-                    else
-                    {
-                        if (deteriorate.IsCriteriaMet(hashAttributeValue))
-                        {
-                            double dRL = 0;
+                //foreach (Deteriorate deteriorate in m_listDeteriorate)
+                //{
+                //    if (SimulationMessaging.Method.IsConditionalRSL)
+                //    {
+                //        if (!hashRL.Contains(deteriorate.Attribute))
+                //        {
+                //            hashRL.Add(deteriorate.Attribute, 0); //Add to remain life hash
+                //        }
+                //        dRemainingLife = 0;
+                //    }
+                //    else
+                //    {
+                //        if (deteriorate.IsCriteriaMet(hashAttributeValue))
+                //        {
+                //            double dRL = 0;
 
-                            if (deteriorate.CalculateRemainingLife(hashAttributeValue, hashAttributeValue, out dRL))
-                            {
-                                if (!hashRL.Contains(deteriorate.Attribute))
-                                {
-                                    hashRL.Add(deteriorate.Attribute, dRL);
-                                    if (dRL < dRemainingLife)
-                                    {
-                                        dRemainingLife = dRL;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                String strRLHash = this.CreateRemainingLifeHashString(hashRL);
+                //            if (deteriorate.CalculateRemainingLife(hashAttributeValue, hashAttributeValue, out dRL))
+                //            {
+                //                if (!hashRL.Contains(deteriorate.Attribute))
+                //                {
+                //                    hashRL.Add(deteriorate.Attribute, dRL);
+                //                    if (dRL < dRemainingLife)
+                //                    {
+                //                        dRemainingLife = dRL;
+                //                    }
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
+                String strRLHash = SimulationMessaging.NoTreatmentRemainingLife[section.SectionID];
 
 
                 //Write report.
@@ -7315,7 +7573,7 @@ namespace Simulation
         {
             m_dictionaryCommittedEquations = new Dictionary<string, CommittedEquation>();
             SimulationMessaging.AddMessage(new SimulationMessage("Compile Committed Project Consequence equations at " + DateTime.Now.ToString("HH:mm:ss")));
-            string query = "SELECT DISTINCT A.CHANGE_, A.COMMITID FROM " + cgOMS.Prefix + "COMMIT_CONSEQUENCES A INNER JOIN " + cgOMS.Prefix + "COMMITTED_ B ON A.COMMITID= B.COMMITID WHERE B.SIMULATIONID='" + simulationID + "' AND A.CHANGE_ LIKE '%]%'";
+            string query = "SELECT A.ID_, A.CHANGE_ FROM " + cgOMS.Prefix + "COMMIT_CONSEQUENCES A INNER JOIN " + cgOMS.Prefix + "COMMITTED_ B ON A.COMMITID= B.COMMITID WHERE B.SIMULATIONID='" + simulationID + "' AND A.CHANGE_ LIKE '%]%' ORDER BY A.ID_";
             if (sectionID != null)
             {
                 query += " AND B.SECTIONID='" + sectionID + "'";
@@ -7324,7 +7582,7 @@ namespace Simulation
             foreach (DataRow row in ds.Tables[0].Rows)
             {
                 string equation = row["CHANGE_"].ToString();
-                string id = row["COMMITID"].ToString();
+                string id = row["ID_"].ToString();
                 if (!m_dictionaryCommittedEquations.ContainsKey(equation))
                 {
                     CommittedEquation ce = new CommittedEquation(equation,id);
@@ -7539,7 +7797,7 @@ namespace Simulation
                 {
                     if (cost.Criteria.IsCriteriaMet(section.m_hashNextAttributeValue))
                     {
-                        if (fCost >= 0)
+                        if (fCost >= 0 && !Method.UseCumulativeCost)
                         {
                             SimulationMessaging.AddMessage(new SimulationMessage("Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section + ".  The more expensive (conservative)is used."));
                         }

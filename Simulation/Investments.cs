@@ -214,16 +214,50 @@ namespace Simulation
         /// <returns></returns>
         public string IsBudgetAvailable(float fAmount, String strBudget, String strYear, Hashtable hashAttributeValue,Priorities priority)
         {
-            string[] budgets;
+            string[] possibleBudgets;
             try
             {
-                budgets = strBudget.Split('|');
+                possibleBudgets = strBudget.Split('|');
             }
             catch (Exception e)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Budget is null." + e.Message));
                 throw e;
             }
+
+            //If there are no budget criteria, then ignore.  The list is enforced.
+
+            var budgets = new List<string>();
+            if (SimulationMessaging.BudgetCriterias.Count > 0)
+            {
+                var listAvailableBudget = new List<BudgetCriteria>();
+                foreach (var budgetCriteria in SimulationMessaging.BudgetCriterias)
+                {
+                    if (budgetCriteria.Criteria.IsCriteriaMet(hashAttributeValue))
+                    {
+                        listAvailableBudget.Add(budgetCriteria);
+                    }
+                }
+
+
+                foreach (var budget in possibleBudgets)
+                {
+                    var available = listAvailableBudget.Find(b => b.BudgetName == budget);
+                    if (available != null && !budgets.Contains(available.BudgetName))
+                    {
+                        budgets.Add(available.BudgetName);
+                    }
+                }
+            }
+            else
+            {
+                foreach(var budget in possibleBudgets)
+                {
+                    budgets.Add(budget);
+                }
+            }
+
+
             
             foreach (string budget in budgets)
             {

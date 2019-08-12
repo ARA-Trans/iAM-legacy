@@ -5,10 +5,11 @@ using System.Text;
 
 namespace Simulation.Interface
 {
-    interface ISupersede
+    public interface IRemainingLife
     {
-        int SupersedeId { get; }
-        int SupersedeTreatmentId { get; }
+        int RemainingLifeId { get; }
+        string Attribute { get; }
+        double RemainingLifeLimit { get; }
         Criterias Criteria { get; }
     }
 }

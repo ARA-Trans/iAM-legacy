@@ -1976,6 +1976,31 @@
         }
 
 
+        private static void UpdateRoadCareForRemainingLifeLimit()
+        {
+            if (!DBMgr.IsTableInDatabase("REMAINING_LIFE_LIMITS"))
+            {
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        DBMgr.ExecuteNonQuery("CREATE TABLE [dbo].[REMAINING_LIFE_LIMITS](	[REMAINING_LIFE_ID] [int] IDENTITY(1,1) NOT NULL,[SIMULATION_ID] [int] NOT NULL,[ATTRIBUTE_] [varchar](50) NOT NULL,[REMAINING_LIFE_LIMIT] [float] NULL,[CRITERIA] [varchar](max) NULL, CONSTRAINT [PK_REMAINING_LIFE_LIMITS] PRIMARY KEY CLUSTERED ([REMAINING_LIFE_ID] ASC)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[REMAINING_LIFE_LIMITS]  WITH CHECK ADD  CONSTRAINT [FK_REMAINING_LIFE_LIMITS_ATTRIBUTES_] FOREIGN KEY([ATTRIBUTE_])REFERENCES [dbo].[ATTRIBUTES_] ([ATTRIBUTE_]) ON UPDATE CASCADE ON DELETE CASCADE");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[REMAINING_LIFE_LIMITS] CHECK CONSTRAINT [FK_REMAINING_LIFE_LIMITS_ATTRIBUTES_]");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[REMAINING_LIFE_LIMITS]  WITH CHECK ADD  CONSTRAINT [FK_REMAINING_LIFE_LIMITS_REMAINING_LIFE_LIMITS] FOREIGN KEY([SIMULATION_ID]) REFERENCES [dbo].[SIMULATIONS] ([SIMULATIONID]) ON DELETE CASCADE");
+                        DBMgr.ExecuteNonQuery("ALTER TABLE [dbo].[REMAINING_LIFE_LIMITS] CHECK CONSTRAINT [FK_REMAINING_LIFE_LIMITS_REMAINING_LIFE_LIMITS]");
+                        break;
+                    case "ORACLE":
+                        throw new NotImplementedException("TODO: Implement Oracle version of SCHEDULED");
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Implement ANSI version of SCHEDULED");
+                }
+            }
+
+        }
+
+
+
         private static void UpdateRoadCareForScheduled()
         {
             if (!DBMgr.IsTableInDatabase("SCHEDULED"))

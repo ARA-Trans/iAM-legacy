@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Simulation.Interface
 {
-    interface ISupersede
+    interface IBudgetCriteria
     {
-        int SupersedeId { get; }
-        int SupersedeTreatmentId { get; }
+        int BudgetCriteriaId { get; }
+        string BudgetName { get; }
         Criterias Criteria { get; }
     }
 }

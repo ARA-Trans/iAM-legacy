@@ -25,7 +25,7 @@ namespace Simulation
         private bool IsBenefitAttributeAscending { get; }
         private bool IsBenefitCalculated { get; }
 
-
+        private bool _isNoTreatmentCircular ;
 
         public CalculateBenefit(int year, 
             Treatments treatmentToEvaluate,
@@ -50,24 +50,93 @@ namespace Simulation
             CurrentDeteriorate = new List<Deteriorate>();
             SimulationTreatments = simulationTreatments;
 
+            //Need to input Deficient
+            _isNoTreatmentCircular = false;
+
+            //See if any of the no treatment consequences effect the criteria.
+            //If they do not there is no need recalculate/resolve
+            var attributesConsequence = new List<string>();
+            foreach (var consequence in NoTreatmentConsequences)
+            {
+                foreach (var attribute in consequence.Attributes)
+                {
+                    if (!attributesConsequence.Contains(attribute))
+                    {
+                        attributesConsequence.Add(attribute);
+                    }
+                }
+                if(consequence.Criteria?.CriteriaAttributes != null)
+                { 
+                    foreach (var attribute in consequence.Criteria.CriteriaAttributes)
+                    {
+                        if (_isNoTreatmentCircular) break;
+
+                        foreach (var calculated in CalculatedAttributes)
+                        {
+                            if (calculated.Attribute != attribute) continue;
+                            //If a attribute is calculated it could result in a circular condition (maybe)
+                            _isNoTreatmentCircular = true;
+                            break;
+                        }
+                        //If the criteria is modified by a consequence it can change (even with no treatment)
+                        if (!attributesConsequence.Contains(attribute)) continue;
+                        _isNoTreatmentCircular = true;
+                        
+                    }
+                }
+            }
         }
 
 
-        public double Solve(Hashtable hashAttributeValue, out Hashtable nextAttributeValue)
+        public double Solve(Hashtable hashAttributeValue, out Hashtable nextAttributeValue, out string rlHash)
         {
-            nextAttributeValue = null;
-            return SimulationMessaging.Method.IsBenefitCost ? SolveBenefitCost(hashAttributeValue, out nextAttributeValue) : SolveRemainingLife(hashAttributeValue);
+            return  SolveBenefitCost(hashAttributeValue, out nextAttributeValue,out rlHash);
         }
 
         private double SolveRemainingLife(Hashtable hashAttributeValue)
         {
+            //Get rid of this and calculate RL in Benefit.
             throw new NotImplementedException();
         }
 
-        private double SolveBenefitCost(Hashtable attributeValue, out Hashtable nextAttributeValue)
+        private List<Consequences> GetReducedSetConsequences(Hashtable attributeValue)
         {
+            if (_isNoTreatmentCircular) return NoTreatmentConsequences;
 
- 
+            var noTreatmentConsequences = new List<Consequences>();
+            foreach (var consequence in NoTreatmentConsequences)
+            {
+                if (consequence.Criteria.IsCriteriaMet(attributeValue))
+                {
+                    noTreatmentConsequences.Add(consequence);
+                }
+            }
+           
+         
+            return noTreatmentConsequences;
+        }
+
+
+
+        private double SolveBenefitCost(Hashtable attributeValue, out Hashtable nextAttributeValue,out string rlHash)
+        {
+            rlHash = "";
+            //Set remaining life to 99 years in the case no attribute has a valid remaining life.
+            var hashRemainingLife = new Dictionary<RemainingLife, double>();
+            var previousAttributeValue = new Dictionary<RemainingLife, double>();
+            var ascendingAttribute = new Dictionary<string, bool>();
+            foreach(var remainingLife in SimulationMessaging.RemainingLifes)
+            {
+                if(!hashRemainingLife.ContainsKey(remainingLife))
+                {
+                    hashRemainingLife.Add(remainingLife, 99);
+                }
+                if(!ascendingAttribute.ContainsKey(remainingLife.Attribute))
+                {
+                    ascendingAttribute.Add(remainingLife.Attribute, SimulationMessaging.GetAttributeAscending(remainingLife.Attribute));
+                }
+            }
+
             //Apply consequence of treatment
             nextAttributeValue = ApplyConsequences(Treatment.ConsequenceList, attributeValue);
             nextAttributeValue = SolveCalculatedFields(nextAttributeValue);
@@ -76,11 +145,6 @@ namespace Simulation
             {
                 currentAttributeValue.Add(key, nextAttributeValue[key]);
             }
-
-
-
-
-
 
 
 
@@ -94,9 +158,10 @@ namespace Simulation
             }
 
 
-
+            var noTreatmentConsequences = GetReducedSetConsequences(nextAttributeValue);
 
             //Calculate the 100 year benefit
+            //Change to 50 year benefit
             for (var i = 0; i < 100; i++)
             {
                 //Make sure the current deterioration equations are current (meet all criteria).
@@ -105,6 +170,7 @@ namespace Simulation
                 //// Deteriorate current deterioration model.
                 foreach (var deteriorate in CurrentDeteriorate)
                 {
+                    if (!apparentAgeHints.ContainsKey(deteriorate.Attribute)) apparentAgeHints.Add(deteriorate.Attribute, 0);
                     currentAttributeValue[deteriorate.Attribute] =
                         deteriorate.IterateOneYear(currentAttributeValue, apparentAgeHints[deteriorate.Attribute], out double apparentAge);
 
@@ -130,20 +196,23 @@ namespace Simulation
                         var scheduledTreatment =
                             SimulationTreatments.Find(f => f.TreatmentID == committed.ScheduledTreatmentId);
                         currentAttributeValue = ApplyConsequences(scheduledTreatment.ConsequenceList, currentAttributeValue);
+                        noTreatmentConsequences = GetReducedSetConsequences(currentAttributeValue);
                     }
                     else
                     {
 
                         currentAttributeValue = ApplyCommittedConsequences(currentAttributeValue, committed);
+                        noTreatmentConsequences = GetReducedSetConsequences(currentAttributeValue);
                     }
                 }
                 else if (scheduled != null)
                 {
                     currentAttributeValue = ApplyConsequences(scheduled.Treatment.ConsequenceList, currentAttributeValue);
+                    noTreatmentConsequences = GetReducedSetConsequences(currentAttributeValue);
                 }
                 else
                 {
-                    currentAttributeValue = ApplyConsequences(NoTreatmentConsequences, currentAttributeValue);
+                    currentAttributeValue = ApplyConsequences(noTreatmentConsequences, currentAttributeValue);
                 }
 
 
@@ -159,6 +228,7 @@ namespace Simulation
                         sumBenefit += (double)currentAttributeValue[SimulationMessaging.Method.BenefitAttribute] -
                                       SimulationMessaging.Method.BenefitLimit;
                     }
+
                 }
                 else
                 {
@@ -173,10 +243,88 @@ namespace Simulation
                 }
 
 
+                //Calculate remaining life if criteria matches.
+                foreach (var remainingLife in SimulationMessaging.RemainingLifes)
+                {
+                    var storePrevious = false;
+                    if(remainingLife.Criteria.IsCriteriaMet(currentAttributeValue))
+                    {
+                        if (ascendingAttribute[remainingLife.Attribute] &&  Convert.ToDouble(currentAttributeValue[remainingLife.Attribute]) > remainingLife.RemainingLifeLimit)
+                        {
+                            hashRemainingLife[remainingLife] = i;
+                            //Need to store value of current so that when threshold is crossed can calculate partial.
+                            storePrevious = true;
+                        }
+ 
+                        if (!ascendingAttribute[remainingLife.Attribute] && Convert.ToDouble(currentAttributeValue[remainingLife.Attribute]) < remainingLife.RemainingLifeLimit)
+                        {
+                            hashRemainingLife[remainingLife] = i;
+                            storePrevious = true;
+                        }
+
+                        if (storePrevious)//The previous value was updated this loop.
+                        {
+                            if (!previousAttributeValue.ContainsKey(remainingLife))
+                            {
+                                previousAttributeValue.Add(remainingLife, Convert.ToDouble(currentAttributeValue[remainingLife.Attribute]));
+                            }
+                            else
+                            {
+                                previousAttributeValue[remainingLife] = Convert.ToDouble(currentAttributeValue[remainingLife.Attribute]);
+                            }
+                        }
+                        else //Previous value was not updated.  If the previous value exists, calculate the exact remaining life now.
+                        {
+                            if(previousAttributeValue.ContainsKey(remainingLife))
+                            {
+                                var delta = (previousAttributeValue[remainingLife] - remainingLife.RemainingLifeLimit) / (previousAttributeValue[remainingLife] - Convert.ToDouble(currentAttributeValue[remainingLife.Attribute]));
+
+                                hashRemainingLife[remainingLife] = hashRemainingLife[remainingLife] + delta;
+
+                                previousAttributeValue.Remove(remainingLife); //So it does not recalculate remaining life.
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            var minimumAttributeRemainingLife = new Dictionary<string, double>();
+            foreach(var key in hashRemainingLife.Keys)
+            {
+                if(!minimumAttributeRemainingLife.ContainsKey(key.Attribute))
+                {
+                    minimumAttributeRemainingLife.Add(key.Attribute, hashRemainingLife[key]);
+                }
+                else
+                {
+                    if(minimumAttributeRemainingLife[key.Attribute] > hashRemainingLife[key])
+                    {
+                        minimumAttributeRemainingLife[key.Attribute] = hashRemainingLife[key];
+                    }
+                }
+            }
+
+            double minimumRemainingLife = 99;
+            foreach(var key in minimumAttributeRemainingLife.Keys)
+            {
+                if(minimumAttributeRemainingLife[key] < minimumRemainingLife)
+                {
+                    minimumRemainingLife = minimumAttributeRemainingLife[key];
+                }
+                rlHash += key + "\t" + minimumAttributeRemainingLife[key].ToString("0.0") + "\n";
+            }
+
+            if(SimulationMessaging.Method.IsRemainingLife)
+            {
+                return minimumRemainingLife;
+            }
+            else
+            {
+                return sumBenefit;
 
             }
-        
-            return sumBenefit;
+       
         }
 
         private void UpdateCurrentDeteriorate(Hashtable hashInput)
@@ -243,7 +391,7 @@ namespace Simulation
             var hashOutput = new Hashtable();
 
             //No Treatment usually only increments age.  If this is the case (and is the only effect of No Treatment solve it quickly.
-            if (consequences.Count == 1 && consequences[0].AttributeChange.Count == 1)
+            if (consequences.Count == 1 && consequences[0].AttributeChange.Count == 1 && consequences[0].AttributeChange[0].Attribute == "AGE")
             {
                 foreach (var key in hashInput.Keys)
                 {

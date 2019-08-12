@@ -1209,7 +1209,7 @@ namespace Simulation
 			}
 			catch(Exception exc)
 			{
-				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
+				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + SimulationMessaging.Area.OriginalInput + " " + exc.Message)); 
 			}
 
         }

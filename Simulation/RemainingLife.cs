@@ -1,30 +1,31 @@
-﻿using System;
+﻿using RoadCareGlobalOperations;
+using Simulation.Interface;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using RoadCareGlobalOperations;
-using Simulation.Interface;
 
 namespace Simulation
 {
-    class Supersede:ISupersede
+    public class RemainingLife : IRemainingLife
     {
-        public int SupersedeId { get; }
-        public int SupersedeTreatmentId { get; }
+        public int RemainingLifeId { get; }
+        public string Attribute { get; }
+        public double RemainingLifeLimit { get; }
         public Criterias Criteria { get; }
 
-
-        public Supersede(int supersedeId,  int supersedeTreatmentId, string criteria)
+        public RemainingLife(int remainingLifeId, string attribute, double remainingLifeLimit, string criteria)
         {
-            SupersedeId = supersedeId;
-            SupersedeTreatmentId = supersedeTreatmentId;
+            RemainingLifeId = remainingLifeId;
+            Attribute = attribute;
+            RemainingLifeLimit = remainingLifeLimit;
 
-            Criteria = new Criterias("SUPERSEDE", "BINARY_CRITERIA",SupersedeId.ToString());
+            Criteria = new Criterias("REMAINING_LIFE", "BINARY_CRITERIA", RemainingLifeId.ToString());
             byte[] assemblyCriteria = null;
             string currentCriteria = "";
             if (!string.IsNullOrWhiteSpace(criteria)) currentCriteria = Simulation.ConvertOMSAttribute(criteria);
-            assemblyCriteria = SimulationMessaging.GetSerializedCalculateEvaluate("SUPERSEDE", "BINARY_CRITERIA", SupersedeId.ToString(), assemblyCriteria);
+            assemblyCriteria = SimulationMessaging.GetSerializedCalculateEvaluate("REMAINING_LIFE", "BINARY_CRITERIA", RemainingLifeId.ToString(), assemblyCriteria);
             if (assemblyCriteria != null && assemblyCriteria.Length > 0)
             {
                 Criteria.Evaluate = (CalculateEvaluate.CalculateEvaluate)AssemblySerialize.DeSerializeObjectFromByteArray(assemblyCriteria);
@@ -45,13 +46,8 @@ namespace Simulation
             Criteria.Criteria = criteria;
             foreach (String str in Criteria.Errors)
             {
-                SimulationMessaging.AddMessage(new SimulationMessage("Error: Supersede criteria for " +  criteria  + " :" + str));
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Supersede criteria for " + criteria + " :" + str));
             }
         }
-
-
-
-
-
     }
 }

@@ -219,6 +219,7 @@ namespace RoadCare3
                 }
             }
             Simulation.SimulationMessaging.ClearProgressList();
+
             //if (!m_simulationThread.IsAlive)
             //{
             //    timerSimulation.Stop();

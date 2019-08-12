@@ -12,6 +12,7 @@ namespace Simulation
         string _message;
         int _percent;
         bool _isFatalError = false;
+        bool _isProgress = false;
 
         public string SimulationID
         {
@@ -43,12 +44,36 @@ namespace Simulation
             set { _isFatalError = value; }
         }
 
+        public bool IsProgress
+        {
+            get { return _isProgress; }
+            set { _isProgress = value; }
+        }
+
+
+
         public SimulationMessage(string message)
         {
             _message = message.ToString();
             _simulationID = SimulationMessaging.SimulationID;
             _alternateID = SimulationMessaging.AlternateID;
             _percent = -1;
+            if (message.Length > 11)
+            {
+                if (_message.Substring(0, 11) == "Fatal Error")
+                {
+                    _isFatalError = true;
+                }
+            }
+        }
+
+        public SimulationMessage(string message, bool isProgress)
+        {
+            _message = message.ToString();
+            _simulationID = SimulationMessaging.SimulationID;
+            _alternateID = SimulationMessaging.AlternateID;
+            _percent = -1;
+            _isProgress = isProgress;
             if (message.Length > 11)
             {
                 if (_message.Substring(0, 11) == "Fatal Error")
