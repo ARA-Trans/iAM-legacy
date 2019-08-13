@@ -16,6 +16,8 @@ using CalculateEvaluate;
 using RoadCareGlobalOperations;
 using DataObjects;
 using System.Text.RegularExpressions;
+using MongoDB.Driver;
+using static Simulation.Simulation;
 using DataAccessLayer;
 
 namespace RollupSegmentation
@@ -26,6 +28,13 @@ namespace RollupSegmentation
         String m_strDataSource="";
         String m_strUserID="";
         String m_strPassword="";
+
+        string m_strSimulation = "";
+        string m_strNetworkID = "";
+        string m_strSimulationID = "";
+        bool apiCall = false;
+        string mongoConnection = "";
+
         List<String> m_listAttributes;
         Hashtable m_hashAttribute;
         int m_nCountNumber = 0;//Count of Number fields
@@ -81,8 +90,32 @@ namespace RollupSegmentation
 
         }
 
-		public void DoRollup()
+        public RollupSegmentation(String strSimulation, String m_strNetwork, String strSimulationID, String strNetworkID, bool isAPI, string connection)
+        {
+            strNetwork = m_strNetwork;
+            m_strSimulation = strSimulation;
+            m_strNetworkID = strNetworkID;
+            m_strSimulationID = strSimulationID;
+            apiCall = isAPI;
+            mongoConnection = connection;
+        }
+
+        public IMongoDatabase MongoDatabase;
+        public IMongoCollection<SimulationModel> AllSimulations;
+
+        public void DoRollup()
 		{
+            MongoClient client = new MongoClient(mongoConnection);
+
+            MongoDatabase = client.GetDatabase("BridgeCare");
+            AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
+
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Running rollup");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             Boolean isOMS = false;
             String omsConnectionString = DataAccessLayer.ImportOMS.GetOMSConnectionString(DBMgr.GetNativeConnection().ConnectionString);
             if(!String.IsNullOrWhiteSpace(omsConnectionString))
@@ -106,6 +139,12 @@ namespace RollupSegmentation
 			if( !CompileAreaEquation() )
 			{
 				RollupMessaging.AddMessge( "Rollup of network aborted: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
+                if(apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Rollup aborted");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
 				return;
 			}
             
@@ -146,7 +185,7 @@ namespace RollupSegmentation
 				catch( Exception exc )
 				{
 					RollupMessaging.AddMessge( "Warning: Drop table " + strTable + " failed. " + exc.Message );
-				}
+                }
 			}
 			bool bPCI = false;
 			String strSelectPCI = "SELECT COUNT(*) FROM PCI";
@@ -161,12 +200,20 @@ namespace RollupSegmentation
 			{
 				RollupMessaging.AddMessge( "Warning: Error retrieving PCI count.  PCI not included in rollup." + exc.Message );
 				bPCI = true;
-			}
+            }
 			DBMgr.ExecuteNonQuery( "DELETE FROM SEGMENT_CONTROL WHERE NETWORKID ='" + strNetworkID + "'" );
 
 			// Get list of all attributes (ATTRIBUTE TABLE) and list of all YEARS (Individual Attribute Tables)
             RollupMessaging.AddMessge("Getting ATTRIBUTE list from ATTRIBUTES table...");
-			String strSelectAttribute = "SELECT ATTRIBUTE_,NATIVE_,TYPE_,FORMAT FROM ATTRIBUTES_ WHERE CALCULATED='0' OR CALCULATED IS NULL";
+
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Getting ATTRIBUTE list from ATTRIBUTES table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
+            String strSelectAttribute = "SELECT ATTRIBUTE_,NATIVE_,TYPE_,FORMAT FROM ATTRIBUTES_ WHERE CALCULATED='0' OR CALCULATED IS NULL";
 			if( bPCI )
 				strSelectAttribute += " OR ATTRIBUTE_ = 'PCI' ORDER BY ATTRIBUTE_";
 			else
@@ -205,10 +252,18 @@ namespace RollupSegmentation
 					m_hashAttribute.Add(strAttribute, attribute);
 				}
 			}
-			RollupMessaging.AddMessge("Finished selection of all ATTRIBUTES for all YEARS");
-			#region Create Attribute Tables LRS and SRS
+			RollupMessaging.AddMessge("Finished selection of all ATTIRBUTES for all YEARS");
 
-			bool bRollupError = false;
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished selection of all ATTIRBUTES");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
+            #region Create Attribute Tables LRS and SRS
+
+            bool bRollupError = false;
 			m_nCountString = 0;
 			m_nCountNumber = 0;
 
@@ -242,7 +297,7 @@ namespace RollupSegmentation
 				{
 					RollupMessaging.AddMessge( "Error: Could not rollup attribute " + str + ". " + exc.Message );
 					bRollupError = true;
-				}
+                }
 
 				attribute.m_listYears = new List<String>();
 				if( !bRollupError )
@@ -288,7 +343,7 @@ namespace RollupSegmentation
 				}
 				else
 				{
-					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarChar(4000), true));
+					listColumn.Add(new DatabaseManager.TableParameters("GEOMETRY", DataType.VarCharMax, true));
 				}
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MINX", DataType.Float, true));
 				listColumn.Add(new DatabaseManager.TableParameters("ENVELOPE_MAXX", DataType.Float, true));
@@ -318,7 +373,15 @@ namespace RollupSegmentation
 				strTable = "SEGMENT_" + strNetworkID + "_NS0";
 				m_strSegmentTable = strTable;
 				RollupMessaging.AddMessge("Inserting SEGMENT_ table attributes into segment control");
-				foreach( String str in m_listAttributes )
+
+                if (apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Inserting SEGMENT_ table attributes");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+
+                foreach ( String str in m_listAttributes )
 				{
 					
 					DBMgr.ExecuteNonQuery( "INSERT INTO SEGMENT_CONTROL (NETWORKID,SEGMENT_TABLE,ATTRIBUTE_) VALUES ('" + strNetworkID + "','" + strTable + "','" + str + "')" );
@@ -356,9 +419,9 @@ namespace RollupSegmentation
 				int nStringTable = m_nCountString / columnLimit;
 			}
 
-			#endregion
+#endregion
 
-			#region Create Section ID for LRS AND SRS
+#region Create Section ID for LRS AND SRS
 			//At this point all necessary tables for this network rollup have been created and stored in SEGMENT_CONTROL
 
 			//Take data from Dynamic Segmentation Table (LRS) or from (RAWSECTIONALIAS) and put in the
@@ -402,7 +465,15 @@ namespace RollupSegmentation
 			// Start reading through the dynamic seg table.
 			Geometry testGeometry;
 			RollupMessaging.AddMessge("Starting through dynamic segmentation table for geometries.");
-			while( dr.Read() )
+
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Starting through dynamic segmentation table for geometries");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
+            while ( dr.Read() )
 			{
 				double logicalBegin = double.Parse( dr["BEGIN_STATION"].ToString() );
 				double logicalEnd = double.Parse( dr["END_STATION"].ToString() );
@@ -452,7 +523,14 @@ namespace RollupSegmentation
 									catch( Exception exc )
 									{
 										RollupMessaging.AddMessge( "Error processing LINESTRING segment. " + exc.Message );
-									}
+
+                                        if (apiCall == true)
+                                        {
+                                            var updateStatus = Builders<SimulationModel>.Update
+                                                 .Set(s => s.status, "Error processing INESTRING segment");
+                                            AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                                        }
+                                    }
 								}
 							}
 							else
@@ -495,7 +573,14 @@ namespace RollupSegmentation
 				nSection++;
 			}
 			RollupMessaging.AddMessge("Finished Geometries");
-			dr.Close();
+
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished Geometries");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+            dr.Close();
 			drGeometry.Close();
 
 		    //foreach (var section in listSections)
@@ -617,8 +702,15 @@ namespace RollupSegmentation
 			//dsmelser
 			//needed for Oracle
 			RollupMessaging.AddMessge("Bulk loading SECTION_ table.");
-			
-			if (listSectionSRS.Count > 0)
+
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Bulk loading SECTION_ table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
+
+            if (listSectionSRS.Count > 0)
 			{
 				switch (DBMgr.NativeConnectionParameters.Provider)
 				{
@@ -648,12 +740,20 @@ namespace RollupSegmentation
 				}
 			}
 			RollupMessaging.AddMessge("Finished Bulk Loading SECTION_ table.");
-			#endregion
 
-			#region LRS AND SRS ATTRIBUTES
+            if (apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Finished Bulk Loading SECTION_ table");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
-			//Only load one tables worth of attributes at a time.  SO... need to get list of tables and attributes therein.
-			List<String> listAttributeInTable;
+            #endregion
+
+            #region LRS AND SRS ATTRIBUTES
+
+            //Only load one tables worth of attributes at a time.  SO... need to get list of tables and attributes therein.
+            List<String> listAttributeInTable;
 			foreach( String strSegmentTable in m_listSegmentTables )
 			{
 				listAttributeInTable = new List<String>();
@@ -896,7 +996,14 @@ namespace RollupSegmentation
 				String strMessage = "Linear attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-				strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
+                if (apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Linear attribute rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+
+                strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
 				tw = new StreamWriter( strOutFile );
 
 				TextReader tr;
@@ -938,7 +1045,14 @@ namespace RollupSegmentation
 				strMessage = "Linear Calculated Field rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-				String strMessageLRSBulk = "LRS Bulk Load beginning: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
+                if (apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Linear Calculated Field rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+
+                String strMessageLRSBulk = "LRS Bulk Load beginning: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				strOutFile = strMyDocumentsFolder + "\\" + strSegmentTable + ".txt";
 				RollupMessaging.AddMessge( strMessageLRSBulk );
 
@@ -1011,7 +1125,14 @@ namespace RollupSegmentation
 				foreach( String attribute in listAttributeInTable )
 				{
 					RollupMessaging.AddMessge( "Rolling up Section Attribute:" + attribute + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
-					bRollupError = false;
+
+                    if (apiCall == true)
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Rolling up Section Attribute");
+                        AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
+                    bRollupError = false;
 					ConnectionParameters cp;
 					String strSelect;
 
@@ -1094,7 +1215,14 @@ namespace RollupSegmentation
 				strMessage = "Section attribute rollup complete: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" );
 				RollupMessaging.AddMessge( strMessage );
 
-				strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
+                if (apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Section attribute rollup complete");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+
+                strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
 				tw = new StreamWriter( strOutFile );
 
 
@@ -1137,8 +1265,15 @@ namespace RollupSegmentation
 				strOutFile = strMyDocumentsFolder + "\\SRS_" + strSegmentTable + ".txt";
 				RollupMessaging.AddMessge( strMessageSRSBulk );
 
+                if (apiCall == true)
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "SRS Bulk Load beginning");
+                    AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
 
-				if( listSectionSRS.Count > 0 )
+
+                if ( listSectionSRS.Count > 0 )
 				{
 
 						switch( DBMgr.NativeConnectionParameters.Provider )
@@ -1207,7 +1342,7 @@ namespace RollupSegmentation
 
 
 
-			#endregion
+#endregion
 
 			//#region LRS AND SRS PCI
 
@@ -1227,6 +1362,21 @@ namespace RollupSegmentation
 			SummarizeImageLocation(strMyDocumentsFolder);
 			CleanCommittedOnSectionNumberChange( strNetworkID );
 			RollupMessaging.AddMessge( "End rollup of network: " + strNetwork + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
+
+            if(bRollupError && apiCall == true)
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Rollup aborted");
+                AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+
+                return;
+            }
+
+            if(apiCall == true && !bRollupError)
+            {
+                var simulation = new Simulation.Simulation(m_strSimulation, strNetwork, Convert.ToInt32(m_strSimulationID), Convert.ToInt32(m_strNetworkID), AllSimulations);
+                simulation.CompileSimulation(true);
+            }
 		}
 
 

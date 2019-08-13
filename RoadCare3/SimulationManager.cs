@@ -454,6 +454,7 @@ namespace RoadCare3
 			String strInflation;
 			String strDiscount;
 			String strBudgetOrder;
+            String strDescription;
 
 			try
 			{
@@ -467,8 +468,9 @@ namespace RoadCare3
 					strInflation = dr["INFLATIONRATE"].ToString();
 					strDiscount = dr["DISCOUNTRATE"].ToString();
 					strBudgetOrder = dr["BUDGETORDER"].ToString();
+                    strDescription = dr["DESCRIPTION"].ToString();
 
-					String strInsert = "INSERT INTO INVESTMENTS (SIMULATIONID,FIRSTYEAR,NUMBERYEARS,INFLATIONRATE,DISCOUNTRATE,BUDGETORDER) VALUES (" + strNewSimulationID + "," + strFirstYear + "," + strNumberYear + "," + strInflation + "," + strDiscount + ",'" + strBudgetOrder + "')";
+                    String strInsert = "INSERT INTO INVESTMENTS (SIMULATIONID,FIRSTYEAR,NUMBERYEARS,INFLATIONRATE,DISCOUNTRATE,BUDGETORDER,DESCRIPTION) VALUES (" + strNewSimulationID + "," + strFirstYear + "," + strNumberYear + "," + strInflation + "," + strDiscount + ",'" + strBudgetOrder + ",'" + strDescription + "')";
 					listInserts.Add( strInsert );
 				}
 				else

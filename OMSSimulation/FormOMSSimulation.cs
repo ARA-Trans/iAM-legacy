@@ -146,8 +146,8 @@ namespace OMSSimulation
                 {
                     oms.TextBox.Text = "Beginning Simulation " + oms.ToString() + " at " + DateTime.Now.ToString();
                     Simulation.Simulation simulation = new Simulation.Simulation(oms.Simulation, "", oms.SimulationID, oms.NetworkID);
-                    oms.Thread = new Thread(new ThreadStart(simulation.CompileSimulation));
-                    oms.Thread.Start();
+                    oms.Thread = new Thread(new ParameterizedThreadStart(simulation.CompileSimulation));
+                    oms.Thread.Start(false);
                     timerSimulation.Start();
                 }
             }
