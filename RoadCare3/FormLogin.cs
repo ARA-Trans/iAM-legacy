@@ -380,11 +380,11 @@ namespace RoadCare3
             #if DEBUG
                         tbRoadCarePassword.Text = "install";
                         tbRoadCareUserName.Text = "install";
-                        tbMSSQLDatabaseName.Text = "Lexington_RC";
-                        tbMSSQLServerName.Text = "TRANS-GLARSON4\\MSSQL14";
-                        tbMSSQLUserName.Text = "penndot";
-                        tbMSSQLPassword.Text = "roadcarepams";
-                        chkUseIntegratedSecurity.Checked = true;
+                        tbMSSQLDatabaseName.Text = "BridgeCare_Dev";
+                        tbMSSQLServerName.Text = "40.121.5.125,1433\\IAM2014";
+                        tbMSSQLUserName.Text = "sa";
+                        tbMSSQLPassword.Text = "20Pikachu^";
+                        chkUseIntegratedSecurity.Checked = false;
                         tcLogin.SelectedIndex= 0;
             #endif
         }

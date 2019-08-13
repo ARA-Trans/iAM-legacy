@@ -1671,25 +1671,25 @@ namespace Simulation
                                 section.Area = float.Parse(dr["AREA"].ToString());
                             }
 
-						section.RollToYear = Investment.StartYear;
-						foreach (String str in listColumns)
-						{
-                            //strValue = dr[str].ToString();
-                            if (dr[str] == DBNull.Value) section.AddAttributeValue(str,null);
-                            else section.AddAttributeValue(str, dr[str]);
-						}
-						try
-						{
-							section.RollForward(m_listDeteriorate, m_listAttributes, m_listCalculatedAttribute);
-						}
-						catch(Exception exc)
-                        {
-                            SimulationMessaging.AddMessage(new SimulationMessage("An error occurred rolling forward a section: "+ exc.Message));
+                            section.RollToYear = Investment.StartYear;
+                            foreach (String str in listColumns)
+                            {
+                                //strValue = dr[str].ToString();
+                                if (dr[str] == DBNull.Value) section.AddAttributeValue(str, null);
+                                else section.AddAttributeValue(str, dr[str]);
+                            }
+                            try
+                            {
+                                section.RollForward(m_listDeteriorate, m_listAttributes, m_listCalculatedAttribute);
+                            }
+                            catch (Exception exc)
+                            {
+                                SimulationMessaging.AddMessage(new SimulationMessage("An error occurred rolling forward a section: " + exc.Message));
 
-						}
-						m_listSections.Add(section);
-					}
-					dr.Close();
+                            }
+                            m_listSections.Add(section);
+                        }
+                    }
 					break;
 				case "ORACLE":
 					try
