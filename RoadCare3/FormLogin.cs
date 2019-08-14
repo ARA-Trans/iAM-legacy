@@ -378,12 +378,12 @@ namespace RoadCare3
             tbRoadCareUserName.Text = Settings.Default.LAST_LOGIN;
             TabSqlServer.Enabled = true;
             #if DEBUG
-                        tbRoadCarePassword.Text = "install";
-                        tbRoadCareUserName.Text = "install";
-                        tbMSSQLDatabaseName.Text = "BridgeCare_Dev";
-                        tbMSSQLServerName.Text = "40.121.5.125,1433\\IAM2014";
-                        tbMSSQLUserName.Text = "sa";
-                        tbMSSQLPassword.Text = "20Pikachu^";
+                        tbRoadCarePassword.Text = "dummy";
+                        tbRoadCareUserName.Text = "dummy";
+                        tbMSSQLDatabaseName.Text = "dummy";
+                        tbMSSQLServerName.Text = "dummy";
+                        tbMSSQLUserName.Text = "dummy";
+                        tbMSSQLPassword.Text = "dummy";
                         chkUseIntegratedSecurity.Checked = false;
                         tcLogin.SelectedIndex= 0;
             #endif
