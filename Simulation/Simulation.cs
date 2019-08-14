@@ -2606,7 +2606,13 @@ namespace Simulation
             {
                 treatments = new Treatments();
                 treatments.Treatment = row[0].ToString();
-                SimulationMessaging.AddMessage(new SimulationMessage("Compiling " + treatments.Treatment + " at " + DateTime.Now.ToString("HH:mm:ss"))); 
+                SimulationMessaging.AddMessage(new SimulationMessage("Compiling " + treatments.Treatment + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Compiling " + treatments.Treatment);
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 int nAny;
                 int nSame;
 
@@ -2998,6 +3004,12 @@ namespace Simulation
                 if (strTargetMean == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - TARGET is missing. Targets if they are included, must have numeric values input for Target."));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: " + strAttribute + " - TARGET is missing.");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     return false;
                 }
 
@@ -3182,6 +3194,12 @@ namespace Simulation
                 if (strDeficient == "" || strPercentDeficient == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - DEFICIENT and/or DEFICIENT PERCENT is missing.  If a deficiency attribute target is included a DEFICIENT level and a percent Allowed DEFICIENT must be entered."));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: " + strAttribute + " - DEFICIENT and/or DEFICIENT PERCENT is missing");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     return false;
                 }
 
@@ -3244,6 +3262,12 @@ namespace Simulation
                     if (targets.Criteria.CriteriaAttributes == null)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - Contains an unidentified attribute. " + row[4].ToString()));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error: " + strAttribute + " - Contains an unidentified attribute. " + row[4].ToString());
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         return false;
 
                     }
@@ -3345,6 +3369,12 @@ namespace Simulation
             catch(Exception e)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Applying deterioration curves." + e.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Applying deterioration curves");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 throw e;
             }
 		}
@@ -3875,6 +3905,12 @@ namespace Simulation
                     columnNames.Add("CHANGEHASH");
                     DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, strTable, sFile, columnNames, ":", " \"str '#ORACLEENDOFLINE#'\"");
                     SimulationMessaging.AddMessage(new SimulationMessage("Bulk Load for BC Complete..."));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Bulk Load for BC Complete");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     break;
                 default:
                     throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
@@ -3942,6 +3978,12 @@ namespace Simulation
                 {
                     var percentage = 100 * Convert.ToDouble(index)/Convert.ToDouble(m_listSections.Count);
                     SimulationMessaging.AddMessage(new SimulationMessage("Determining benefit/cost " + percentage.ToString("0.#") + "% complete.",true));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Determining benefit / cost " + percentage.ToString("0.#") + "% complete");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                 }
 
                 index++;
@@ -5718,6 +5760,12 @@ namespace Simulation
                 catch (Exception e)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Sorting and getting best BenefitCost treatment:" + e.Message));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: Sorting and getting best BenefitCost treatment");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     throw e;
                 }
 
@@ -5841,6 +5889,12 @@ namespace Simulation
                 catch (Exception e)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Removing Deficient and Targets from list of Targets: " + e.Message));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: Removing Deficient and Targets from list of Targets");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     throw e;
                 }
                 
@@ -6112,6 +6166,12 @@ namespace Simulation
             {
 
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Bulk loading results from year = " + nYear.ToString() + ". " + e.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Bulk loading results from year = " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 throw e;
             }
 
@@ -6425,6 +6485,12 @@ namespace Simulation
                             if (nYear == appliedTreatment.Year)
                             {
                                 SimulationMessaging.AddMessage(new SimulationMessage("Applying treatment:" + sTreatment + " to Facility:" +  section.Facility + " Section:" + section.Section + " for Year:" + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                                if (APICall.Equals(true))
+                                {
+                                    var updateStatus = Builders<SimulationModel>.Update
+                                    .Set(s => s.status, "Applying treatment:" + sTreatment + " to Facility:" + section.Facility + " Section:" + section.Section + " for Year:" + nYear.ToString());
+                                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                                }
                                 Committed singleSection = new Committed();
                                 singleSection.Treatment = appliedTreatment.Treatment;
                                 singleSection.ConsequenceID = appliedTreatment.TreatmentID;
@@ -7905,6 +7971,12 @@ namespace Simulation
         {
             m_dictionaryCommittedEquations = new Dictionary<string, CommittedEquation>();
             SimulationMessaging.AddMessage(new SimulationMessage("Compile Committed Project Consequence equations at " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Compile Committed Project Consequence equations");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             string query = "SELECT A.ID_, A.CHANGE_ FROM " + cgOMS.Prefix + "COMMIT_CONSEQUENCES A INNER JOIN " + cgOMS.Prefix + "COMMITTED_ B ON A.COMMITID= B.COMMITID WHERE B.SIMULATIONID='" + simulationID + "' AND A.CHANGE_ LIKE '%]%' ORDER BY A.ID_";
             if (sectionID != null)
             {
