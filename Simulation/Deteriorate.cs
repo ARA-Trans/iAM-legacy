@@ -413,7 +413,7 @@ namespace Simulation
 				}
 				catch(Exception exc)
 				{
-					SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
+					SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + _calculate.OriginalInput + " " + exc.Message)); 
 				}
 
             }
@@ -422,9 +422,10 @@ namespace Simulation
 
         public double IterateOneYear(Hashtable hashAttributeValues, out bool bOutOfRange)
         {
+            double apparentAge;
             if (this.PiecewiseEquation == null)
             {
-                return IterateOneYearEquation(hashAttributeValues, out bOutOfRange);
+                return IterateOneYearEquation(hashAttributeValues,0,out apparentAge, out bOutOfRange);
             }
             else
             {
@@ -432,8 +433,53 @@ namespace Simulation
             }
         }
 
+
+        public double IterateOneYear(Hashtable hashAttributeValues, int apparentAgeHint, out double apparentAge)
+        {
+            if (PiecewiseEquation != null)
+            {
+                return IterateSpanPiecewise(hashAttributeValues, 1, apparentAgeHint, out apparentAge);
+            }
+
+
+            
+            return IterateOneYearEquation(hashAttributeValues, apparentAgeHint,out apparentAge, out bool bOutOfRange);
+
+        }
+
+
+        /// <summary>
+        /// New method with Apparent Age Hint
+        /// </summary>
+        /// <param name="hashAttributeValues"></param>
+        /// <param name="span"></param>
+        /// <param name="apparentAgeHint"></param>
+        /// <param name="apparentAge"></param>
+        /// <returns></returns>
+        public double IterateSpanPiecewise(Hashtable hashAttributeValues, double span,int apparentAgeHint, out double  apparentAge)
+        {
+            double dValue = double.Parse(hashAttributeValues[this.Attribute].ToString());
+            double dAnswer = double.NaN;
+            if (Shift)
+            {
+                var dAge = double.Parse(hashAttributeValues["AGE"].ToString());
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge, span,out apparentAge).Value;
+                
+            }
+            else
+            {
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, span,apparentAgeHint, out apparentAge).Value;
+            }
+
+            return dAnswer;
+        }
+
+
+
+
         public double IterateSpanPiecewise(Hashtable hashAttributeValues ,double span, out bool bOutOfRange)
         {
+            double apparentAge = 0;
             bOutOfRange = false;
             double dValue = double.Parse(hashAttributeValues[this.Attribute].ToString());
             double dAnswer = double.NaN;
@@ -441,7 +487,7 @@ namespace Simulation
             if (Shift)
             {
                 dAge = double.Parse(hashAttributeValues["AGE"].ToString());
-                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge,span).Value;
+                dAnswer = this.PiecewiseEquation.GetNextValue(dValue, dAge,span, out apparentAge).Value;
             }
             else
             {
@@ -467,13 +513,14 @@ namespace Simulation
         /// </summary>
         /// <param name="hashAttributeValues">Values for other attributes</param>
         /// <returns>Value for next year</returns>
-        public double IterateOneYearEquation(Hashtable hashAttributeValues,out bool bOutOfRange)
+        public double IterateOneYearEquation(Hashtable hashAttributeValues, int apparentAgeHint, out double apparentAge, out bool bOutOfRange)
         {
             double increment;
             double delta;
             double ratio;
             double dAnswer;
             double dAge = 0;
+            apparentAge = 0;
             if (Shift)
             {
                 dAge = double.Parse(hashAttributeValues["AGE"].ToString());
@@ -481,10 +528,16 @@ namespace Simulation
 
             bOutOfRange = true;
             double dValue = double.Parse(hashAttributeValues[this.Attribute].ToString());
+            //TODO: Does this need to be solved everytime on
             if (!_isAgeOnly) Solve(hashAttributeValues);
 
             //Check if 99 year value is input
-            if (dValue == _answer[99])
+            if (dValue > _answer[98] && !SimulationMessaging.GetAttributeAscending(Attribute))
+            {
+                bOutOfRange = false;
+                return dValue;
+            }
+            else if(dValue < _answer[98] && SimulationMessaging.GetAttributeAscending(Attribute))
             {
                 bOutOfRange = false;
                 return dValue;
@@ -911,8 +964,8 @@ namespace Simulation
 			}
 			catch(Exception exc)
 			{
-				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
-				return false;
+				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + _evaluate.OriginalInput + " " + exc.Message));
+                return false;
 			}
         }
 

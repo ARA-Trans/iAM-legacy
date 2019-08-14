@@ -1478,10 +1478,15 @@ namespace RoadCare3
 
 		private void btnCommitImport_Click( object sender, EventArgs e )
 		{
+            Global.WriteOutput("Begin committed project import.");
 			List<CommitCopy> committedToPaste = GetSavedTreatments();
+            Global.WriteOutput("Begin saving committed project to database.");
 			PasteCommittted( committedToPaste );
-			UpdateView();
-		}
+            Global.WriteOutput("End saving committed project to database.");
+		    Global.WriteOutput("Updating committed project view.");
+            UpdateView();
+		    Global.WriteOutput("Import committed project is complete.");
+        }
 
 		private List<CommitCopy> GetSavedTreatments()
 		{
@@ -1618,9 +1623,18 @@ namespace RoadCare3
 			{
 				foreach( int year in candidateProjects[sectionID].Keys )
 				{
-					CommitCopy bestProject = ChooseAndAdjustBestProject( sectionID, candidateProjects[sectionID][year] );
+                    if (candidateProjects[sectionID][year].Count == 1)
+                    {
+                        candidateProjects[sectionID][year][0].NewCost =
+                            candidateProjects[sectionID][year][0].OriginalCost;
+                        CreateCommittedProject(sectionID, candidateProjects[sectionID][year][0]);
+                    }
 
-					CreateCommittedProject( sectionID, bestProject );
+                    else
+                    {
+                        CommitCopy bestProject = ChooseAndAdjustBestProject(sectionID, candidateProjects[sectionID][year]);
+                        CreateCommittedProject(sectionID, bestProject);
+                    }
 				}
 			}
 		}
@@ -1629,7 +1643,15 @@ namespace RoadCare3
 		{
 			List<string> matchingSectionIDs = new List<string>();
 			string sectionIDQuery = "SELECT SECTIONID FROM SECTION_" + m_strNetworkID + " WHERE FACILITY = '" + locationCopy.Route + "' AND DIRECTION = '" + locationCopy.Direction + "' AND " + locationCopy.End + " > BEGIN_STATION AND " + locationCopy.Start + " < END_STATION";
-			DataSet matchingSectionData = DBMgr.ExecuteQuery( sectionIDQuery );
+
+		    if (string.IsNullOrWhiteSpace(locationCopy.Direction))
+		    {
+		        sectionIDQuery = "SELECT SECTIONID FROM SECTION_" + m_strNetworkID + " WHERE FACILITY = '" +
+		                         locationCopy.Route + "' AND SECTION ='" + locationCopy.Section + "'";
+		    }
+
+
+		    DataSet matchingSectionData = DBMgr.ExecuteQuery( sectionIDQuery );
 			if( matchingSectionData.Tables.Count > 0 )
 			{
 				foreach( DataRow matchingSectionRow in matchingSectionData.Tables[0].Rows )
@@ -1637,7 +1659,7 @@ namespace RoadCare3
 					matchingSectionIDs.Add( matchingSectionRow["SECTIONID"].ToString() );
 				}
 			}
-
+            
 			return matchingSectionIDs;
 		}
 
@@ -1717,6 +1739,8 @@ namespace RoadCare3
 
 		private void CreateCommittedProject( string sectionID, CommitCopy projectToConvert )
 		{
+		    if (projectToConvert == null) return;
+
 			//1. Insert into COMMITTED_
 			string committedInsert = "INSERT INTO COMMITTED_ (SIMULATIONID, SECTIONID, YEARS, TREATMENTNAME, YEARSAME, YEARANY, BUDGET, COST_)" +
 										"VALUES ('" + m_strSimulationID +

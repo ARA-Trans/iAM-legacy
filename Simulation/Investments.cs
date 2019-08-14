@@ -214,16 +214,50 @@ namespace Simulation
         /// <returns></returns>
         public string IsBudgetAvailable(float fAmount, String strBudget, String strYear, Hashtable hashAttributeValue,Priorities priority)
         {
-            string[] budgets;
+            string[] possibleBudgets;
             try
             {
-                budgets = strBudget.Split('|');
+                possibleBudgets = strBudget.Split('|');
             }
             catch (Exception e)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Budget is null." + e.Message));
                 throw e;
             }
+
+            //If there are no budget criteria, then ignore.  The list is enforced.
+
+            var budgets = new List<string>();
+            if (SimulationMessaging.BudgetCriterias.Count > 0)
+            {
+                var listAvailableBudget = new List<BudgetCriteria>();
+                foreach (var budgetCriteria in SimulationMessaging.BudgetCriterias)
+                {
+                    if (budgetCriteria.Criteria.IsCriteriaMet(hashAttributeValue))
+                    {
+                        listAvailableBudget.Add(budgetCriteria);
+                    }
+                }
+
+
+                foreach (var budget in possibleBudgets)
+                {
+                    var available = listAvailableBudget.Find(b => b.BudgetName == budget);
+                    if (available != null && !budgets.Contains(available.BudgetName))
+                    {
+                        budgets.Add(available.BudgetName);
+                    }
+                }
+            }
+            else
+            {
+                foreach(var budget in possibleBudgets)
+                {
+                    budgets.Add(budget);
+                }
+            }
+
+
             
             foreach (string budget in budgets)
             {
@@ -390,6 +424,138 @@ namespace Simulation
             hashYearAmount.Remove(strYear);
             fAvailable = fAvailable - fAmount;
             hashYearAmount.Add(strYear, fAvailable);
+        }
+
+
+        public void MoveBudgetAcross(string budget, string year,  Priorities priority)
+        {
+            //Get next budget.
+            var nextBudget = GetNextBudget(budget);
+
+            //Add what is left from current budget (and priority) to the the next budget.
+
+            string budgetCheck = budget.Trim();
+            Hashtable hashYearAmount;
+            Hashtable hashYearAmountOriginal;
+            float available = 0;
+            float original = 0;
+
+            //Budget not defined
+            try
+            {
+                if (!BudgetYear.Contains(budgetCheck)) return;
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Checking budget year. " + e.Message));
+                throw e;
+            }
+
+
+            try
+            {
+                hashYearAmount = (Hashtable)BudgetYear[budgetCheck];
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving budget year. " + e.Message));
+                throw e;
+            }
+            try
+            {
+                if (!hashYearAmount.Contains(year)) return;
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Checking year amount. " + e.Message));
+                throw e;
+            }
+
+            try
+            {
+                available = (float)hashYearAmount[year];
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving year amount. " + e.Message));
+                throw e;
+            }
+
+            try
+            {
+                if (!BudgetYearOriginal.Contains(budgetCheck)) return;
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Checking budget year original. " + e.Message));
+                throw e;
+            }
+
+            try
+            {
+                hashYearAmountOriginal = (Hashtable)BudgetYearOriginal[budgetCheck];
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving budget year original. " + e.Message));
+                throw e;
+            }
+
+
+            try
+            {
+                if (!hashYearAmountOriginal.Contains(year)) return;
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Checking year amount original. " + e.Message));
+                throw e;
+            }
+
+            try
+            {
+                original = (float)hashYearAmountOriginal[year];
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving year amount original. " + e.Message));
+                throw e;
+            }
+
+
+            if (original <= 0) return;
+            var percent = (1 - available / original) * 100;
+
+            try
+            {
+                var percentLimit = (float)priority.BudgetPercent[budgetCheck];
+                if (percent < percentLimit)
+                {
+                    var difference = percentLimit - percent;
+                    var budgetToMove = original * difference / 100;
+                    hashYearAmount[year] = (float)hashYearAmount[year] - budgetToMove;
+
+                    hashYearAmount = (Hashtable)BudgetYear[nextBudget];
+                    hashYearAmount[year] = (float)hashYearAmount[year] + budgetToMove;
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Error: Retrieving budget year original. " + e.Message));
+                throw e;
+            }
+        }
+
+        private string GetNextBudget(string budget)
+        {
+            var index = m_listBudgetOrder.FindIndex(b=>b == budget);
+            if (index < m_listBudgetOrder.Count - 1)
+            {
+                return m_listBudgetOrder[index + 1];
+            }
+            return m_listBudgetOrder[m_listBudgetOrder.Count - 1];
         }
     }
 }

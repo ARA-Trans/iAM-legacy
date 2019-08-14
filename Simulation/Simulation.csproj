@@ -304,6 +304,9 @@
     <Compile Include="AppliedTreatment.cs" />
     <Compile Include="AttributeChange.cs" />
     <Compile Include="BenefitCost.cs" />
+    <Compile Include="BudgetCriteria.cs" />
+    <Compile Include="CalculateBenefit.cs" />
+    <Compile Include="CalculatedAttribute.cs" />
     <Compile Include="CommitCopy.cs" />
     <Compile Include="CommittedEquation.cs" />
     <Compile Include="CompoundTreatment.cs" />
@@ -317,6 +320,10 @@
     <Compile Include="Criterias.cs" />
     <Compile Include="DataOMS.cs" />
     <Compile Include="Deteriorate.cs" />
+    <Compile Include="Interface\IBudgetCriteria.cs" />
+    <Compile Include="Interface\IRemainingLife.cs" />
+    <Compile Include="Interface\IScheduled.cs" />
+    <Compile Include="Interface\ISupersede.cs" />
     <Compile Include="Investments.cs" />
     <Compile Include="Jurisdiction.cs" />
     <Compile Include="LCCAOptimization.cs" />
@@ -326,12 +333,15 @@
     <Compile Include="OMSCriteria.cs" />
     <Compile Include="OverallConditionIndex.cs" />
     <Compile Include="Priorities.cs" />
+    <Compile Include="RemainingLife.cs" />
     <Compile Include="ReportOMS.cs" />
+    <Compile Include="Scheduled.cs" />
     <Compile Include="Sections.cs" />
     <Compile Include="Simulation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimulationMessage.cs" />
     <Compile Include="SimulationMessaging.cs" />
+    <Compile Include="Supersede.cs" />
     <Compile Include="Targets.cs" />
     <Compile Include="TreatmentCopy.cs" />
     <Compile Include="Treatments.cs" />

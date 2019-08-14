@@ -1108,7 +1108,7 @@
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(3, 21);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(156, 13);
+            this.label7.Size = new System.Drawing.Size(51, 13);
             this.label7.TabIndex = 4;
             this.label7.Text = "Version 3";
             this.label7.Click += new System.EventHandler(this.label7_Click);

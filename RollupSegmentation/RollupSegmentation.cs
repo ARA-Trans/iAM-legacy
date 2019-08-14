@@ -18,6 +18,7 @@ using DataObjects;
 using System.Text.RegularExpressions;
 using MongoDB.Driver;
 using static Simulation.Simulation;
+using DataAccessLayer;
 
 namespace RollupSegmentation
 {
@@ -104,13 +105,12 @@ namespace RollupSegmentation
 
         public void DoRollup()
 		{
-            MongoClient client = new MongoClient(mongoConnection);
-
-            MongoDatabase = client.GetDatabase("BridgeCare");
-            AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
-
             if (apiCall == true)
             {
+                MongoClient client = new MongoClient(mongoConnection);
+                MongoDatabase = client.GetDatabase("BridgeCare");
+                AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
+
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Running rollup");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
@@ -677,7 +677,7 @@ namespace RollupSegmentation
 											 + "\t" + dr["SECTION"].ToString()
 											 + "\t" + area.ToString()
 											 + "\tft^2";// +dr["AREATYPE"].ToString();
-				if( dr["GEOMETRY"] != null )
+				if( dr["GEOMETRY"] != DBNull.Value )
 				{
 					strRow += "\t" + dr["GEOMETRY"].ToString()
 					+ "\t" + dr["Envelope_MinX"].ToString()
@@ -687,7 +687,7 @@ namespace RollupSegmentation
 				}
 				else
 				{
-					strRow += "\t\t\t\t";
+					strRow += "\t\t\t\t\t";
 				}
 				listSectionSRS.Add(new DataPoint(nSection.ToString(), dr["FACILITY"].ToString(), dr["SECTION"].ToString(), area.ToString(), "1"));
 
@@ -1123,9 +1123,6 @@ namespace RollupSegmentation
 
 				foreach( String attribute in listAttributeInTable )
 				{
-					if (attribute == "E1")
-					{
-					}
 					RollupMessaging.AddMessge( "Rolling up Section Attribute:" + attribute + " at " + DateTime.Now.ToString( "HH:mm:ss" ) );
 
                     if (apiCall == true)
@@ -3553,6 +3550,33 @@ namespace RollupSegmentation
                 case "Weighted"://Weighted TODO:
                     strNumber = "";
                     break;
+
+                case "First": //First
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        if (String.IsNullOrEmpty(strNumber))
+                        {
+                            strNumber = pt.m_strData;
+                        }
+                    }
+                    break;
+
+                case "Last": //Last
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        strNumber = pt.m_strData;
+                    }
+                    break;
+
+
+
+
                 default:
                     strNumber = "";
                     break;
@@ -3661,6 +3685,30 @@ namespace RollupSegmentation
                     }
                     strNumber = nCount.ToString();
                     break;
+
+                case "First": //First
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        if (String.IsNullOrEmpty(strNumber))
+                        {
+                            strNumber = pt.m_strData;
+                        }
+                    }
+                    break;
+
+                case "Last": //Last
+                    strNumber = "";
+                    foreach (DataPoint pt in list)
+                    {
+                        if (pt.m_strRoutes != dpSection.m_strRoutes || pt.m_strSection != dpSection.m_strSection) continue;
+                        if (pt.m_strData == "") continue;
+                        strNumber = pt.m_strData;
+                    }
+                    break;
+
 
                 default:
                     strNumber = "";
@@ -3915,6 +3963,17 @@ namespace RollupSegmentation
         public String m_strMinY;
         public String m_strMaxY;
 
+        public override string ToString()
+        {
+            if(m_strSection != null)
+            {
+                return m_strRoutes + " " + m_strSection + " " + m_strData;
+            }
+            else
+            {
+                return m_strRoutes + "(" + m_strBegin + "-" + m_strEnd + ")" + m_strDirection + " " + m_strData;
+            }
+        }
 
         public DataPoint(String strSectionID, String strFacility, String strSection, String strArea, String strUnit)
         {

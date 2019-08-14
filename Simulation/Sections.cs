@@ -593,7 +593,7 @@ namespace Simulation
 
 
 
-        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute)
+        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute, List<CalculatedAttribute> listCalculatedAttributes)
         {
             //All possible data is now in Section.  Do a quick check to see if all data is
             //present in current year.  If it is we are done.
@@ -816,6 +816,18 @@ namespace Simulation
             { 
                 m_hashYearAttributeValues.Remove(RollToYear);
             }
+
+            // Update CalculatedAttributes for RollForward.
+
+            foreach (var calculatedAttribute in listCalculatedAttributes)
+            {
+                if (!hashRollForward.ContainsKey(calculatedAttribute.Attribute)) continue;
+                if (calculatedAttribute.IsCriteriaMet(hashRollForward))
+                {
+                    hashRollForward[calculatedAttribute.Attribute] = calculatedAttribute.Calculate(hashRollForward);
+                }
+            }
+
 
             //Store all attributes by year.  This is the first for this simulation.
             m_hashYearAttributeValues.Add(this.RollToYear, hashRollForward);
@@ -1197,7 +1209,7 @@ namespace Simulation
 			}
 			catch(Exception exc)
 			{
-				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
+				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + SimulationMessaging.Area.OriginalInput + " " + exc.Message)); 
 			}
 
         }
@@ -1334,7 +1346,10 @@ namespace Simulation
                         }
                         else
                         {
-                            strOut += hashAttributeValue[sAttribute].ToString();
+                            if (hashAttributeValue[sAttribute] != null)
+                            {
+                                strOut += hashAttributeValue[sAttribute].ToString();
+                            }
                         }
                     }
                 }
@@ -1369,7 +1384,10 @@ namespace Simulation
                         }
                         else
                         {
-                            strOut += hashAttributeValue[sAttribute].ToString();
+                            if(hashAttributeValue[sAttribute] != null)
+                            { 
+                                strOut += hashAttributeValue[sAttribute].ToString();
+                            }
                         }
                     }
                 }
@@ -1383,16 +1401,25 @@ namespace Simulation
                     String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
                     if (sAttribute == "SECTIONID") continue;
                     String sValue = "";
-                    if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
+                    if (hashAttributeValue[sAttribute] != null) //Values can remain null in OMS analysis
                     {
-                        double dValue = 0;
-                        double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
-                        sValue = dValue.ToString(sFormat);
+
+ 
+                        if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
+                        {
+                            double dValue = 0;
+                            double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
+                            sValue = dValue.ToString(sFormat);
+                        }
+                        else
+                        {
+                            if (hashAttributeValue[sAttribute] != null)
+                            {
+                                sValue = hashAttributeValue[sAttribute].ToString();
+                            }
+                        }
                     }
-                    else
-                    {
-                        sValue = hashAttributeValue[sAttribute].ToString();
-                    }
+
                     strOut += "\t";
                     strOut += sValue;
                 }

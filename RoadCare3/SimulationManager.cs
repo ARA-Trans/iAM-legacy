@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
@@ -385,9 +386,47 @@ namespace RoadCare3
 			{
 				Global.WriteOutput( "Error: Failure in copying Priority Levels and Funding.  Rest of Analysis copied correctly." + exception.Message );
 			}
-		}
 
-		public static void PasteInvestment( String strNewSimulationID )
+            try
+            {
+                var delete = "DELETE FROM REMAINING_LIFE_LIMITS WHERE SIMULATION_ID='" + strNewSimulation + "'";
+                DBMgr.ExecuteNonQuery(delete);
+
+            }
+            catch (Exception e)
+            {
+                Global.WriteOutput("Error: Failure in copying Remaining Life Limits. " + e.Message);
+            }
+
+
+            try
+            {
+                DataSet datasetRemainingLife =
+                    DBMgr.ExecuteQuery("SELECT * FROM REMAINING_LIFE_LIMITS WHERE SIMULATION_ID ='" +
+                                       m_strCopyAnalysisSimulationID + "'");
+                foreach (DataRow dr in datasetRemainingLife.Tables[0].Rows)
+                {
+                    var remainingLifeLimit = dr["REMAINING_LIFE_LIMIT"].ToString();
+                    var attribute = dr["ATTRIBUTE_"].ToString();
+                    var criteria = "";
+                    if (dr["CRITERIA"] != DBNull.Value) criteria = dr["CRITERIA"].ToString();
+
+                    var insert =
+                        "INSERT INTO REMAINING_LIFE_LIMITS (SIMULATION_ID,ATTRIBUTE_,REMAINING_LIFE_LIMIT,CRITERIA) VALUES ('"
+                        + strNewSimulation + "','" + attribute + "','" + remainingLifeLimit + "','" +
+                        criteria + "')";
+
+                    DBMgr.ExecuteNonQuery(insert);
+
+                }
+            }
+            catch(Exception e)
+            {
+                Global.WriteOutput("Error: Failure in copying Remaining Life Limits. " + e.Message);
+            }
+        }
+
+        public static void PasteInvestment( String strNewSimulationID )
 		{
 			if( String.IsNullOrEmpty( m_strCopyInvestmentSimulationID ) )
 				return;
@@ -395,11 +434,16 @@ namespace RoadCare3
 			List<string> listInserts = new List<string>();
 
 			//Delete existing SIMULATIONID FROM 
-			String strDelete = "DELETE FROM INVESTMENTS WHERE SIMULATIONID=" + strNewSimulationID;
-			listInserts.Add( strDelete );
+			var deleteInvestments  = "DELETE FROM INVESTMENTS WHERE SIMULATIONID=" + strNewSimulationID;
+			listInserts.Add(deleteInvestments);
 
-			strDelete = "DELETE FROM YEARLYINVESTMENT WHERE SIMULATIONID=" + strNewSimulationID;
-			listInserts.Add( strDelete );
+			var deleteYearlyInvestment = "DELETE FROM YEARLYINVESTMENT WHERE SIMULATIONID=" + strNewSimulationID;
+			listInserts.Add(deleteYearlyInvestment);
+
+            var delete = "DELETE FROM BUDGET_CRITERIA WHERE SIMULATIONID=" + strNewSimulationID;
+            listInserts.Add(delete);
+
+
 
 
 			String strSelect = "SELECT * FROM INVESTMENTS WHERE SIMULATIONID=" + m_strCopyInvestmentSimulationID;
@@ -463,9 +507,36 @@ namespace RoadCare3
 			}
 
 
-			try
-			{
+
+
+            var selectBudgetCriteria = "SELECT * FROM BUDGET_CRITERIA  WHERE SIMULATIONID=" + m_strCopyInvestmentSimulationID;
+
+            try
+            {
+                DataSet ds = DBMgr.ExecuteQuery(selectBudgetCriteria);
+                foreach (DataRow dr in ds.Tables[0].Rows)
+                {
+                    var budgetName = dr["BUDGET_NAME"].ToString();
+                    var criteria = dr["CRITERIA"].ToString();
+    
+                    String strInsert = "INSERT INTO BUDGET_CRITERIA (SIMULATIONID,BUDGET_NAME,CRITERIA) VALUES ('" + strNewSimulationID + "','" + budgetName + "','" + criteria + "')";
+                    listInserts.Add(strInsert);
+                }
+            }
+            catch (Exception exception)
+            {
+                Global.WriteOutput("Error: Retrieving existing YearlyInvestment Information." + exception.Message);
+                return;
+            }
+
+
+
+
+
+            try
+            {
 				DBMgr.ExecuteBatchNonQuery( listInserts );
+                Global.WriteOutput("Investment and Budget Criteria successfully copied.");
 			}
 			catch( Exception exception )
 			{
@@ -488,7 +559,8 @@ namespace RoadCare3
 			listInserts.Add( strDelete );
 
 
-			String strSelect = "SELECT * FROM PERFORMANCE WHERE SIMULATIONID=" + m_strCopyPerformanceSimulationID;
+
+            String strSelect = "SELECT * FROM PERFORMANCE WHERE SIMULATIONID=" + m_strCopyPerformanceSimulationID;
 			try
 			{
 				DataSet ds = DBMgr.ExecuteQuery( strSelect );
@@ -517,7 +589,7 @@ namespace RoadCare3
 							throw new NotImplementedException( "TODO: Implement ANSI version of PastePerformance()" );
 							//break;
 					}
-					DBMgr.ExecuteNonQuery(strInsert);
+                    listInserts.Add(strInsert);
 				}
 
 
@@ -527,7 +599,17 @@ namespace RoadCare3
 				Global.WriteOutput( "Error: Copy PERFORMANCE table." + exception.Message );
 				return;
 			}
-		}
+
+            try
+            {
+                DBMgr.ExecuteBatchNonQuery(listInserts);
+                Global.WriteOutput("Performance equations successfully copied.");
+            }
+            catch (Exception exception)
+            {
+                Global.WriteOutput("Error: Copying Performance equations from one simulation to another" + exception.Message);
+            }
+        }
 
 		public static void PasteTreatment( String strNewSimulationID )
 		{
@@ -549,101 +631,194 @@ namespace RoadCare3
 			}
 
 
-
+            var copyFromTreatmentHash = new Hashtable();
 			String strSelect = "SELECT * FROM TREATMENTS WHERE SIMULATIONID=" + m_strCopyTreatmentSimulationID;
 			DataSet ds = DBMgr.ExecuteQuery( strSelect );
-			foreach( DataRow dr in ds.Tables[0].Rows )
-			{
-				String strTreatmentID = dr["TREATMENTID"].ToString();
-				String strTreatment = dr["TREATMENT"].ToString();
-				String strBeforeAny = dr["BEFOREANY"].ToString();
-				String strBeforeSame = dr["BEFORESAME"].ToString();
-				String strBudget = dr["BUDGET"].ToString();
-				String strDescription = dr["DESCRIPTION"].ToString();
-
-				Global.WriteOutput( "Pasting treatment [" + strTreatment + "]" );
-
-				String strInsert;
-				if( strBudget.Trim() == "" )
-				{
-					strInsert = "INSERT INTO TREATMENTS (SIMULATIONID,TREATMENT,BEFOREANY,BEFORESAME,DESCRIPTION)VALUES(" + strNewSimulationID + ",'" + strTreatment + "'," + strBeforeAny + "," + strBeforeSame + ",'" + strDescription + "')";
-				}
-				else
-				{
-					strInsert = "INSERT INTO TREATMENTS (SIMULATIONID,TREATMENT,BEFOREANY,BEFORESAME,BUDGET,DESCRIPTION)VALUES(" + strNewSimulationID + ",'" + strTreatment + "'," + strBeforeAny + "," + strBeforeSame + ",'" + strBudget + "','" + strDescription + "')";
-				}
-
-				DBMgr.ExecuteNonQuery( strInsert );
-				String strIdentity;
-				switch (DBMgr.NativeConnectionParameters.Provider)
-				{
-					case "MSSQL":
-						strIdentity = "SELECT IDENT_CURRENT ('TREATMENTS') FROM TREATMENTS";
-						break;
-					case "ORACLE":
-						//strIdentity = "SELECT TREATMENTS_TREATMENTID_SEQ.CURRVAL FROM DUAL";
-						//strIdentity = "SELECT LAST_NUMBER - CACHE_SIZE + 1 FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'TREATMENTS_TREATMENTID_SEQ'";
-						strIdentity = "SELECT MAX(TREATMENTID) FROM TREATMENTS";
-						break;
-					default:
-						throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-						//break;
-				}
-				DataSet dsIdentity = DBMgr.ExecuteQuery( strIdentity );
-				strIdentity = dsIdentity.Tables[0].Rows[0].ItemArray[0].ToString();
-
-				Global.WriteOutput( "Pasting Feasibility" );
-
-				DataSet dsFeasibility = DBMgr.ExecuteQuery( "SELECT * FROM FEASIBILITY WHERE TREATMENTID=" + strTreatmentID );
-				switch( DBMgr.NativeConnectionParameters.Provider )
-				{
-					case "MSSQL":
-						SQLCopyFeasibility( strIdentity, dsFeasibility );
-						break;
-					case "ORACLE":
-						ORACLECopyFeasibility( strIdentity, dsFeasibility );
-						break;
-					default:
-						throw new NotImplementedException( "TODO: implement ANSICopyConsequences()" );
-						//break;
-				}
-
-				Global.WriteOutput( "Pasting Costs" );
-
-				DataSet dsCosts = DBMgr.ExecuteQuery( "SELECT * FROM COSTS WHERE TREATMENTID = " + strTreatmentID );
-				switch( DBMgr.NativeConnectionParameters.Provider )
-				{
-					case "MSSQL":
-						SQLCopyCosts( strIdentity, dsCosts );
-						break;
-					case "ORACLE":
-						ORACLECopyCosts( strIdentity, dsCosts );
-						break;
-					default:
-						throw new NotImplementedException( "TODO: implement ANSICopyConsequences()" );
-						//break;
-				}
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                String strTreatmentID = dr["TREATMENTID"].ToString();
+                String strTreatment = dr["TREATMENT"].ToString();
+                String strBeforeAny = dr["BEFOREANY"].ToString();
+                String strBeforeSame = dr["BEFORESAME"].ToString();
+                String strBudget = dr["BUDGET"].ToString();
+                String strDescription = dr["DESCRIPTION"].ToString();
 
 
-				Global.WriteOutput( "Pasting Consequences" );
+                Global.WriteOutput("Pasting treatment [" + strTreatment + "]");
 
-				DataSet dsConsequences = DBMgr.ExecuteQuery( "SELECT * FROM CONSEQUENCES WHERE TREATMENTID = " + strTreatmentID );
-				switch( DBMgr.NativeConnectionParameters.Provider )
-				{
-					case "MSSQL":
-						SQLCopyConsequences( strIdentity, dsConsequences );
-						break;
-					case "ORACLE":
-						ORACLECopyConsequences( strIdentity, dsConsequences );
-						break;
-					default:
-						throw new NotImplementedException( "TODO: implement ANSICopyConsequences()" );
-						//break;
-				}
-			}
+                String strInsert;
+                if (strBudget.Trim() == "")
+                {
+                    strInsert =
+                        "INSERT INTO TREATMENTS (SIMULATIONID,TREATMENT,BEFOREANY,BEFORESAME,DESCRIPTION)VALUES(" +
+                        strNewSimulationID + ",'" + strTreatment + "'," + strBeforeAny + "," + strBeforeSame + ",'" +
+                        strDescription + "')";
+                }
+                else
+                {
+                    strInsert =
+                        "INSERT INTO TREATMENTS (SIMULATIONID,TREATMENT,BEFOREANY,BEFORESAME,BUDGET,DESCRIPTION)VALUES(" +
+                        strNewSimulationID + ",'" + strTreatment + "'," + strBeforeAny + "," + strBeforeSame + ",'" +
+                        strBudget + "','" + strDescription + "')";
+                }
+
+                DBMgr.ExecuteNonQuery(strInsert);
+                String strIdentity;
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        strIdentity = "SELECT IDENT_CURRENT ('TREATMENTS') FROM TREATMENTS";
+                        break;
+                    case "ORACLE":
+                        //strIdentity = "SELECT TREATMENTS_TREATMENTID_SEQ.CURRVAL FROM DUAL";
+                        //strIdentity = "SELECT LAST_NUMBER - CACHE_SIZE + 1 FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'TREATMENTS_TREATMENTID_SEQ'";
+                        strIdentity = "SELECT MAX(TREATMENTID) FROM TREATMENTS";
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                    //break;
+                }
+
+                DataSet dsIdentity = DBMgr.ExecuteQuery(strIdentity);
+                strIdentity = dsIdentity.Tables[0].Rows[0].ItemArray[0].ToString();
+
+                copyFromTreatmentHash.Add(strTreatmentID, strIdentity);
+
+
+                Global.WriteOutput("Pasting Feasibility");
+
+                DataSet dsFeasibility =
+                    DBMgr.ExecuteQuery("SELECT * FROM FEASIBILITY WHERE TREATMENTID=" + strTreatmentID);
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        SQLCopyFeasibility(strIdentity, dsFeasibility);
+                        break;
+                    case "ORACLE":
+                        ORACLECopyFeasibility(strIdentity, dsFeasibility);
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: implement ANSICopyConsequences()");
+                    //break;
+                }
+
+                Global.WriteOutput("Pasting Costs");
+
+                DataSet dsCosts = DBMgr.ExecuteQuery("SELECT * FROM COSTS WHERE TREATMENTID = " + strTreatmentID);
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        SQLCopyCosts(strIdentity, dsCosts);
+                        break;
+                    case "ORACLE":
+                        ORACLECopyCosts(strIdentity, dsCosts);
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: implement ANSICopyConsequences()");
+                    //break;
+                }
+
+
+                Global.WriteOutput("Pasting Consequences");
+
+                DataSet dsConsequences =
+                    DBMgr.ExecuteQuery("SELECT * FROM CONSEQUENCES WHERE TREATMENTID = " + strTreatmentID);
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        SQLCopyConsequences(strIdentity, dsConsequences);
+                        break;
+                    case "ORACLE":
+                        ORACLECopyConsequences(strIdentity, dsConsequences);
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: implement ANSICopyConsequences()");
+                    //break;
+                }
+            }
+
+            Global.WriteOutput("Pasting Scheduled and Supersedes for all treatments");
+            foreach (string key in copyFromTreatmentHash.Keys)
+            { 
+
+
+
+                DataSet dataSetScheduled = DBMgr.ExecuteQuery("SELECT * FROM SCHEDULED WHERE TREATMENTID = " + key);
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        SQLCopyScheduled(key, dataSetScheduled,copyFromTreatmentHash);
+                        break;
+                    case "ORACLE":
+                        ORACLECopyScheduled(key, dataSetScheduled);
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: implement ANSICopyConsequences()");
+                    //break;
+                }
+
+
+                DataSet dataSetSupersedes = DBMgr.ExecuteQuery("SELECT * FROM SUPERSEDES WHERE TREATMENT_ID = " + key);
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        SQLCopySupersedes(key, dataSetSupersedes,copyFromTreatmentHash);
+                        break;
+                    case "ORACLE":
+                        ORACLECopySupersedes(key, dataSetSupersedes);
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: implement ANSICopyConsequences()");
+                    //break;
+                }
+            }
 		}
 
-		private static void ORACLECopyCosts( string identity, DataSet costSet )
+        private static void ORACLECopySupersedes(string strIdentity, DataSet dataSetSupersedes)
+        {
+            Global.WriteOutput("ERROR: Oracle Supersedes Copy is not implemented.");
+        }
+
+        private static void SQLCopySupersedes(string oldTreatmentId, DataSet dataSetSupersedes, Hashtable copyFromTreatmentHash)
+        {
+            foreach (DataRow row in dataSetSupersedes.Tables[0].Rows)
+            {
+                var criteria = "";
+                var supersedeTreatmentId = row["SUPERSEDE_TREATMENT_ID"].ToString();
+
+
+
+                if (row["CRITERIA"] != DBNull.Value) criteria = row["CRITERIA"].ToString();
+
+                var insert = "INSERT INTO SUPERSEDES (TREATMENT_ID, SUPERSEDE_TREATMENT_ID, CRITERIA) VALUES ('" +
+                             copyFromTreatmentHash[oldTreatmentId]  + "','" + copyFromTreatmentHash[supersedeTreatmentId] + "','" + criteria + "')";
+
+                DBMgr.ExecuteNonQuery(insert);
+
+            }
+        }
+
+        private static void ORACLECopyScheduled(string strIdentity, DataSet dataScheduled)
+        {
+            Global.WriteOutput("ERROR: Oracle Scheduled Copy is not implemented.");
+        }
+
+        private static void SQLCopyScheduled(string oldTreatmentId, DataSet dataScheduled, Hashtable copyFromTreatmentHash)
+        {
+            foreach (DataRow row in dataScheduled.Tables[0].Rows)
+            {
+                var scheduledTreatmentId = row["SCHEDULEDTREATMENTID"].ToString();
+                var scheduledYear = row["SCHEDULEDYEAR"].ToString();
+
+                var insert = "INSERT INTO SCHEDULED (TREATMENTID, SCHEDULEDTREATMENTID, SCHEDULEDYEAR) VALUES ('" +
+                             copyFromTreatmentHash[oldTreatmentId] + "','" + copyFromTreatmentHash[scheduledTreatmentId] + "','" + scheduledYear + "')";
+
+                DBMgr.ExecuteNonQuery(insert);
+
+            }
+        }
+
+        private static void ORACLECopyCosts( string identity, DataSet costSet )
 		{
 			string insertStatement = "";
 

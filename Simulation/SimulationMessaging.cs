@@ -5,6 +5,8 @@ using System.Collections;
 using DatabaseManager;
 using System.Data;
 using System.IO;
+using Simulation.Interface;
+
 namespace Simulation
 {
     public static class SimulationMessaging
@@ -77,6 +79,28 @@ namespace Simulation
         static private List<ConditionalRSL> _attributeConditionalRSL;
         [ThreadStatic]
         static private Jurisdiction _jurisdiction;
+        [ThreadStatic]
+        static private List<RemainingLife> _attributeRemainingLife;
+        [ThreadStatic]
+        static private Dictionary<string,string> _noTreatmentRemainingLife;
+        [ThreadStatic]
+        static private List<BudgetCriteria> _budgetCriteria;
+
+        public static void ReleaseSimulationData()
+        {
+            m_hashAttributeType.Clear();
+            m_hashAttributeDefault.Clear();
+            m_hashAttributeMinimum.Clear();
+            m_hashAttributeMaximum.Clear();
+            m_hashAttributeAscending.Clear();
+            m_hashAttributeFormat.Clear();
+            m_hashAttributeOMS.Clear();
+            _deteriorates.Clear();
+            _attributeConditionalRSL.Clear();
+            _attributeRemainingLife.Clear();
+            _noTreatmentRemainingLife.Clear();
+        }
+
 
         public static List<ConditionalRSL> AttributeConditionalRSL
         {
@@ -234,8 +258,25 @@ namespace Simulation
         {
             get { return m_listAttribute; }
             set { m_listAttribute = value; }
-        }   
+        }
 
+        static public List<RemainingLife> RemainingLifes
+        {
+            get { return _attributeRemainingLife; }
+            set { _attributeRemainingLife = value; }
+        }
+
+        static public Dictionary<string,string> NoTreatmentRemainingLife
+        {
+            get { return _noTreatmentRemainingLife; }
+            set { _noTreatmentRemainingLife = value; }
+        }
+
+        static public List<BudgetCriteria> BudgetCriterias
+        {
+            get { return _budgetCriteria; }
+            set { _budgetCriteria = value; }
+        }
 
         /// <summary>
         /// Simulation Consequence Table.
@@ -292,8 +333,10 @@ namespace Simulation
             get { return m_sBCTargetTable; }
             set { m_sBCTargetTable = value; }
         }
-
-
+        /// <summary>
+        /// Stores costs that make up CumulativeCost
+        /// </summary>
+        public static string CumulativeCostTable { get; set; }
 
         static public List<SimulationMessage> GetProgressList()
         {
@@ -304,7 +347,7 @@ namespace Simulation
         }
 
 
-		static public void AddMessage(string baseMessage, Exception ex)
+        static public void AddMessage(string baseMessage, Exception ex)
 		{
 			Exception currentException = ex;
 			while (currentException != null)

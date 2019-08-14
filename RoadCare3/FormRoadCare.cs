@@ -30,7 +30,7 @@ namespace RoadCare3
             InitializeComponent();
 
             var formLogin = new FormLogin();
-
+            //Project is now open source so removing license check.
             //var now = DateTime.Now;
             //if (now >= Global.ExactMomentWhenLicenseExpires)
             //{
@@ -219,6 +219,7 @@ namespace RoadCare3
                 }
             }
             Simulation.SimulationMessaging.ClearProgressList();
+
             //if (!m_simulationThread.IsAlive)
             //{
             //    timerSimulation.Stop();

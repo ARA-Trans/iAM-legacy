@@ -1948,34 +1948,6 @@
             UpdateRoadCareForFunctionEquationTables();//  Adds the necessary columns to tables with equations for allowing use of complete functions for equations.
             UpdateRoadCareForConditionalRsl();
             UpdateRoadCareForCumulativeCost();
-            UpdateRoadCareInvestmentsTable();
-        }
-
-        /// <summary>
-        /// Modify the RoadCare schema to store a description in the Investments table.
-        /// </summary>
-        private static void UpdateRoadCareInvestmentsTable()
-        {
-            DataSet ds = DBMgr.GetTableColumnsWithTypes("INVESTMENTS");
-            bool isInvesmentsDescription = false;
-            foreach (DataRow row in ds.Tables[0].Rows)
-            {
-                if (row["column_name"].ToString().ToUpper() == "DESCRIPTION")
-                {
-                    isInvesmentsDescription = true;
-                }
-            }
-            if (!isInvesmentsDescription)
-            {
-                if (DBMgr.NativeConnectionParameters.Provider == "ORACLE")
-                {
-                    DBMgr.ExecuteNonQuery("ALTER TABLE INVESTMENTS ADD DESCRIPTION varchar2(4000) NULL");
-                }
-                else
-                {
-                    DBMgr.ExecuteNonQuery("ALTER TABLE INVESTMENTS ADD DESCRIPTION [varchar](4000) NULL");
-                }
-            }
         }
 
         private static void UpdateRoadCareForCumulativeCost()

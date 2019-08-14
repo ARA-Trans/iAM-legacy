@@ -57,6 +57,15 @@ namespace Simulation
             set { m_strRedirect = value; }
         }
 
+        public AttributeChange(string attribute, string change)
+        {
+            Attribute = attribute;
+            Change = change;
+        }
+        public AttributeChange()
+        {
+
+        }
         /// <summary>
         /// Calculate change in a NUMBER attribute
         /// </summary>

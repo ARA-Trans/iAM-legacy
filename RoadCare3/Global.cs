@@ -191,6 +191,35 @@ namespace RoadCare3
             }
         }
 
+        public static void ReplaceOutput(String strOutputText)
+        {
+            var outputWindow = FormManager.GetOutputWindow();
+            if (outputWindow != null)
+            {
+                if (!string.IsNullOrEmpty(strOutputText))
+                {
+                    // We wrap the SetOutputText call with Invoke if the
+                    // currently executing thread is not on the same thread as
+                    // the outputWindow control (i.e. if InvokeRequired is
+                    // true). This happens in some cases when "background
+                    // worker" logic might call this method to update the UI.
+                    // Without Invoke, a call to SetOutputText from another
+                    // thread would cause a cross-thread access violation
+                    // exception.
+                    if (outputWindow.InvokeRequired)
+                    {
+                        outputWindow.Invoke(new Action(() =>
+                            outputWindow.ReplaceOutputText(strOutputText)));
+                    }
+                    else
+                    {
+                        outputWindow.ReplaceOutputText(strOutputText);
+                    }
+                }
+            }
+        }
+
+
         public static String UTF8ByteArrayToString(Byte[] characters)
         {
 

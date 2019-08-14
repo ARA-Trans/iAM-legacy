@@ -28,6 +28,9 @@ namespace Simulation
         Treatments _OMSTreatment;
         bool _omsIsNotAllowed;
         int _resultType;
+        //If this is set. The committed project is a ScheduledTreatment and not a true committed project.
+        public string ScheduledTreatmentId { get; set; }
+
 
         public int ResultType
         {
