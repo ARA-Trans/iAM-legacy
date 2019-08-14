@@ -105,13 +105,12 @@ namespace RollupSegmentation
 
         public void DoRollup()
 		{
-            MongoClient client = new MongoClient(mongoConnection);
-
-            MongoDatabase = client.GetDatabase("BridgeCare");
-            AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
-
             if (apiCall == true)
             {
+                MongoClient client = new MongoClient(mongoConnection);
+                MongoDatabase = client.GetDatabase("BridgeCare");
+                AllSimulations = MongoDatabase.GetCollection<SimulationModel>("scenarios");
+
                 var updateStatus = Builders<SimulationModel>.Update
                     .Set(s => s.status, "Running rollup");
                 AllSimulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
