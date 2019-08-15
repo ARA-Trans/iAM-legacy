@@ -4059,12 +4059,6 @@ namespace Simulation
                 {
                     var percentage = 100 * Convert.ToDouble(index)/Convert.ToDouble(m_listSections.Count);
                     SimulationMessaging.AddMessage(new SimulationMessage("Determining benefit/cost " + percentage.ToString("0.#") + "% complete.",true));
-                    if (APICall.Equals(true))
-                    {
-                        var updateStatus = Builders<SimulationModel>.Update
-                        .Set(s => s.status, "Determining benefit/cost " + percentage.ToString("0.#") + "% complete");
-                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
-                    }
                 }
 
                 index++;
