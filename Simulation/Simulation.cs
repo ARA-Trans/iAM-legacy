@@ -388,6 +388,12 @@ namespace Simulation
                 if (!GetInvestmentData()) return false;
             }
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Investments complete: " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Verifying Investments complete");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
 
             //Get Target Data
@@ -397,6 +403,12 @@ namespace Simulation
             }
             SimulationMessaging.Targets = m_hashTargets;
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Targets and deficiency complete: " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Verifying Targets and deficiency complete");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
 
             if (SimulationMessaging.RemainingLifes == null)
@@ -405,6 +417,12 @@ namespace Simulation
             }
 
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Remaining Life Limits complete: " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Verifying Remaining Life Limits complete");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
 
 
@@ -418,6 +436,12 @@ namespace Simulation
                 if (!GetTreatmentData()) return false;
             }
             SimulationMessaging.AddMessage(new SimulationMessage("Verifying Treatments complete: " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Verifying Treatments complete");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
 
 
             //Priority
@@ -445,6 +469,12 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Dropping section from TARGET table. " + exception.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Dropping section from TARGET table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return false;
             }
 
@@ -456,6 +486,12 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Dropping section from BENEFITCOST table. " + exception.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Dropping section from BENEFITCOST table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return false;
             }
 
@@ -467,6 +503,12 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Dropping section from REPORT table. " + exception.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Dropping section from REPORT table");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return false;
             }
 
@@ -564,6 +606,12 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Error in compiling AREA function. SQL message - " + exception.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error in compiling AREA function");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return false;
             }
             SimulationMessaging.ListArea = new List<String>();
@@ -719,6 +767,12 @@ namespace Simulation
             {
                 //Apply Deteriorate/Performance curves.
                 SimulationMessaging.AddMessage(new SimulationMessage("Applying Performance/Deterioration equations for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Applying Performance/Deterioration equations for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 ApplyDeterioration(nYear,strSectionID);
 
                 //Determine Benefit/Cost
@@ -730,6 +784,12 @@ namespace Simulation
                 if (nYear != int.Parse(strYear))
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Applying committed projects for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Applying committed projects for " + nYear.ToString());
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     ApplyCommitted(nYear, strSectionID);
                 }
 
@@ -737,6 +797,12 @@ namespace Simulation
                 DetermineTargetAndDeficient(nYear,strSectionID);
 
                 SimulationMessaging.AddMessage(new SimulationMessage("Spending Budget and evaluating Targets for " + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Spending Budget and evaluating Targets for " + nYear.ToString());
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
 
                 if (nYear.ToString() == strYear)
                 {
@@ -1512,6 +1578,12 @@ namespace Simulation
             }
 
             SimulationMessaging.AddMessage(new SimulationMessage("Sucessfully created Simulation table " + strTable));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Sucessfully created Simulation table " + strTable);
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             return true;
         }
 
@@ -1923,6 +1995,12 @@ namespace Simulation
                     if (!string.IsNullOrWhiteSpace(networkArea))
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Simulation using Netwrok Specific Area."));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Simulation using Netwrok Specific Area");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         strArea = networkArea;
                     }
                 }
@@ -2503,9 +2581,12 @@ namespace Simulation
 
 
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: At least one deterioration equation must be set for the Benefit variable."));
-                        var updateStatus = Builders<SimulationModel>.Update
-                    .Set(s => s.status, "Error: At least one deterioration equation must be set for the Benefit variable");
-                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error: At least one deterioration equation must be set for the Benefit variable");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         return false;
                     //break;
                     default:
@@ -2606,7 +2687,13 @@ namespace Simulation
             {
                 treatments = new Treatments();
                 treatments.Treatment = row[0].ToString();
-                SimulationMessaging.AddMessage(new SimulationMessage("Compiling " + treatments.Treatment + " at " + DateTime.Now.ToString("HH:mm:ss"))); 
+                SimulationMessaging.AddMessage(new SimulationMessage("Compiling " + treatments.Treatment + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Compiling " + treatments.Treatment);
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 int nAny;
                 int nSame;
 
@@ -2998,6 +3085,12 @@ namespace Simulation
                 if (strTargetMean == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - TARGET is missing. Targets if they are included, must have numeric values input for Target."));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: " + strAttribute + " - TARGET is missing. Targets if they are included, must have numeric values input for Target");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     return false;
                 }
 
@@ -3071,6 +3164,12 @@ namespace Simulation
                     if (targets.Criteria.CriteriaAttributes == null)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Attribute " + row[1].ToString() + "  has unknown variable in Target CRITERIA. " + row[4].ToString()));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error: Attribute " + row[1].ToString() + "  has unknown variable in Target CRITERIA " + row[4].ToString());
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         return false;
                     }
 
@@ -3182,6 +3281,12 @@ namespace Simulation
                 if (strDeficient == "" || strPercentDeficient == "")
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - DEFICIENT and/or DEFICIENT PERCENT is missing.  If a deficiency attribute target is included a DEFICIENT level and a percent Allowed DEFICIENT must be entered."));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: " + strAttribute + " - DEFICIENT and/or DEFICIENT PERCENT is missing");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     return false;
                 }
 
@@ -3244,6 +3349,12 @@ namespace Simulation
                     if (targets.Criteria.CriteriaAttributes == null)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: " + strAttribute + " - Contains an unidentified attribute. " + row[4].ToString()));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error: " + strAttribute + " - Contains an unidentified attribute " + row[4].ToString());
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         return false;
 
                     }
@@ -3345,6 +3456,12 @@ namespace Simulation
             catch(Exception e)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Applying deterioration curves." + e.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Applying deterioration curves");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 throw e;
             }
 		}
@@ -3942,6 +4059,12 @@ namespace Simulation
                 {
                     var percentage = 100 * Convert.ToDouble(index)/Convert.ToDouble(m_listSections.Count);
                     SimulationMessaging.AddMessage(new SimulationMessage("Determining benefit/cost " + percentage.ToString("0.#") + "% complete.",true));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Determining benefit/cost " + percentage.ToString("0.#") + "% complete");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                 }
 
                 index++;
@@ -4307,6 +4430,12 @@ namespace Simulation
                                 if (fCost >= 0 && !Method.UseCumulativeCost)
                                 {
                                     SimulationMessaging.AddMessage(new SimulationMessage("Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section + ".  The more expensive (conservative)is used."));
+                                    if (APICall.Equals(true))
+                                    {
+                                        var updateStatus = Builders<SimulationModel>.Update
+                                        .Set(s => s.status, "Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section);
+                                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                                    }
                                 }
                                 if (cost._attributesEquation.Contains("LENGTH"))
                                 {
@@ -4351,6 +4480,12 @@ namespace Simulation
                     if (section.Area <= 0)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is equal to zero and Benefit/Cost is infinite. Section ignored."));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is 0 and Benefit/Cost is infinite. Section ignored");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         continue;
                     }
                     else
@@ -5761,6 +5896,12 @@ namespace Simulation
                 catch (Exception e)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error:Checking if treatment is allowed:" + e.Message));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error:Checking if treatment is allowed");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     throw e;
                 }          
 
@@ -5841,6 +5982,12 @@ namespace Simulation
                 catch (Exception e)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error: Removing Deficient and Targets from list of Targets: " + e.Message));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error: Removing Deficient and Targets from list of Targets");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     throw e;
                 }
                 
@@ -5894,6 +6041,12 @@ namespace Simulation
                 catch (Exception e)
                 {
                     SimulationMessaging.AddMessage(new SimulationMessage("Error updating Targets and deficient." + e.Message));
+                    if (APICall.Equals(true))
+                    {
+                        var updateStatus = Builders<SimulationModel>.Update
+                        .Set(s => s.status, "Error updating Targets and deficient");
+                        Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                    }
                     throw e;
                 }
 
@@ -6083,6 +6236,12 @@ namespace Simulation
             catch (Exception e)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Applying No Treatment to Targets and Deficient." + e.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Applying No Treatment to Targets and Deficient");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 throw e;
             }
             tw.Close();
@@ -6237,6 +6396,12 @@ namespace Simulation
                     {
                         if (!m_hashTargetSectionID.Contains(target.ID)) continue;
                         SimulationMessaging.AddMessage(new SimulationMessage(target.Attribute + " " + target.TargetName + " Target Met"));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, target.Attribute + " " + target.TargetName + " Target Met");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         RemoveMetTargets(target);
                         listRemove.Add(target);
                         
@@ -6248,6 +6413,12 @@ namespace Simulation
                     {
                         if (!m_hashTargetSectionID.Contains(target.ID)) continue;
                         SimulationMessaging.AddMessage(new SimulationMessage(target.Attribute + " " + target.TargetName + " Deficient Target Met"));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, target.Attribute + " " + target.TargetName + " Deficient Target Met");
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                         RemoveMetTargets(target);
                         listRemove.Add(target);
 
@@ -6425,6 +6596,12 @@ namespace Simulation
                             if (nYear == appliedTreatment.Year)
                             {
                                 SimulationMessaging.AddMessage(new SimulationMessage("Applying treatment:" + sTreatment + " to Facility:" +  section.Facility + " Section:" + section.Section + " for Year:" + nYear.ToString() + " at " + DateTime.Now.ToString("HH:mm:ss")));
+                                if (APICall.Equals(true))
+                                {
+                                    var updateStatus = Builders<SimulationModel>.Update
+                                    .Set(s => s.status, "Applying treatment:" + sTreatment + " to Facility:" + section.Facility + " Section:" + section.Section + " for Year:" + nYear.ToString());
+                                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                                }
                                 Committed singleSection = new Committed();
                                 singleSection.Treatment = appliedTreatment.Treatment;
                                 singleSection.ConsequenceID = appliedTreatment.TreatmentID;
@@ -7323,6 +7500,12 @@ namespace Simulation
                     catch (Exception exception)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Error update section for YEAR=" + nYear.ToString() + ". " + exception.Message));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error update section for YEAR=" + nYear.ToString());
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                     }
                 }
             }
@@ -7430,6 +7613,12 @@ namespace Simulation
                     catch (Exception exception)
                     {
                         SimulationMessaging.AddMessage(new SimulationMessage("Error update section for YEAR=" + nYear.ToString() + ". " + exception.Message));
+                        if (APICall.Equals(true))
+                        {
+                            var updateStatus = Builders<SimulationModel>.Update
+                            .Set(s => s.status, "Error update section for YEAR=" + nYear.ToString());
+                            Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                        }
                     }
                 }
             }
@@ -7519,7 +7708,13 @@ namespace Simulation
                             }
                             else
                             {
-                                SimulationMessaging.AddMessage(new SimulationMessage("Multiple valid " + consequence.Attributes[0] + " consequences for " + treatment.Treatment)); 
+                                SimulationMessaging.AddMessage(new SimulationMessage("Multiple valid " + consequence.Attributes[0] + " consequences for " + treatment.Treatment));
+                                if (APICall.Equals(true))
+                                {
+                                    var updateStatus = Builders<SimulationModel>.Update
+                                    .Set(s => s.status, "Multiple valid " + consequence.Attributes[0] + " consequences for " + treatment.Treatment);
+                                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                                }
                             }
                         }
                         else
@@ -7597,6 +7792,12 @@ namespace Simulation
             catch
             {
 				SimulationMessaging.AddMessage(new SimulationMessage("Error: Compound treatment failed to properly calculate."));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Compound treatment failed to properly calculate");
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
             }
             return hashOutput;
         }
@@ -7905,6 +8106,12 @@ namespace Simulation
         {
             m_dictionaryCommittedEquations = new Dictionary<string, CommittedEquation>();
             SimulationMessaging.AddMessage(new SimulationMessage("Compile Committed Project Consequence equations at " + DateTime.Now.ToString("HH:mm:ss")));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Compile Committed Project Consequence equations");
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             string query = "SELECT A.ID_, A.CHANGE_ FROM " + cgOMS.Prefix + "COMMIT_CONSEQUENCES A INNER JOIN " + cgOMS.Prefix + "COMMITTED_ B ON A.COMMITID= B.COMMITID WHERE B.SIMULATIONID='" + simulationID + "' AND A.CHANGE_ LIKE '%]%' ORDER BY A.ID_";
             if (sectionID != null)
             {
@@ -8132,6 +8339,12 @@ namespace Simulation
                         if (fCost >= 0 && !Method.UseCumulativeCost)
                         {
                             SimulationMessaging.AddMessage(new SimulationMessage("Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section + ".  The more expensive (conservative)is used."));
+                            if (APICall.Equals(true))
+                            {
+                                var updateStatus = Builders<SimulationModel>.Update
+                                .Set(s => s.status, "Muliple cost criteria met for " + treatment.Treatment + " for section " + section.Facility + " " + section.Section);
+                                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                            }
                         }
                         if (cost._attributesEquation.Contains("LENGTH"))
                         {
@@ -8172,6 +8385,13 @@ namespace Simulation
             if (section.Area <= 0)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is equal to zero and Benefit/Cost is infinite. Section ignored."));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Warning:Facility(" + section.Facility + ")Section(" + section.Section + ") AREA is zero and Benefit/Cost is infinite. Section ignored");
+
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return 0;
             }
             else
@@ -8194,6 +8414,13 @@ namespace Simulation
         public void UpdateSimulation()
         {
             SimulationMessaging.AddMessage(new SimulationMessage("Beginning simulation update." + DateTime.Now.ToLongTimeString()));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Beginning simulation update");
+
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             if (this.ActionOMS != "Commit")
             {
                 SetSimulationTables();
@@ -8210,6 +8437,13 @@ namespace Simulation
                 CommitOMSActivity(false); 
             }
             SimulationMessaging.AddMessage(new SimulationMessage("Complete simulation update." + DateTime.Now.ToLongTimeString()));
+            if (APICall.Equals(true))
+            {
+                var updateStatus = Builders<SimulationModel>.Update
+                .Set(s => s.status, "Completed simulation update");
+
+                Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+            }
             Thread.Sleep(1000);
         }
 
@@ -8531,6 +8765,13 @@ namespace Simulation
             catch (Exception exception)
             {
                 SimulationMessaging.AddMessage(new SimulationMessage("Error: Deleting year from TARGET table. " + exception.Message));
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Error: Deleting year from TARGET table");
+
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
                 return false;
             }
             return true;
