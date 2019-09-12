@@ -94,7 +94,10 @@ namespace RoadCare3
 				{
 					strEquation = dgvCalculated[nColumn, nRow].Value.ToString();
                     isFunctionTag = dgvCalculated[0, nRow].Tag.ToString();
-                    if (isFunctionTag == "1") isFunction = true;
+                    if (isFunctionTag == "1")
+                    {
+                        isFunction = true;
+                    }
 				}
 				FormEditEquation formEditEquation = new FormEditEquation(strEquation,false, isFunction);
 				formEditEquation.CalculatedField = true;

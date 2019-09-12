@@ -628,9 +628,9 @@ namespace RoadCare3
 
                     timerSimulation.Start();
                     this.Cursor = Cursors.WaitCursor;
-                    m_simulationThread = new Thread(new ThreadStart(m_simulation.CompileSimulation));
+                    m_simulationThread = new Thread(new ParameterizedThreadStart(m_simulation.CompileSimulation));
                     //m_simulationThread.Priority = ThreadPriority.Highest;
-                    m_simulationThread.Start();
+                    m_simulationThread.Start(false);
                 }
                 else
                 {
