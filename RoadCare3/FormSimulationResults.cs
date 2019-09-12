@@ -1495,8 +1495,8 @@ namespace RoadCare3
 			OpenFileDialog commitedOpenDialog = new OpenFileDialog();
 			commitedOpenDialog.Filter = "Tab Seperated Text|*.txt";
 			commitedOpenDialog.ValidateNames = true;
-
-			if( commitedOpenDialog.ShowDialog() == DialogResult.OK )
+            string lineToParse = null;
+            if ( commitedOpenDialog.ShowDialog() == DialogResult.OK )
 			{
 				try
 				{
@@ -1516,7 +1516,8 @@ namespace RoadCare3
 						}
 					}
 
-					for( string lineToParse = committedSaveFileReader.ReadLine(); lineToParse != null; lineToParse = committedSaveFileReader.ReadLine() )
+
+                    for ( lineToParse = committedSaveFileReader.ReadLine(); lineToParse != null; lineToParse = committedSaveFileReader.ReadLine() )
 					{
 						string[] entries = lineToParse.Split( '\t' );
 						LocationCopy loc = new LocationCopy( entries[0], entries[1], entries[2], double.Parse(entries[3]), double.Parse(entries[4]), double.Parse(entries[11]) );
@@ -1544,7 +1545,7 @@ namespace RoadCare3
 				}
 				catch( Exception ex )
 				{
-					Global.WriteOutput( "ERROR: could not read from file: " + ex.Message );
+					Global.WriteOutput( "ERROR: could not read from file: " + ex.Message + " " + lineToParse);
 					savedTreatments.Clear();
 				}
 			}

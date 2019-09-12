@@ -1079,6 +1079,9 @@ namespace DatabaseManager
             String strDS;
             String strBCP;
 
+            String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            strMyDocumentsFolder += "\\RoadCare Projects\\Temp\\";
+
             if (m_cpNativeParameters.SqlConnection.State == ConnectionState.Open)
             {
                 strDB = m_cpNativeParameters.SqlConnection.Database.ToString();
@@ -1086,7 +1089,7 @@ namespace DatabaseManager
 
                 if (m_cpNativeParameters.IsIntegratedSecurity)
                 {
-                    strBCP = "\"" + strDB + ".dbo." + strTableName + "\" IN \"" + strPathName + "\" /S " + strDS + " /T -t \"" + cDelimeter + "\" -c -q";
+                    strBCP = "\"" + strDB + ".dbo." + strTableName + "\" IN \"" + strPathName + "\" /S " + strDS + " /T -t \"" + cDelimeter + "\" -c -q -o \"" + strMyDocumentsFolder + "output.txt\"";
                 }
                 else
                 {

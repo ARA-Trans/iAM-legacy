@@ -35,7 +35,7 @@ namespace RoadCare3
 
             ActiveControl = btnLogin;
 
-            label7.Text = $"Version {Assembly.GetExecutingAssembly().GetName().Version} for 7.10.2019";
+            label7.Text = $"Version {Assembly.GetExecutingAssembly().GetName().Version} for 8.21.2019";
         }
 
         private void btnLogin_Click(object sender, EventArgs e)
@@ -378,12 +378,12 @@ namespace RoadCare3
             tbRoadCareUserName.Text = Settings.Default.LAST_LOGIN;
             TabSqlServer.Enabled = true;
             #if DEBUG
-                        tbRoadCarePassword.Text = "dummy";
-                        tbRoadCareUserName.Text = "dummy";
-                        tbMSSQLDatabaseName.Text = "dummy";
-                        tbMSSQLServerName.Text = "dummy";
-                        tbMSSQLUserName.Text = "dummy";
-                        tbMSSQLPassword.Text = "dummy";
+                        tbRoadCarePassword.Text = "install";
+                        tbRoadCareUserName.Text = "install";
+                        tbMSSQLDatabaseName.Text = "PAMS";
+                        tbMSSQLServerName.Text = "13.92.210.73";
+                        tbMSSQLUserName.Text = "penndot";
+                        tbMSSQLPassword.Text = "roadcarepams";
                         chkUseIntegratedSecurity.Checked = false;
                         tcLogin.SelectedIndex= 0;
             #endif
