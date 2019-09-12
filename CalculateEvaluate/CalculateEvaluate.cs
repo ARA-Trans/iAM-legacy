@@ -687,7 +687,9 @@ namespace CalculateEvaluate
             }
             catch(Exception exception)
             {
-                throw exception;
+                var extendedExpression = new Exception(exception.Message + " (" + m_expression + ")");
+            
+                throw extendedExpression;
             }
         }
 

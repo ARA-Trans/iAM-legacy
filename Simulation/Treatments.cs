@@ -5,6 +5,8 @@ using System.Data;
 using System.Collections;
 using RoadCareGlobalOperations;
 using System.IO;
+using Simulation.Interface;
+
 namespace Simulation
 {
     /// <summary>
@@ -22,8 +24,8 @@ namespace Simulation
         private List<Costs> _costs = new List<Costs>();
         private List<Consequences> _consequences = new List<Consequences>();
         private List<String> _attributes = new List<String>();
-
-
+        private List<IScheduled> _scheduleds = new List<IScheduled>();
+        private List<ISupersede> _supersedes = new List<ISupersede>();
         private List<string> m_listBudget = null;
 
         //Values for caching dll's
@@ -187,6 +189,17 @@ namespace Simulation
         {
             get{return _attributes;}
         }
+
+        public List<IScheduled> Scheduleds
+        {
+            get { return _scheduleds; }
+        }
+
+        public List<ISupersede> Supersedes
+        {
+            get { return _supersedes; }
+        }
+
 
         /// <summary>
         /// Loads all feasibility criteria for this treatment in for this treatment ID.
@@ -414,6 +427,8 @@ namespace Simulation
                 return false;
             }
 
+            var consequenceCount = 0;
+
             foreach (DataRow row in ds.Tables[0].Rows)
             {
                 string id = row["CONSEQUENCEID"].ToString();
@@ -424,7 +439,11 @@ namespace Simulation
                 String strEquation = row["EQUATION"].ToString();
                 consequence.TreatmentID = this.TreatmentID;
                 consequence.Treatment = this.Treatment;
-                
+
+                SimulationMessaging.AddMessage(new SimulationMessage("Compiling treatment consequence " + consequenceCount));
+                consequenceCount++;
+
+
                 if (strCriteria.Trim().Length == 0)
                 {
                     consequence.Default = true;
@@ -519,7 +538,84 @@ namespace Simulation
             return true;
         }
 
+        public bool LoadSupersedes()
+        {
 
+
+            try
+            {
+                var select = "SELECT SUPERSEDE_ID, SUPERSEDE_TREATMENT_ID, CRITERIA FROM SUPERSEDES WHERE TREATMENT_ID='" + this.TreatmentID + "'";
+                DataSet ds = DBMgr.ExecuteQuery(select);
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var supersedeId = int.Parse(row["SUPERSEDE_ID"].ToString());
+                    var supersedeTreatmentId = int.Parse(row["SUPERSEDE_TREATMENT_ID"].ToString());
+                    var criteria = "";
+
+                    if(row["CRITERIA"] != DBNull.Value)    criteria =row["CRITERIA"].ToString();
+
+                    Supersedes.Add(new Supersede(supersedeId, supersedeTreatmentId,criteria));
+                }
+
+
+                foreach (var supersede in Supersedes)
+                {
+                    foreach (String str in supersede.Criteria.CriteriaAttributes)
+                    {
+                        if (!SimulationMessaging.IsAttribute(str))
+                        {
+                            SimulationMessaging.AddMessage(new SimulationMessage("Error: " + str + " which is used by the Supersede criteria is not present in the database."));
+                        }
+                        if (!_attributes.Contains(str))
+                        {
+                            _attributes.Add(str);
+                        }
+                    }
+                }
+
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(
+                    new SimulationMessage("Fatal Error: Opening SUPERSEDE table. SQL Message - " + exception.Message));
+                return false;
+            }
+            return true;
+        }
+
+        public bool LoadScheduled(List<Treatments> availableTreatments)
+        {
+            var select = "SELECT SCHEDULEDID, SCHEDULEDTREATMENTID, SCHEDULEDYEAR FROM SCHEDULED WHERE TREATMENTID='" + this.TreatmentID + "'";
+
+            DataSet ds;
+            try
+            {
+                ds = DBMgr.ExecuteQuery(select);
+
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    var scheduledId = int.Parse(row["SCHEDULEDID"].ToString());
+                    var scheduledTreatmentId = row["SCHEDULEDTREATMENTID"].ToString();
+                    var scheduledYear = int.Parse(row["SCHEDULEDYEAR"].ToString());
+                    var scheduledTreatment = availableTreatments.Find(t => t.TreatmentID == scheduledTreatmentId);
+
+                    if (scheduledTreatment != null)
+                    {
+                        _scheduleds.Add(new Scheduled(scheduledId, scheduledTreatment, scheduledYear));
+                    }
+
+                }
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(
+                    new SimulationMessage("Fatal Error: Opening SCHEDULED table. SQL Message - " + exception.Message));
+                return false;
+            }
+            return true;
+        }
         
         public bool IsTreatmentCriteriaMet(Hashtable hashAttributeValue)
         {

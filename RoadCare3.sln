@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoadCare3", "RoadCare3\RoadCare3.csproj", "{95538685-450B-4CAE-BDD5-87925C0191A1}"
 EndProject
@@ -1916,7 +1916,7 @@ Global
 		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|Win32.ActiveCfg = Release|Any CPU
-		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|x64.ActiveCfg = Release|Any CPU
+		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|x64.ActiveCfg = Release|x64
 		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|x86.ActiveCfg = Release|x86
 		{91CC2C02-72EA-43AF-95B0-F45EDF91538E}.Release|x86.Build.0 = Release|x86
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.AACOUNTY|Any CPU.ActiveCfg = Release|Any CPU
@@ -1960,7 +1960,7 @@ Global
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|Win32.ActiveCfg = Release|Any CPU
-		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|x64.ActiveCfg = Release|Any CPU
+		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|x64.ActiveCfg = Release|x64
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|x86.ActiveCfg = Release|x86
 		{A40B7775-7A62-4E76-928A-346F916B48C7}.Release|x86.Build.0 = Release|x86
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.AACOUNTY|Any CPU.ActiveCfg = Release|Any CPU
@@ -2005,7 +2005,7 @@ Global
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|Win32.ActiveCfg = Release|Any CPU
-		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|x64.ActiveCfg = Release|Any CPU
+		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|x64.ActiveCfg = Release|x64
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|x86.ActiveCfg = Release|x86
 		{0F2FA112-CBD1-4F2B-8F4B-8648656AF6E0}.Release|x86.Build.0 = Release|x86
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.AACOUNTY|Any CPU.ActiveCfg = Release|Any CPU
@@ -2049,7 +2049,7 @@ Global
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|Win32.ActiveCfg = Release|Any CPU
-		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|x64.ActiveCfg = Release|Any CPU
+		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|x64.ActiveCfg = Release|x64
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|x86.ActiveCfg = Release|x86
 		{7780F9A8-0E4A-4C83-B12F-632B3DD9D461}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection

@@ -43,9 +43,9 @@ namespace DataAccessLayer
             {
                 Simulation.SimulationMessaging.ClearProgressList(simulationID);
                 Simulation.Simulation simulation = new Simulation.Simulation("", "", simulationID, "1", DB.ConnectionString);
-                Thread simulationThread = new Thread(new ThreadStart(simulation.CompileSimulation));
+                Thread simulationThread = new Thread(new ParameterizedThreadStart(simulation.CompileSimulation));
                 RunSimulation.Simulations.Add(simulationID, simulationThread);
-                simulationThread.Start();
+                simulationThread.Start(false);
             }
         }
 

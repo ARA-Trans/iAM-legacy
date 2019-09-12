@@ -36,6 +36,9 @@ namespace Simulation
 
 
                 byte [] assembly = SimulationMessaging.GetSerializedCalculateEvaluate(cgOMS.Prefix + "COMMITTED", "BINARY_EQUATION", _id, null);
+                SimulationMessaging.AddMessage(new SimulationMessage("Compiling committed equation " +  m_strEquation));
+
+
                 if (assembly != null && assembly.Length > 0)
                 {
                     calculate = (CalculateEvaluate.CalculateEvaluate)AssemblySerialize.DeSerializeObjectFromByteArray(assembly);
@@ -50,6 +53,10 @@ namespace Simulation
                 {
                     calculate = new CalculateEvaluate.CalculateEvaluate();
                     calculate.BuildClass(m_strEquation, true, cgOMS.Prefix + "COMMITTED_BINARY_EQUATION_" + _id);
+
+    
+
+
 
                     if (calculate.m_cr == null)
                     {
@@ -100,7 +107,7 @@ namespace Simulation
             }
             catch (Exception exc)
             {
-                SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
+                SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + calculate.OriginalInput + " " + exc.Message));
                 return 0;
             }
         }

@@ -4,6 +4,7 @@ using System.Text;
 using DatabaseManager;
 using System.Collections;
 using System.Data;
+using System.IO;
 
 namespace Simulation
 {
@@ -593,7 +594,7 @@ namespace Simulation
 
 
 
-        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute)
+        public void RollForward(List<Deteriorate> listDeteriorate, List<String> listAttribute, List<CalculatedAttribute> listCalculatedAttributes)
         {
             //All possible data is now in Section.  Do a quick check to see if all data is
             //present in current year.  If it is we are done.
@@ -816,6 +817,18 @@ namespace Simulation
             { 
                 m_hashYearAttributeValues.Remove(RollToYear);
             }
+
+            // Update CalculatedAttributes for RollForward.
+
+            foreach (var calculatedAttribute in listCalculatedAttributes)
+            {
+                if (!hashRollForward.ContainsKey(calculatedAttribute.Attribute)) continue;
+                if (calculatedAttribute.IsCriteriaMet(hashRollForward))
+                {
+                    hashRollForward[calculatedAttribute.Attribute] = calculatedAttribute.Calculate(hashRollForward);
+                }
+            }
+
 
             //Store all attributes by year.  This is the first for this simulation.
             m_hashYearAttributeValues.Add(this.RollToYear, hashRollForward);
@@ -1197,7 +1210,7 @@ namespace Simulation
 			}
 			catch(Exception exc)
 			{
-				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod. " + exc.Message));
+				SimulationMessaging.AddMessage(new SimulationMessage("Error in RunMethod.   " + SimulationMessaging.Area.OriginalInput + " " + exc.Message)); 
 			}
 
         }
@@ -1302,17 +1315,22 @@ namespace Simulation
         }
 
 
-        public String WriteSimulation(int nYearStart, int nYearEnd)
+        public void WriteSimulation(int nYearStart, int nYearEnd, Dictionary<string,int> attributeTable, List<TextWriter> textWriters)
         {
             Hashtable hashAttributeValue = null;
-            String strOut = this.SectionID;
-            for(int nYear = nYearStart; nYear<= nYearEnd; nYear++)
+            foreach(var tw in textWriters)
             {
-                hashAttributeValue = (Hashtable) m_hashYearAttributeValues[nYear];
-                foreach (String sAttribute in SimulationMessaging.ListAttributes)
+                tw.Write(SectionID);
+            }
+
+            foreach (String sAttribute in SimulationMessaging.ListAttributes)
+            {
+                if (sAttribute == "SECTIONID") continue;
+                for (int nYear = nYearStart; nYear <= nYearEnd; nYear++)
                 {
-                    if (sAttribute == "SECTIONID") continue;
-                    strOut += "\t";
+                    hashAttributeValue = (Hashtable)m_hashYearAttributeValues[nYear];
+
+                    textWriters[attributeTable[sAttribute]].Write("\t");
                     if(hashAttributeValue[sAttribute] != null) //Values can remain null in OMS analysis
                     {
                         String sValue = hashAttributeValue[sAttribute].ToString();
@@ -1330,74 +1348,53 @@ namespace Simulation
                             }
                             if (fValue == 0) sValue = "0";
                             else sValue = fValue.ToString(sFormat);
-                            strOut += sValue;
+                            textWriters[attributeTable[sAttribute]].Write(sValue);
                         }
                         else
                         {
-                            strOut += hashAttributeValue[sAttribute].ToString();
+                            if (hashAttributeValue[sAttribute] != null)
+                            {
+                                textWriters[attributeTable[sAttribute]].Write(hashAttributeValue[sAttribute].ToString());
+                            }
                         }
                     }
                 }
-            }
 
-            if (SimulationMessaging.IsOMS)
-            {
                 int year = 0;//Stores rolled forward values
+                textWriters[attributeTable[sAttribute]].Write("\t");
                 hashAttributeValue = (Hashtable)m_hashYearAttributeValues[year];
-                foreach (String sAttribute in SimulationMessaging.ListAttributes)
                 {
-                    if (sAttribute == "SECTIONID") continue;
-                    strOut += "\t";
-                    if (hashAttributeValue[sAttribute] != null)
-                    {
-                        String sValue = hashAttributeValue[sAttribute].ToString();
-                        if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
-                        {
-                            String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
-                            float fValue = float.NaN;
-                            try
-                            {
-                                fValue = float.Parse(sValue);
-                            }
-                            catch
-                            {
-                                fValue = float.NaN;
-                            }
-                            if (fValue == 0) sValue = "0";
-                            else sValue = fValue.ToString(sFormat);
-                            strOut += sValue;
-                        }
-                        else
-                        {
-                            strOut += hashAttributeValue[sAttribute].ToString();
-                        }
-                    }
-                }
-            }
-            else
-            {
-                int year = 0;//Stores rolled forward values
-                hashAttributeValue = (Hashtable)m_hashYearAttributeValues[year];
-                foreach (String sAttribute in SimulationMessaging.ListAttributes)
-                {
-                    String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
-                    if (sAttribute == "SECTIONID") continue;
-                    String sValue = "";
+                    String sValue = hashAttributeValue[sAttribute].ToString();
                     if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
                     {
-                        double dValue = 0;
-                        double.TryParse(hashAttributeValue[sAttribute].ToString(), out dValue);
-                        sValue = dValue.ToString(sFormat);
+                        String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
+                        float fValue = float.NaN;
+                        try
+                        {
+                            fValue = float.Parse(sValue);
+                        }
+                        catch
+                        {
+                            fValue = float.NaN;
+                        }
+                        if (fValue == 0) sValue = "0";
+                        else sValue = fValue.ToString(sFormat);
+                        textWriters[attributeTable[sAttribute]].Write(sValue);
                     }
                     else
                     {
-                        sValue = hashAttributeValue[sAttribute].ToString();
+                        if (hashAttributeValue[sAttribute] != null)
+                        {
+                            textWriters[attributeTable[sAttribute]].Write(hashAttributeValue[sAttribute].ToString());
+                        }
                     }
-                    strOut += "\t";
-                    strOut += sValue;
                 }
             }
-            return strOut;
+            foreach (var tw in textWriters)
+            {
+                tw.WriteLine("");
+            }
+            return;
         }
 
 

@@ -92,6 +92,9 @@ namespace Simulation
             set { _isOMSTargetEnforced = value; }
         }
 
+        public bool UseCumulativeCost { get; set; }
+
+        public bool UseAcrossBudgets { get; set; }
         ///// <summary>
         ///// Attributes to consider Remaining Life for.
         ///// </summary>
@@ -102,7 +105,7 @@ namespace Simulation
 
         //}
 
-    
-    
+
+
     }
 }

@@ -32,6 +32,8 @@ namespace RoadCare3
             this.labelAnalysis = new System.Windows.Forms.Label();
             this.tabControlAnalysis = new System.Windows.Forms.TabControl();
             this.tabPagePriority = new System.Windows.Forms.TabPage();
+            this.radioButtonAcrossBudget = new System.Windows.Forms.RadioButton();
+            this.radioButtonWithinBudget = new System.Windows.Forms.RadioButton();
             this.dgvPriority = new System.Windows.Forms.DataGridView();
             this.tabPageTarget = new System.Windows.Forms.TabPage();
             this.dgvTarget = new System.Windows.Forms.DataGridView();
@@ -47,6 +49,11 @@ namespace RoadCare3
             this.Deficient = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DeficientPercent = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DeficientCriteria = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tabRemainingLife = new System.Windows.Forms.TabPage();
+            this.dataGridViewRemainLife = new System.Windows.Forms.DataGridView();
+            this.RemainingLifeAttribute = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.RemainingLifeLimit = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.RemainingLifeCriteria = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.cbOptimization = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -73,6 +80,8 @@ namespace RoadCare3
             ((System.ComponentModel.ISupportInitialize)(this.dgvTarget)).BeginInit();
             this.tabPageDeficient.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDeficient)).BeginInit();
+            this.tabRemainingLife.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewRemainLife)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -95,6 +104,7 @@ namespace RoadCare3
             this.tabControlAnalysis.Controls.Add(this.tabPagePriority);
             this.tabControlAnalysis.Controls.Add(this.tabPageTarget);
             this.tabControlAnalysis.Controls.Add(this.tabPageDeficient);
+            this.tabControlAnalysis.Controls.Add(this.tabRemainingLife);
             this.tabControlAnalysis.Location = new System.Drawing.Point(-1, 107);
             this.tabControlAnalysis.Margin = new System.Windows.Forms.Padding(2);
             this.tabControlAnalysis.Name = "tabControlAnalysis";
@@ -104,6 +114,8 @@ namespace RoadCare3
             // 
             // tabPagePriority
             // 
+            this.tabPagePriority.Controls.Add(this.radioButtonAcrossBudget);
+            this.tabPagePriority.Controls.Add(this.radioButtonWithinBudget);
             this.tabPagePriority.Controls.Add(this.dgvPriority);
             this.tabPagePriority.Location = new System.Drawing.Point(4, 22);
             this.tabPagePriority.Margin = new System.Windows.Forms.Padding(2);
@@ -113,6 +125,31 @@ namespace RoadCare3
             this.tabPagePriority.TabIndex = 0;
             this.tabPagePriority.Text = "Priority";
             this.tabPagePriority.UseVisualStyleBackColor = true;
+            this.tabPagePriority.Click += new System.EventHandler(this.TabPagePriority_Click);
+            // 
+            // radioButtonAcrossBudget
+            // 
+            this.radioButtonAcrossBudget.AutoSize = true;
+            this.radioButtonAcrossBudget.Location = new System.Drawing.Point(193, 9);
+            this.radioButtonAcrossBudget.Name = "radioButtonAcrossBudget";
+            this.radioButtonAcrossBudget.Size = new System.Drawing.Size(174, 17);
+            this.radioButtonAcrossBudget.TabIndex = 27;
+            this.radioButtonAcrossBudget.TabStop = true;
+            this.radioButtonAcrossBudget.Text = "Use extra funds across budgets";
+            this.radioButtonAcrossBudget.UseVisualStyleBackColor = true;
+            this.radioButtonAcrossBudget.CheckedChanged += new System.EventHandler(this.RadioButtonAcrossBudget_CheckedChanged);
+            // 
+            // radioButtonWithinBudget
+            // 
+            this.radioButtonWithinBudget.AutoSize = true;
+            this.radioButtonWithinBudget.Location = new System.Drawing.Point(7, 9);
+            this.radioButtonWithinBudget.Name = "radioButtonWithinBudget";
+            this.radioButtonWithinBudget.Size = new System.Drawing.Size(165, 17);
+            this.radioButtonWithinBudget.TabIndex = 26;
+            this.radioButtonWithinBudget.TabStop = true;
+            this.radioButtonWithinBudget.Text = "Use extra funds within budget";
+            this.radioButtonWithinBudget.UseVisualStyleBackColor = true;
+            this.radioButtonWithinBudget.CheckedChanged += new System.EventHandler(this.RadioButtonWithinBudget_CheckedChanged);
             // 
             // dgvPriority
             // 
@@ -120,11 +157,11 @@ namespace RoadCare3
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvPriority.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPriority.Location = new System.Drawing.Point(0, 0);
+            this.dgvPriority.Location = new System.Drawing.Point(0, 33);
             this.dgvPriority.Margin = new System.Windows.Forms.Padding(2);
             this.dgvPriority.Name = "dgvPriority";
             this.dgvPriority.RowTemplate.Height = 24;
-            this.dgvPriority.Size = new System.Drawing.Size(834, 386);
+            this.dgvPriority.Size = new System.Drawing.Size(834, 353);
             this.dgvPriority.TabIndex = 0;
             this.dgvPriority.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPriority_CellDoubleClick);
             this.dgvPriority.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPriority_CellEnter);
@@ -255,6 +292,51 @@ namespace RoadCare3
             this.DeficientCriteria.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.DeficientCriteria.HeaderText = "Criteria";
             this.DeficientCriteria.Name = "DeficientCriteria";
+            // 
+            // tabRemainingLife
+            // 
+            this.tabRemainingLife.Controls.Add(this.dataGridViewRemainLife);
+            this.tabRemainingLife.Location = new System.Drawing.Point(4, 22);
+            this.tabRemainingLife.Name = "tabRemainingLife";
+            this.tabRemainingLife.Padding = new System.Windows.Forms.Padding(3);
+            this.tabRemainingLife.Size = new System.Drawing.Size(834, 386);
+            this.tabRemainingLife.TabIndex = 3;
+            this.tabRemainingLife.Text = "Remaining Life Limit";
+            this.tabRemainingLife.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewRemainLife
+            // 
+            this.dataGridViewRemainLife.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewRemainLife.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.RemainingLifeAttribute,
+            this.RemainingLifeLimit,
+            this.RemainingLifeCriteria});
+            this.dataGridViewRemainLife.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewRemainLife.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewRemainLife.Name = "dataGridViewRemainLife";
+            this.dataGridViewRemainLife.Size = new System.Drawing.Size(828, 380);
+            this.dataGridViewRemainLife.TabIndex = 0;
+            this.dataGridViewRemainLife.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewRemainLife_CellMouseDoubleClick);
+            this.dataGridViewRemainLife.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewRemainLife_CellValidated);
+            this.dataGridViewRemainLife.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.DataGridViewRemainLife_UserDeletedRow);
+
+            // 
+            // RemainingLifeAttribute
+            // 
+            this.RemainingLifeAttribute.HeaderText = "Remaining Life Attribute";
+            this.RemainingLifeAttribute.Name = "RemainingLifeAttribute";
+            this.RemainingLifeAttribute.Width = 200;
+            // 
+            // RemainingLifeLimit
+            // 
+            this.RemainingLifeLimit.HeaderText = "Limit";
+            this.RemainingLifeLimit.Name = "RemainingLifeLimit";
+            // 
+            // RemainingLifeCriteria
+            // 
+            this.RemainingLifeCriteria.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.RemainingLifeCriteria.HeaderText = "Criteria";
+            this.RemainingLifeCriteria.Name = "RemainingLifeCriteria";
             // 
             // label1
             // 
@@ -495,11 +577,14 @@ namespace RoadCare3
             this.Load += new System.EventHandler(this.FormAnalysis_Load);
             this.tabControlAnalysis.ResumeLayout(false);
             this.tabPagePriority.ResumeLayout(false);
+            this.tabPagePriority.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPriority)).EndInit();
             this.tabPageTarget.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvTarget)).EndInit();
             this.tabPageDeficient.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvDeficient)).EndInit();
+            this.tabRemainingLife.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewRemainLife)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -545,5 +630,12 @@ namespace RoadCare3
         private System.Windows.Forms.DataGridViewTextBoxColumn DeficientCriteria;
 		private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.CheckBox checkBoxMultipleCost;
+        private System.Windows.Forms.RadioButton radioButtonAcrossBudget;
+        private System.Windows.Forms.RadioButton radioButtonWithinBudget;
+        private System.Windows.Forms.TabPage tabRemainingLife;
+        private System.Windows.Forms.DataGridView dataGridViewRemainLife;
+        private System.Windows.Forms.DataGridViewComboBoxColumn RemainingLifeAttribute;
+        private System.Windows.Forms.DataGridViewTextBoxColumn RemainingLifeLimit;
+        private System.Windows.Forms.DataGridViewTextBoxColumn RemainingLifeCriteria;
     }
 }

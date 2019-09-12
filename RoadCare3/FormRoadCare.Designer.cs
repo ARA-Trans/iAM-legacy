@@ -178,7 +178,7 @@ namespace RoadCare3
             this.specialReportsToolStripMenuItem,
             this.importOMSToolStripMenuItem});
             this.toolsToolStripMenuItem1.Name = "toolsToolStripMenuItem1";
-            this.toolsToolStripMenuItem1.Size = new System.Drawing.Size(48, 20);
+            this.toolsToolStripMenuItem1.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem1.Text = "Tools";
             // 
             // loadBinariesToolStripMenuItem

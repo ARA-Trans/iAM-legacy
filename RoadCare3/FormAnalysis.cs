@@ -208,11 +208,12 @@ namespace RoadCare3
                     cbBenefit.Items.Add(strAttribute);
                     this.Attribute.Items.Add(strAttribute);
                     this.DeficientAttribute.Items.Add(strAttribute);
+                    RemainingLifeAttribute.Items.Add(strAttribute);
 
                 }
             }
 
-            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT,USE_CUMULATIVE_COST FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            String strSelect = "SELECT COMMENTS,JURISDICTION,ANALYSIS,BUDGET_CONSTRAINT,WEIGHTING,BENEFIT_VARIABLE,BENEFIT_LIMIT,USE_CUMULATIVE_COST,USE_ACROSS_BUDGET FROM SIMULATIONS WHERE SIMULATIONID='" + m_strSimulationID + "'";
             ds = new DataSet();
 
             try
@@ -239,10 +240,27 @@ namespace RoadCare3
             {
                 useCumulativeCost = Convert.ToBoolean(ds.Tables[0].Rows[0]["USE_CUMULATIVE_COST"]);
             }
+
+            var useAcrossBudget = false;
+
+            if (ds.Tables[0].Rows[0]["USE_ACROSS_BUDGET"] != DBNull.Value)
+            {
+                useAcrossBudget = Convert.ToBoolean(ds.Tables[0].Rows[0]["USE_ACROSS_BUDGET"]);
+            }
+
+
             checkBoxMultipleCost.Checked = useCumulativeCost;
 
+            if (useAcrossBudget)
+            {
+                radioButtonAcrossBudget.Checked = true;
+            }
+            else
+            {
+                radioButtonWithinBudget.Checked = true;
+            }
 
-            cbBenefit.Text = strBenefitVariable.ToString();
+                cbBenefit.Text = strBenefitVariable.ToString();
             cbBudget.Text = strBudgetConstraint.ToString();
             cbOptimization.Text = strAnalysis.ToString();
             cbWeighting.Text = strWeighting.ToString();
@@ -377,6 +395,32 @@ namespace RoadCare3
                     nCount++;
                 }
             }
+
+
+
+            //Add Remaining Life Limit
+            var select =
+                "SELECT REMAINING_LIFE_ID, ATTRIBUTE_,REMAINING_LIFE_LIMIT, CRITERIA FROM REMAINING_LIFE_LIMITS WHERE SIMULATION_ID='" +
+                m_strSimulationID + "'";
+
+
+                var datasetRemainingLife = DBMgr.ExecuteQuery(select);
+
+                dataGridViewRemainLife.Rows.Clear();
+                dataGridViewRemainLife.Columns[2].ReadOnly = true;
+
+                foreach (DataRow dr in datasetRemainingLife.Tables[0].Rows)
+                {
+                    var attribute = dr["ATTRIBUTE_"].ToString();
+                    float remainingLifeLimit = 0;
+                    if (dr["REMAINING_LIFE_LIMIT"] != DBNull.Value)
+                        remainingLifeLimit = Convert.ToSingle(dr["REMAINING_LIFE_LIMIT"]);
+                    var criteria = "";
+                    if (dr["CRITERIA"] != DBNull.Value) criteria = dr["CRITERIA"].ToString();
+
+                    int nIndex = dataGridViewRemainLife.Rows.Add(attribute, remainingLifeLimit, criteria.Replace("|","'"));
+                    dataGridViewRemainLife.Rows[nIndex].Tag = dr["REMAINING_LIFE_ID"].ToString();
+                }
 
 
             m_bChange = true;
@@ -584,9 +628,9 @@ namespace RoadCare3
 
                     timerSimulation.Start();
                     this.Cursor = Cursors.WaitCursor;
-                    m_simulationThread = new Thread(new ThreadStart(m_simulation.CompileSimulation));
+                    m_simulationThread = new Thread(new ParameterizedThreadStart(m_simulation.CompileSimulation));
                     //m_simulationThread.Priority = ThreadPriority.Highest;
-                    m_simulationThread.Start();
+                    m_simulationThread.Start(false);
                 }
                 else
                 {
@@ -611,13 +655,29 @@ namespace RoadCare3
             lock (listSimulation)
             {
 				String strOut = "";
+                var isProgress = false;
                 foreach (Simulation.SimulationMessage message in listSimulation)
                 {
-					strOut += message.Message + "\n";
-				}
-				Global.WriteOutput(strOut);
+                    if(strOut.Length == 0 || !message.IsProgress)
+                    {
+                        strOut += message.Message + "\n";
+                        if (message.IsProgress) isProgress = true;
+                    }
+                }
+                if (isProgress)
+                {
+                    Global.ReplaceOutput(strOut);
+                }
+                else
+                {
+                    Global.WriteOutput(strOut);
+                }
             }
             Simulation.SimulationMessaging.ClearProgressList();
+
+            
+
+
             if (!m_simulationThread.IsAlive)
             {
                 timerSimulation.Stop();
@@ -628,6 +688,8 @@ namespace RoadCare3
 
 				buttonRunSimulation.Enabled = true;
 				Refresh();
+                m_simulation = null;
+                GC.Collect();
             }
         }
 
@@ -1340,6 +1402,202 @@ namespace RoadCare3
                 return;
             }
 
+        }
+
+        private void TabPagePriority_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RadioButtonWithinBudget_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RadioButtonAcrossBudget_CheckedChanged(object sender, EventArgs e)
+        {
+            var update = "";
+            if (radioButtonAcrossBudget.Checked)
+            {
+                update = "UPDATE SIMULATIONS SET USE_ACROSS_BUDGET='1' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            else
+            {
+                update = "UPDATE SIMULATIONS SET USE_ACROSS_BUDGET='0' WHERE SIMULATIONID='" + m_strSimulationID + "'";
+            }
+            try
+            {
+                DBMgr.ExecuteNonQuery(update);
+            }
+            catch (Exception exception)
+            {
+                Global.WriteOutput("Error updating apply budget: " + exception.Message.ToString());
+                return;
+            }
+        }
+
+        private void DataGridViewRemainLife_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex > -1)
+            {
+                var strValue = "";
+                if (dataGridViewRemainLife.Rows[e.RowIndex].Tag == null)
+                {
+                    if (dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+
+                    var strInsert = "";
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+                            strInsert = "INSERT INTO REMAINING_LIFE_LIMITS (SIMULATION_ID, ATTRIBUTE_,REMAINING_LIFE_LIMIT) VALUES ('" +
+                                        m_strSimulationID + "','" + strValue + "','0')";
+                            break;
+                        default:
+                            MessageBox.Show("Select attribute before entering a limit or criteria.");
+                            return;
+                    }
+
+
+
+                    try
+                    {
+                        String strIdentity;
+                        DBMgr.ExecuteNonQuery(strInsert);
+                        switch (DBMgr.NativeConnectionParameters.Provider)
+                        {
+                            case "MSSQL":
+                                strIdentity = "SELECT IDENT_CURRENT ('REMAINING_LIFE_LIMITS') FROM REMAINING_LIFE_LIMITS";
+                                break;
+                            case "ORACLE":
+                                strIdentity = "SELECT MAX(REMAINING_LIFE_ID) FROM REMAINING_LIFE_LIMITS";
+                                break;
+                            default:
+                                throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                                //break;
+                        }
+
+                        var ds = DBMgr.ExecuteQuery(strIdentity);
+                        dataGridViewRemainLife.Rows[e.RowIndex].Tag = ds.Tables[0].Rows[0].ItemArray[0].ToString();
+
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error:" + except.Message.ToString());
+                    }
+                }
+                else
+                {
+                    String strTag = dataGridViewRemainLife.Rows[e.RowIndex].Tag.ToString();
+                    String strUpdate = "";
+
+
+                    if (dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strValue = dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    switch (e.ColumnIndex)
+                    {
+                        case 0:
+
+                            strUpdate = "UPDATE REMAINING_LIFE_LIMITS SET ATTRIBUTE_='" + strValue + "' WHERE REMAINING_LIFE_ID='" + strTag + "'";
+                            break;
+                        case 1:
+                            try
+                            {
+                                strValue = Convert.ToSingle(strValue).ToString();
+
+                            }
+                            catch (Exception exception)
+                            {
+                                MessageBox.Show("Remaining Life Limit must be a number. " + exception.Message);
+                                return;
+                            }
+
+                            strUpdate = "UPDATE REMAINING_LIFE_LIMITS SET REMAINING_LIFE_LIMIT ='" + strValue + "' WHERE REMAINING_LIFE_ID='" + strTag + "'";
+                            break;
+
+                        case 2:
+                            strValue = strValue.Trim();
+                            strValue = strValue.Replace("'", "|");
+                            strUpdate = "UPDATE REMAINING_LIFE_LIMITS SET CRITERIA ='" + strValue + "' WHERE REMAINING_LIFE_ID='" + strTag + "'";
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(strUpdate))
+                        {
+                            DBMgr.ExecuteNonQuery(strUpdate);
+                        }
+                    }
+                    catch (Exception except)
+                    {
+                        Global.WriteOutput("Error: " + except.Message.ToString());
+
+                    }
+                }
+            }
+        }
+
+        private void DataGridViewRemainLife_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            if (e.Row.Tag != null)
+            {
+                try
+                {
+                    DBMgr.ExecuteNonQuery("DELETE FROM REMAINING_LIFE_LIMITS WHERE REMAINING_LIFE_ID='" + e.Row.Tag + "'");
+                }
+                catch (Exception except)
+                {
+                    Global.WriteOutput("Error Deleting Remaining Life Limits:" + except.Message.ToString());
+                }
+            }
+        }
+
+
+        private void DataGridViewRemainLife_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex == 2 && e.RowIndex != -1)
+            {
+                if (Global.SecurityOperations.CanModifySimulationTreatment(m_strNetworkID, m_strSimulationID))
+                {
+                    String strCriteria = "";
+                    if (dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+                    {
+                        strCriteria = dataGridViewRemainLife.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    }
+                    FormAdvancedSearch formAdvancedSearch = new FormAdvancedSearch(m_strNetwork, m_hashAttributeYear, strCriteria, true);
+                    if (formAdvancedSearch.ShowDialog() == DialogResult.OK)
+                    {
+                        dataGridViewRemainLife[e.ColumnIndex, e.RowIndex].Value = formAdvancedSearch.GetWhereClause();
+                        try
+                        {
+                            string strID = dataGridViewRemainLife.Rows[e.RowIndex].Tag.ToString();
+                        }
+                        catch (Exception except)
+                        {
+                            Global.WriteOutput("Error: Updating Consequence Criteria." + except.Message);
+                        }
+
+                    }
+                    dataGridViewRemainLife.Update();
+                }
+            }
         }
     }
 }

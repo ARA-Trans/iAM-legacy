@@ -94,7 +94,10 @@ namespace RoadCare3
 				{
 					strEquation = dgvCalculated[nColumn, nRow].Value.ToString();
                     isFunctionTag = dgvCalculated[0, nRow].Tag.ToString();
-                    if (isFunctionTag == "1") isFunction = true;
+                    if (isFunctionTag == "1")
+                    {
+                        isFunction = true;
+                    }
 				}
 				FormEditEquation formEditEquation = new FormEditEquation(strEquation,false, isFunction);
 				formEditEquation.CalculatedField = true;
@@ -208,25 +211,20 @@ namespace RoadCare3
 				if (dgvCalculated[nColumn, nRow].Value != null)
 				{
 					strEquation = dgvCalculated[nColumn, nRow].Value.ToString();
-                    isFunctionTag = dgvCalculated[0, nRow].Tag.ToString();
-                    if (isFunctionTag == "1") isFunction = true;
-				}
+                }
 				FormEditEquation formEditEquation = new FormEditEquation(strEquation,false,isFunction);
 				formEditEquation.CalculatedField = true;
 				if (formEditEquation.ShowDialog() == DialogResult.OK)
 				{
-                    if (formEditEquation.IsFunction) dgvCalculated[0, nRow].Tag = "1";
-                    else dgvCalculated[0, nRow].Tag = "0";
 
-                    dgvCalculated[e.ColumnIndex, e.RowIndex].Value = formEditEquation.Equation;
 					if (dgvCalculated.Rows[nRow].Tag == null) //Insert new
 					{
-						dgvCalculated.Rows.Add();
+
 						try
 						{
 							strEquation = formEditEquation.Equation;
-
-							String strInsert = "INSERT INTO ATTRIBUTES_CALCULATED (ATTRIBUTE_,EQUATION,ISFUNCTION)VALUES('" + this.Attribute + "','" + strEquation + "','" + dgvCalculated[0,nRow].Tag.ToString() + "')";
+						    dgvCalculated.Rows.Add();
+                            String strInsert = "INSERT INTO ATTRIBUTES_CALCULATED (ATTRIBUTE_,EQUATION,ISFUNCTION)VALUES('" + this.Attribute + "','" + strEquation + "','0')";
 							SqlCommand command = new SqlCommand(strInsert, DBMgr.NativeConnectionParameters.SqlConnection);
 							command.ExecuteNonQuery();
 
@@ -236,7 +234,8 @@ namespace RoadCare3
 							dgvCalculated.Rows[nRow].Tag = strIdentity;
 							dgvCalculated[nColumn, nRow].Value = strEquation;
 							dgvCalculated.Update();
-						}
+						    dgvCalculated[e.ColumnIndex, e.RowIndex].Value = formEditEquation.Equation;
+                        }
 						catch (Exception exception)
 						{
 							Global.WriteOutput("Error: Inserting EQUATION for Calculated Fields." + exception.Message);
@@ -251,10 +250,11 @@ namespace RoadCare3
 							strEquation = formEditEquation.Equation;
 
 							strID = dgvCalculated.Rows[nRow].Tag.ToString();
-							String strUpdate = "UPDATE ATTRIBUTES_CALCULATED SET EQUATION='" + strEquation + "', ISFUNCTION='" + dgvCalculated[0,nRow].Tag.ToString() + "' WHERE ID_='" + strID + "'";
+							String strUpdate = "UPDATE ATTRIBUTES_CALCULATED SET EQUATION='" + strEquation + "', ISFUNCTION='0' WHERE ID_='" + strID + "'";
 							SqlCommand command = new SqlCommand(strUpdate, DBMgr.NativeConnectionParameters.SqlConnection);
 							command.ExecuteNonQuery();
-						}
+						    dgvCalculated[e.ColumnIndex, e.RowIndex].Value = formEditEquation.Equation;
+                        }
 						catch (Exception exception)
 						{
 							Global.WriteOutput("Error: Updating EQUATION for Calculated Fields." + exception.Message);

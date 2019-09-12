@@ -1950,7 +1950,7 @@
             UpdateRoadCareForCumulativeCost();
         }
 
-	    private static void UpdateRoadCareForCumulativeCost()
+        private static void UpdateRoadCareForCumulativeCost()
 	    {
 	        var ds = DBMgr.GetTableColumnsWithTypes("SIMULATIONS");
 	        bool isCumulativeCost = false;

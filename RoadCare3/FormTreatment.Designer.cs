@@ -53,6 +53,10 @@ namespace RoadCare3
             this.textBoxSame = new System.Windows.Forms.TextBox();
             this.textBoxDescription = new System.Windows.Forms.TextBox();
             this.dgvConsequences = new System.Windows.Forms.DataGridView();
+            this.Attribute = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.Change = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.CONSEQUENCE_EQUATION = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.CriteriaS = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.contextMenuConsequence = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuConsequenceCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuConsequencePaste = new System.Windows.Forms.ToolStripMenuItem();
@@ -61,14 +65,18 @@ namespace RoadCare3
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPageCost = new System.Windows.Forms.TabPage();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPageScheduled = new System.Windows.Forms.TabPage();
+            this.dataGridViewScheduled = new System.Windows.Forms.DataGridView();
+            this.ScheduledTreatment = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.ScheduledYears = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.tabPageSupercedes = new System.Windows.Forms.TabPage();
+            this.dataGridViewSupersede = new System.Windows.Forms.DataGridView();
+            this.SUPERCEDES = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.SUPERCEDES_CRITERIA = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.contextMenuStripCT = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.editCompoundTreatmentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkedComboBoxBudget = new RoadCare3.CheckedComboBox();
-            this.Attribute = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.Change = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.CONSEQUENCE_EQUATION = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.CriteriaS = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFeasibility)).BeginInit();
             this.contextMenuFeasibility.SuspendLayout();
             this.contextMenuCosts.SuspendLayout();
@@ -80,6 +88,10 @@ namespace RoadCare3
             this.tabPage1.SuspendLayout();
             this.tabPageCost.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.tabPageScheduled.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewScheduled)).BeginInit();
+            this.tabPageSupercedes.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSupersede)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.contextMenuStripCT.SuspendLayout();
             this.SuspendLayout();
@@ -336,6 +348,30 @@ namespace RoadCare3
             this.dgvConsequences.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvConsequences_CellValueChanged);
             this.dgvConsequences.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dgvConsequences_UserDeletedRow);
             // 
+            // Attribute
+            // 
+            this.Attribute.HeaderText = "Attribute";
+            this.Attribute.Name = "Attribute";
+            this.Attribute.Width = 150;
+            // 
+            // Change
+            // 
+            this.Change.HeaderText = "Change";
+            this.Change.Name = "Change";
+            this.Change.Width = 75;
+            // 
+            // CONSEQUENCE_EQUATION
+            // 
+            this.CONSEQUENCE_EQUATION.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.CONSEQUENCE_EQUATION.HeaderText = "Equation";
+            this.CONSEQUENCE_EQUATION.Name = "CONSEQUENCE_EQUATION";
+            // 
+            // CriteriaS
+            // 
+            this.CriteriaS.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.CriteriaS.HeaderText = "Criteria";
+            this.CriteriaS.Name = "CriteriaS";
+            // 
             // contextMenuConsequence
             // 
             this.contextMenuConsequence.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -374,6 +410,8 @@ namespace RoadCare3
             this.tabControlFeasibility.Controls.Add(this.tabPage1);
             this.tabControlFeasibility.Controls.Add(this.tabPageCost);
             this.tabControlFeasibility.Controls.Add(this.tabPage3);
+            this.tabControlFeasibility.Controls.Add(this.tabPageScheduled);
+            this.tabControlFeasibility.Controls.Add(this.tabPageSupercedes);
             this.tabControlFeasibility.Location = new System.Drawing.Point(188, 93);
             this.tabControlFeasibility.Margin = new System.Windows.Forms.Padding(2);
             this.tabControlFeasibility.Name = "tabControlFeasibility";
@@ -417,6 +455,96 @@ namespace RoadCare3
             this.tabPage3.Text = "Consequence";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // tabPageScheduled
+            // 
+            this.tabPageScheduled.Controls.Add(this.dataGridViewScheduled);
+            this.tabPageScheduled.Location = new System.Drawing.Point(4, 22);
+            this.tabPageScheduled.Name = "tabPageScheduled";
+            this.tabPageScheduled.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageScheduled.Size = new System.Drawing.Size(758, 398);
+            this.tabPageScheduled.TabIndex = 3;
+            this.tabPageScheduled.Text = "Scheduled";
+            this.tabPageScheduled.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewScheduled
+            // 
+            this.dataGridViewScheduled.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewScheduled.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ScheduledTreatment,
+            this.ScheduledYears});
+            this.dataGridViewScheduled.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewScheduled.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewScheduled.Margin = new System.Windows.Forms.Padding(2);
+            this.dataGridViewScheduled.Name = "dataGridViewScheduled";
+            this.dataGridViewScheduled.RowHeadersWidth = 20;
+            this.dataGridViewScheduled.RowTemplate.Height = 24;
+            this.dataGridViewScheduled.Size = new System.Drawing.Size(752, 392);
+            this.dataGridViewScheduled.TabIndex = 12;
+            this.dataGridViewScheduled.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewScheduled_CellValidated);
+            this.dataGridViewScheduled.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewScheduled_CellValueChanged);
+            this.dataGridViewScheduled.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dataGridViewScheduled_RowsRemoved);
+            this.dataGridViewScheduled.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dataGridViewScheduled_UserDeletedRow);
+            // 
+            // ScheduledTreatment
+            // 
+            this.ScheduledTreatment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ScheduledTreatment.HeaderText = "Treatment";
+            this.ScheduledTreatment.Name = "ScheduledTreatment";
+            this.ScheduledTreatment.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.ScheduledTreatment.Sorted = true;
+            this.ScheduledTreatment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // ScheduledYears
+            // 
+            this.ScheduledYears.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ScheduledYears.HeaderText = "Scheduled Year";
+            this.ScheduledYears.Name = "ScheduledYears";
+            this.ScheduledYears.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.ScheduledYears.Sorted = true;
+            this.ScheduledYears.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.ScheduledYears.ToolTipText = "Number of years before treatment is scheduled.";
+            // 
+            // tabPageSupercedes
+            // 
+            this.tabPageSupercedes.Controls.Add(this.dataGridViewSupersede);
+            this.tabPageSupercedes.Location = new System.Drawing.Point(4, 22);
+            this.tabPageSupercedes.Name = "tabPageSupercedes";
+            this.tabPageSupercedes.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageSupercedes.Size = new System.Drawing.Size(758, 398);
+            this.tabPageSupercedes.TabIndex = 4;
+            this.tabPageSupercedes.Text = "Supercedes";
+            this.tabPageSupercedes.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewSupersede
+            // 
+            this.dataGridViewSupersede.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewSupersede.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.SUPERCEDES,
+            this.SUPERCEDES_CRITERIA});
+            this.dataGridViewSupersede.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewSupersede.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewSupersede.Name = "dataGridViewSupersede";
+            this.dataGridViewSupersede.Size = new System.Drawing.Size(752, 392);
+            this.dataGridViewSupersede.TabIndex = 0;
+            this.dataGridViewSupersede.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewSupersede_CellMouseDoubleClick);
+            this.dataGridViewSupersede.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewSupersede_CellValidated);
+            this.dataGridViewSupersede.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.DataGridViewSupersede_UserDeletedRow);
+            this.dataGridViewSupersede.DoubleClick += new System.EventHandler(this.DataGridViewSupersede_DoubleClick);
+            // 
+            // SUPERCEDES
+            // 
+            this.SUPERCEDES.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SUPERCEDES.HeaderText = "Supercedes";
+            this.SUPERCEDES.Name = "SUPERCEDES";
+            this.SUPERCEDES.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.SUPERCEDES.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // SUPERCEDES_CRITERIA
+            // 
+            this.SUPERCEDES_CRITERIA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SUPERCEDES_CRITERIA.HeaderText = "Criteria";
+            this.SUPERCEDES_CRITERIA.Name = "SUPERCEDES_CRITERIA";
+            // 
             // pictureBox1
             // 
             this.pictureBox1.Image = global::RoadCare3.Properties.Resources.bigpink;
@@ -431,12 +559,12 @@ namespace RoadCare3
             this.contextMenuStripCT.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.editCompoundTreatmentToolStripMenuItem});
             this.contextMenuStripCT.Name = "contextMenuStripCT";
-            this.contextMenuStripCT.Size = new System.Drawing.Size(226, 26);
+            this.contextMenuStripCT.Size = new System.Drawing.Size(225, 26);
             // 
             // editCompoundTreatmentToolStripMenuItem
             // 
             this.editCompoundTreatmentToolStripMenuItem.Name = "editCompoundTreatmentToolStripMenuItem";
-            this.editCompoundTreatmentToolStripMenuItem.Size = new System.Drawing.Size(225, 22);
+            this.editCompoundTreatmentToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
             this.editCompoundTreatmentToolStripMenuItem.Text = "Edit Compound Treatment...";
             // 
             // checkedComboBoxBudget
@@ -455,31 +583,6 @@ namespace RoadCare3
             this.checkedComboBoxBudget.ValueSeparator = ", ";
             this.checkedComboBoxBudget.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedComboBoxBudget_ItemCheck);
             this.checkedComboBoxBudget.DropDownClosed += new System.EventHandler(this.checkedComboBoxBudget_DropDownClosed);
-            
-            // 
-            // Attribute
-            // 
-            this.Attribute.HeaderText = "Attribute";
-            this.Attribute.Name = "Attribute";
-            this.Attribute.Width = 150;
-            // 
-            // Change
-            // 
-            this.Change.HeaderText = "Change";
-            this.Change.Name = "Change";
-            this.Change.Width = 75;
-            // 
-            // CONSEQUENCE_EQUATION
-            // 
-            this.CONSEQUENCE_EQUATION.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.CONSEQUENCE_EQUATION.HeaderText = "Equation";
-            this.CONSEQUENCE_EQUATION.Name = "CONSEQUENCE_EQUATION";
-            // 
-            // CriteriaS
-            // 
-            this.CriteriaS.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.CriteriaS.HeaderText = "Criteria";
-            this.CriteriaS.Name = "CriteriaS";
             // 
             // FormTreatment
             // 
@@ -517,6 +620,10 @@ namespace RoadCare3
             this.tabPage1.ResumeLayout(false);
             this.tabPageCost.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
+            this.tabPageScheduled.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewScheduled)).EndInit();
+            this.tabPageSupercedes.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSupersede)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.contextMenuStripCT.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -566,5 +673,13 @@ namespace RoadCare3
         private System.Windows.Forms.DataGridViewTextBoxColumn Change;
         private System.Windows.Forms.DataGridViewTextBoxColumn CONSEQUENCE_EQUATION;
         private System.Windows.Forms.DataGridViewTextBoxColumn CriteriaS;
+        private System.Windows.Forms.TabPage tabPageScheduled;
+        private System.Windows.Forms.DataGridView dataGridViewScheduled;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ScheduledTreatment;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ScheduledYears;
+        private System.Windows.Forms.TabPage tabPageSupercedes;
+        private System.Windows.Forms.DataGridView dataGridViewSupersede;
+        private System.Windows.Forms.DataGridViewComboBoxColumn SUPERCEDES;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SUPERCEDES_CRITERIA;
     }
 }
