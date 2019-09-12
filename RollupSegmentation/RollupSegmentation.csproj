@@ -314,7 +314,7 @@
       <Name>OpenGISExtension</Name>
     </ProjectReference>
     <ProjectReference Include="..\PCI\PCI.vcxproj">
-      <Project>{D5101E8F-AD1C-4629-87A2-D86B5A84E6B5}</Project>
+      <Project>{d5101e8f-ad1c-4629-87a2-d86b5a84e6b5}</Project>
       <Name>PCI</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoadCareGlobalOperations\RoadCareGlobalOperations.csproj">
