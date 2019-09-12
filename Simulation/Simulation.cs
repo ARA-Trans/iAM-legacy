@@ -51,7 +51,8 @@ namespace Simulation
         private Dictionary<string, List<AttributeChange>> m_dictionaryCommittedConsequences; //Stores all the committed project consequences for the simulation
         private List<CalculatedAttribute> m_listCalculatedAttribute;//List of all calculated attributes.
 
-        
+        private Dictionary<string, int> m_dictionaryAttributeSimulationTable;
+        private Dictionary<string, List<TableParameters>> m_dictionarySimulationTables;
 
 
         TimeSpan _spanRead = new TimeSpan();
@@ -65,7 +66,6 @@ namespace Simulation
         string _treatmentOMS;
         int _yearOMS;
         bool _isUpdateOMS = false;
-        bool _omsEnforceBudget = false;
 
         public bool IsUpdateOMS
         {
@@ -217,6 +217,10 @@ namespace Simulation
             m_listAttributes.Sort();
             _spanRead += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
+
+
+
+
 
             //Create table for each attribute year pair into the future.
             SimulationMessaging.AddMessage(new SimulationMessage("Compile simulation complete: " + DateTime.Now.ToString("HH:mm:ss")));
@@ -785,40 +789,45 @@ namespace Simulation
 
             SimulationMessaging.AddMessage(new SimulationMessage("Output per section per attribute report for all years at " + DateTime.Now.ToString("HH:mm:ss")));
             if (!CreateSimulationTable(m_strNetworkID, m_strSimulationID)) return;
-            String sOutFile;
-            TextWriter tw = SimulationMessaging.CreateTextWriter("simulation_" + m_strSimulationID + ".csv", out sOutFile);
+
+            List<TextWriter> listSimulationWriters = new List<TextWriter>();
+            for(var i = 0; i < m_dictionarySimulationTables.Count; i++)
+            {
+                listSimulationWriters.Add(SimulationMessaging.CreateTextWriter(SimulationMessaging.SimulationTable + "_" + i + ".txt", out _));
+            }
+
             foreach (Sections section in m_listSections)
             {
-                String strOut = section.WriteSimulation(Investment.StartYear, Investment.StartYear + Investment.AnalysisPeriod - 1);
-                tw.WriteLine(strOut);
+                section.WriteSimulation(Investment.StartYear, Investment.StartYear + Investment.AnalysisPeriod - 1, m_dictionaryAttributeSimulationTable, listSimulationWriters);
             }
-            tw.Close();
-            //        String sOutFile;
-            //      WriteSimulationResult(m_listSections,out  sOutFile);
 
-            //           UpdateSimulationView();
+            foreach(var tw in listSimulationWriters)
+            { 
+                tw.Close();
+            }
+            String strMyDocumentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            strMyDocumentsFolder += "\\RoadCare Projects\\Temp";
+            for (var j = 0; j < m_dictionarySimulationTables.Count; j++)
+            {
 
+                string sOutFile = strMyDocumentsFolder + "\\" + SimulationMessaging.SimulationTable + "_" + j + ".txt";
+                _spanAnalysis += DateTime.Now - _dateTimeLast;
+                _dateTimeLast = DateTime.Now;
 
-
-
-
-            _spanAnalysis += DateTime.Now - _dateTimeLast;
-            _dateTimeLast = DateTime.Now;
-
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					DBMgr.SQLBulkLoad(SimulationMessaging.SimulationTable, sOutFile, "\\t");
-					break;
-				case "ORACLE":
-					//throw new NotImplementedException( "TODO: Figure out columns for RunSimulation()" );
-					DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, SimulationMessaging.SimulationTable, sOutFile, DBMgr.GetTableColumns(SimulationMessaging.SimulationTable),"\\t");
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
-
+                switch (DBMgr.NativeConnectionParameters.Provider)
+                {
+                    case "MSSQL":
+                        DBMgr.SQLBulkLoad(SimulationMessaging.SimulationTable + "_" + j, sOutFile, "\\t");
+                        break;
+                    case "ORACLE":
+                        //throw new NotImplementedException( "TODO: Figure out columns for RunSimulation()" );
+                        DBMgr.OracleBulkLoad(DBMgr.NativeConnectionParameters, SimulationMessaging.SimulationTable, sOutFile, DBMgr.GetTableColumns(SimulationMessaging.SimulationTable), "\\t");
+                        break;
+                    default:
+                        throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                        //break;
+                }
+            }
             _spanReport += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
 
@@ -839,6 +848,7 @@ namespace Simulation
         private void UpdateSimulationView()
         {
             var dropView = "DROP VIEW IF EXISTS SIMULATION_" + m_strNetworkID + "_" + m_strSimulationID;
+
 
             try
             {
@@ -882,67 +892,6 @@ namespace Simulation
                 return;
             }
 
-
-
-        }
-
-        private void WriteSimulationResult(List<Sections> sections,  out string sOutFile)
-        {
-            sOutFile="";
-            TextWriter tw = SimulationMessaging.CreateTextWriter("simulation_results.csv", out sOutFile);
-            foreach (var section in sections)
-            {
-
-
-
-                for (int nYear = Investment.StartYear; nYear <= Investment.StartYear + Investment.AnalysisPeriod; nYear++)
-                {
-                    var outputYear = nYear;
-                    if (outputYear == Investment.StartYear + Investment.AnalysisPeriod)
-                    {
-                        outputYear = 0;
-                    }
-
-                    var hashAttributeValue = (Hashtable)section.m_hashYearAttributeValues[outputYear];
-                    foreach (String sAttribute in SimulationMessaging.ListAttributes)
-                    {
-                        if (sAttribute == "SECTIONID") continue;
-
-                        var result = "\t"+ m_strSimulationID + "\t" + section.SectionID.ToString() + "\t" + sAttribute + "\t" + outputYear + "\t";
-
-                        if (hashAttributeValue[sAttribute] != null) //Values can remain null in OMS analysis
-                        {
-                            String sValue = hashAttributeValue[sAttribute].ToString();
-                            if (SimulationMessaging.GetAttributeType(sAttribute) == "NUMBER")
-                            {
-                                String sFormat = SimulationMessaging.GetAttributeFormat(sAttribute);
-                                float fValue = float.NaN;
-                                try
-                                {
-                                    fValue = float.Parse(sValue);
-                                }
-                                catch
-                                {
-                                    fValue = float.NaN;
-                                }
-                                if (fValue == 0) sValue = "0";
-                                else sValue = fValue.ToString(sFormat);
-                                result += sValue;
-                            }
-                            else
-                            {
-                                if (hashAttributeValue[sAttribute] != null)
-                                {
-                                    result += hashAttributeValue[sAttribute].ToString();
-                                }
-                            }
-                        }
-
-                        tw.WriteLine(result);
-                    }
-                }
-            }
-            tw.Close();
 
 
         }
@@ -1033,24 +982,11 @@ namespace Simulation
             //Drop Existing Simulation table when re-running SIMULATION or just Deleting Simulatoin.
             String strTable = cgOMS.Prefix + "SIMULATION_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.SimulationTable = strTable;
-			String strSelect = "";
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
-					break;
-				case "ORACLE":
-					strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
-            DataSet ds = DBMgr.ExecuteQuery(strSelect);
-            //This table exists
-            if(ds.Tables[0].Rows.Count > 0)
+
+
+            for(var i = 0; i <10; i++)
             {
-                String strDrop = "DROP TABLE " + strTable;;
+                String strDrop = "DROP TABLE IF EXISTS " + strTable + "_" + i ;
                 try
                 {
                     DBMgr.ExecuteNonQuery(strDrop);
@@ -1062,181 +998,142 @@ namespace Simulation
                 }
             }
 
+
             //Drop Existing BENEFITCOST table when re-running SIMULATION or just Deleting Simulation.
             strTable = cgOMS.Prefix + "BENEFITCOST_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.BenefitCostTable = strTable;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
-					break;
-				case "ORACLE":
-					strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
-            ds = DBMgr.ExecuteQuery(strSelect);
-            //This table exists
-            if (ds.Tables[0].Rows.Count > 0)
+            try
             {
-                String strDrop = "DROP TABLE " + strTable; ;
-                try
-                {
-                    DBMgr.ExecuteNonQuery(strDrop);
-                }
-                catch (Exception exception)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    return false;
-                }
+                DBMgr.ExecuteNonQuery("DROP TABLE IF EXISTS " + strTable);
             }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                return false;
+            }
+
             //Drop Existing REPORT table when re-running SIMULATION or just Deleting Simulation.
             strTable = cgOMS.Prefix + "REPORT_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.ReportTable = strTable;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
-					break;
-				case "ORACLE":
-					strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
-            ds = DBMgr.ExecuteQuery(strSelect);
 
-			//This table exists
-            if (ds.Tables[0].Rows.Count > 0)
+            try
             {
-                String strDrop = "DROP TABLE " + strTable; ;
-                try
-                {
-					DBMgr.ExecuteNonQuery(strDrop);
-				}
-                catch (Exception exception)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    return false;
-                }
+				DBMgr.ExecuteNonQuery("DROP TABLE IF EXISTS " + strTable);
+			}
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Benefit Cost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                return false;
             }
 
             //Drop Existing TARGET table when re-running SIMULATION or just Deleting Simulation.
             strTable = cgOMS.Prefix + "TARGET_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.TargetTable = strTable;
-			switch (DBMgr.NativeConnectionParameters.Provider)
-			{
-				case "MSSQL":
-					strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
-					break;
-				case "ORACLE":
-					strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
-					break;
-				default:
-					throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-					//break;
-			}
-            ds = DBMgr.ExecuteQuery(strSelect);
-			//This table exists
-            if (ds.Tables[0].Rows.Count > 0)
+
+            try
             {
-                String strDrop = "DROP TABLE " + strTable; ;
-                try
-                {
-                    DBMgr.ExecuteNonQuery(strDrop);
-				}
-                catch (Exception exception)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    return false;
-                }
+                DBMgr.ExecuteNonQuery("DROP TABLE IF EXISTS " + strTable);
+			}
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Target table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                return false;
             }
 
 
             //Drop Existing TARGET table when re-running SIMULATION or just Deleting Simulation.
             strTable = cgOMS.Prefix + "CUMULATIVECOST_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.CumulativeCostTable = strTable;
-            switch (DBMgr.NativeConnectionParameters.Provider)
+
+            try
             {
-                case "MSSQL":
-                    strSelect = "SELECT * FROM sys.objects WHERE NAME ='" + strTable + "' AND type_desc = 'USER_TABLE'";
-                    break;
-                case "ORACLE":
-                    strSelect = "SELECT * FROM USER_TABLES WHERE TABLE_NAME = '" + strTable + "'";
-                    break;
-                default:
-                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
-                //break;
+                DBMgr.ExecuteNonQuery("DROP TABLE IF EXISTS " + strTable);
             }
-            ds = DBMgr.ExecuteQuery(strSelect);
-            //This table exists
-            if (ds.Tables[0].Rows.Count > 0)
+            catch (Exception exception)
             {
-                String strDrop = "DROP TABLE " + strTable; ;
-                try
-                {
-                    DBMgr.ExecuteNonQuery(strDrop);
-                }
-                catch (Exception exception)
-                {
-                    SimulationMessaging.AddMessage(new SimulationMessage("Dropping CumulativeCost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
-                    return false;
-                }
+                SimulationMessaging.AddMessage(new SimulationMessage("Dropping CumulativeCost table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                return false;
             }
             return true;
         }
 
         public bool CreateSimulationTable(String strNetworkID, String strSimulationID)
         {
-            String strTable = SimulationMessaging.SimulationTable;
-            List<TableParameters> listColumn = new List<TableParameters>();
-            listColumn.Add(new TableParameters("SECTIONID", DataType.Int, false, true, false));
 
+
+            String strTable = SimulationMessaging.SimulationTable;
+
+            var numberColumns = m_listAttributes.Count * (Investment.AnalysisPeriod + 1);
+
+            var numberTables = Math.Ceiling(Convert.ToDouble(numberColumns) / 1023);
+            m_dictionarySimulationTables = new Dictionary<string, List<TableParameters>>();
+            m_dictionaryAttributeSimulationTable = new Dictionary<string, int>();
+
+            for(var i = 0; i < numberTables; i++)
+            {
+                m_dictionarySimulationTables.Add(strTable + "_" + i, new List<TableParameters>());
+            }
+
+
+            foreach (var key in m_dictionarySimulationTables.Keys)
+            {
+                m_dictionarySimulationTables[key].Add(new TableParameters("SECTIONID", DataType.Int, false, true, false));
+            }
+
+            int currentTable = 0;
             String strType;
             int nYear;
-            for (int n = 0; n < Investment.AnalysisPeriod; n++)
+
+            foreach (String str in m_listAttributes)
             {
-                nYear = Investment.StartYear + n;
-                foreach (String str in m_listAttributes)
+                var currentKey = strTable + "_" + currentTable;
+
+                if (m_dictionarySimulationTables[currentKey].Count + Investment.AnalysisPeriod + 1 > 1024)
                 {
+                    currentTable++;
+                    currentKey = strTable + "_" + currentTable;
+                }
+                m_dictionaryAttributeSimulationTable.Add(str, currentTable);
+
+                for (int n = 0; n < Investment.AnalysisPeriod; n++)
+                {
+                    nYear = Investment.StartYear + n;
                     if (str == "SECTIONID") continue;
                     strType = SimulationMessaging.GetAttributeType(str);
                     if (strType == "NUMBER")
                     {
-                        listColumn.Add(new TableParameters(str + "_" + nYear.ToString(), DataType.Float, true));
+                        m_dictionarySimulationTables[currentKey].Add(new TableParameters(str + "_" + nYear.ToString(), DataType.Float, true));
                     }
                     else
                     {
-						listColumn.Add(new TableParameters(str + "_" + nYear.ToString(), DataType.VarChar(4000), true));
+                        m_dictionarySimulationTables[currentKey].Add(new TableParameters(str + "_" + nYear.ToString(), DataType.VarChar(4000), true));
                     }
                 }
-            }
-
-            foreach (String str in m_listAttributes)
-            {
-                if (str == "SECTIONID") continue;
                 strType = SimulationMessaging.GetAttributeType(str);
+
                 if (strType == "NUMBER")
                 {
-                    listColumn.Add(new TableParameters(str + "_0", DataType.Float, true));
+                    m_dictionarySimulationTables[currentKey].Add(new TableParameters(str + "_0", DataType.Float, true));
                 }
                 else
                 {
-                    listColumn.Add(new TableParameters(str + "_0", DataType.VarChar(4000), true));
+                    m_dictionarySimulationTables[currentKey].Add(new TableParameters(str + "_0", DataType.VarChar(4000), true));
                 }
             }
-            try
+
+            foreach (var key in m_dictionarySimulationTables.Keys)
             {
-                DBMgr.CreateTable(strTable, listColumn);
+                try
+                {
+                    DBMgr.CreateTable(key, m_dictionarySimulationTables[key]);
+                }
+                catch (Exception exception)
+                {
+                    SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation table " + strTable + " with SQL Message - " + exception.Message));
+                    return false;
+                }
             }
-            catch (Exception exception)
-            {
-                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation table " + strTable + " with SQL Message - " + exception.Message));
-                return false;
-            }
+
             return true;
         }
 
