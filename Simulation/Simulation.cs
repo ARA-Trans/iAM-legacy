@@ -1185,7 +1185,7 @@ namespace Simulation
 
             try
             {
-
+                DBMgr.ExecuteNonQuery("DROP TABLE IF EXISTS " + strTable);
             }
             catch (Exception exception)
             {
@@ -1204,7 +1204,7 @@ namespace Simulation
             strTable = cgOMS.Prefix + "CUMULATIVECOST_" + strNetworkID + "_" + strSimulationID;
             SimulationMessaging.CumulativeCostTable = strTable;
 
-            String strDrop = "DROP TABLE IF EXISTS" + strTable;
+            String strDrop = "DROP TABLE IF EXISTS " + strTable;
             try
             {
                 DBMgr.ExecuteNonQuery(strDrop);
