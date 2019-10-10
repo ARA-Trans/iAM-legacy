@@ -611,8 +611,16 @@ namespace Simulation
                     this.Method = new AnalysisMethod();
                     Method.TypeAnalysis = dr["ANALYSIS"].ToString();
                     Method.TypeBudget = dr["BUDGET_CONSTRAINT"].ToString();
-                    Method.IsBenefitCost = true;
-                    Method.IsRemainingLife = true;
+                    if (Method.TypeAnalysis.Contains("Benefit"))
+                    {
+                        Method.IsBenefitCost = true;
+                        Method.IsRemainingLife = false;
+                    }
+                    else
+                    {
+                        Method.IsBenefitCost = false;
+                        Method.IsRemainingLife = true;
+                    }
                     Method.BenefitAttribute = dr["BENEFIT_VARIABLE"].ToString();
                     if (dr["RUN_TIME"] != DBNull.Value) SimulationMessaging.LengthLastRun = Convert.ToDouble(dr["RUN_TIME"]);
                     if (dr["USE_CUMULATIVE_COST"] != DBNull.Value) Method.UseCumulativeCost = Convert.ToBoolean(dr["USE_CUMULATIVE_COST"]);
@@ -1189,7 +1197,7 @@ namespace Simulation
 
             var numberColumns = m_listAttributes.Count * (Investment.AnalysisPeriod + 1);
 
-            var numberTables = Math.Ceiling(Convert.ToDouble(numberColumns) / 1023);
+            var numberTables = Math.Ceiling(Convert.ToDouble(numberColumns) / 900);
             m_dictionarySimulationTables = new Dictionary<string, List<TableParameters>>();
             m_dictionaryAttributeSimulationTable = new Dictionary<string, int>();
 
@@ -1212,7 +1220,7 @@ namespace Simulation
             {
                 var currentKey = strTable + "_" + currentTable;
 
-                if (m_dictionarySimulationTables[currentKey].Count + Investment.AnalysisPeriod + 1 > 1024)
+                if (m_dictionarySimulationTables[currentKey].Count + Investment.AnalysisPeriod + 1 > 899)
                 {
                     currentTable++;
                     currentKey = strTable + "_" + currentTable;
