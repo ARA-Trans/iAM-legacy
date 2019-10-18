@@ -1223,6 +1223,21 @@ namespace Simulation
                 return false;
             }
 
+            //Drop Existing TARGET table when re-running SIMULATION or just Deleting Simulation.
+            strTable = cgOMS.Prefix + "REASONS_" + strNetworkID + "_" + strSimulationID;
+            SimulationMessaging.ReasonsTable = strTable;
+
+            strDrop = "DROP TABLE IF EXISTS " + strTable;
+            try
+            {
+                DBMgr.ExecuteNonQuery(strDrop);
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Dropping Reasons table for NetworkID:" + m_strNetworkID + " SimulationID:" + m_strSimulationID + " failed.  Simulation cannot proceed until this table DROPPED. SQL message -" + exception.Message));
+                return false;
+            }
+
             return true;
         }
 
@@ -1422,6 +1437,42 @@ namespace Simulation
                 }
                 return false;
             }
+
+
+            strTable = SimulationMessaging.ReasonsTable;
+            listColumn = new List<TableParameters>();
+            listColumn.Add(new TableParameters("SECTIONID", DataType.Int, false, true, false));
+            listColumn.Add(new TableParameters("YEARS", DataType.Int, true));
+            listColumn.Add(new TableParameters("TREATMENT", DataType.VarChar(50), true));
+            listColumn.Add(new TableParameters("REASON", DataType.VarChar(50), true));
+            listColumn.Add(new TableParameters("BUDGET", DataType.VarChar(50), true));
+            listColumn.Add(new TableParameters("BENEFIT_ORDER", DataType.Int, true));
+            listColumn.Add(new TableParameters("PRIORITY", DataType.Int, true));
+            listColumn.Add(new TableParameters("WEIGHTED_BENEFIT_COST", DataType.Float, true));
+            listColumn.Add(new TableParameters("NUMBER_TARGET", DataType.Int, true));
+            listColumn.Add(new TableParameters("BUDGET_HASH", DataType.VarCharMax, true));
+            try
+            {
+                DBMgr.CreateTable(strTable, listColumn);
+            }
+            catch (Exception exception)
+            {
+                SimulationMessaging.AddMessage(new SimulationMessage("Fatal Error: Creating simulation Reasons table " + strTable + " with SQL Message - " + exception.Message));
+
+                if (APICall.Equals(true))
+                {
+                    var updateStatus = Builders<SimulationModel>.Update
+                    .Set(s => s.status, "Fatal Error: Creating simulation Reasons table " + strTable);
+                    Simulations.UpdateOne(s => s.simulationId == Convert.ToInt32(m_strSimulationID), updateStatus);
+                }
+                return false;
+            }
+
+
+
+
+
+
 
             SimulationMessaging.AddMessage(new SimulationMessage("Sucessfully created Simulation table " + strTable));
             if (APICall.Equals(true))
@@ -5483,16 +5534,22 @@ namespace Simulation
             double dRate = Investment.Inflation;
             float fInflationMultiplier = (float)Math.Pow(1 + dRate, (double)nInflationYear);
 
-            String sOutFile = "";
+            string sOutFile = "";
+            string sReasonOutfile = "";
             TextWriter tw = SimulationMessaging.CreateTextWriter("report_" + m_strSimulationID + ".csv", out sOutFile);
+            var reasonReportWriter = SimulationMessaging.CreateTextWriter("reason_" + m_strSimulationID + ".csv", out sReasonOutfile);
+
             String strSectionID = "";
 
             int nCommitOrder = 0;
+            int benefitOrder = 0;
+
             bool bRemoveTreatedSection = false;
             int currentHead = 0; //Current head of AppliedTreament.  Used for SubsetTarget.
 
             while (m_listApplyTreatment.Count > 0)
             {
+                benefitOrder++;
                 //Remove all other possible treatments for this sectionID
                 if (strSectionID != "" && bRemoveTreatedSection)
                 {
@@ -5573,7 +5630,7 @@ namespace Simulation
                 String sBC = treatment.BenefitCostRatio.ToString();
                 String strTreatmentID = treatment.TreatmentID;
                 String sRLHash = treatment.RemainingLifeHash;
-
+                string budgetHash = "";
                 // Get the section that matches this
                 Sections section = m_listSections.Find(delegate (Sections s) { return s.SectionID == strSectionID; });
                 if (section == null) continue;//Should never happen.
@@ -5587,6 +5644,8 @@ namespace Simulation
                         //SimulationMessaging.AddMessage(new SimulationMessage("Warning! Applying treatment " + treatment.Treatment + " to section " + section.Section + " produces as negative benefit cost. Please evaluate your treatment consequence parameters. Treatment will not be suggested."));
                         //Added May 16, 2014.  If negative benefit/cost remove section from possible list go to next.
                         m_listApplyTreatment.Remove(treatment);
+                        reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "Negative benefit cost", "", "", nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
+
                         bRemoveTreatedSection = false;
                         continue;
                     }
@@ -5594,7 +5653,9 @@ namespace Simulation
                     {
                         m_listApplyTreatment.Remove(treatment);
                         bRemoveTreatedSection = false;
+                        reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "Any/Same shadow", "", "", nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
                         continue;
+                        
                     }
                 }
                 catch (Exception e)
@@ -5610,7 +5671,6 @@ namespace Simulation
                 }
 
                 float fAmount = section.Area * fCost * fInflationMultiplier;
-
                 try
                 {
                     if (strMultipleBudget == null)
@@ -5619,11 +5679,12 @@ namespace Simulation
                     }
 
                     strBudget = null;
+                    
                     foreach (Priorities priority in m_listPriorities)
                     {
                         if (strBudget == null)
                         {
-                            strBudget = Investment.IsBudgetAvailable(fAmount, strMultipleBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority);
+                            strBudget = Investment.IsBudgetAvailable(fAmount, strMultipleBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority, out budgetHash);
                         }
                     }
                 }
@@ -5639,6 +5700,7 @@ namespace Simulation
                     {
                         m_listApplyTreatment.Remove(treatment);
                         bRemoveTreatedSection = false;
+                        reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "No budget available under any priority", "", "", nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
                         continue;
                     }
                 }
@@ -5657,6 +5719,7 @@ namespace Simulation
                         {
                             m_listApplyTreatment.Remove(treatment);
                             bRemoveTreatedSection = false;
+                            reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "All targets met which this treatment can help", strBudget, budgetHash, nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
                             continue;
                         }
                     }
@@ -5667,6 +5730,8 @@ namespace Simulation
                         if (listNotMet.Count == 0)
                         {
                             m_listApplyTreatment.Remove(treatment);
+                            reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "All deficients met which this treatment can help", strBudget, budgetHash, nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
+
                             bRemoveTreatedSection = false;
                             continue;
                         }
@@ -5677,6 +5742,7 @@ namespace Simulation
                         if (m_listTargets.Count == 0)
                         {
                             m_listApplyTreatment.Remove(treatment);
+                            reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "All targets/deficient met which this treatment can help", strBudget, budgetHash, nYear, 0, treatment.NumberTreatmentDeficient, benefitOrder, treatment.SelectionWeight));
                             bRemoveTreatedSection = false;
                             continue;
                         }
@@ -5698,6 +5764,13 @@ namespace Simulation
                 float fNewArea;
                 try
                 {
+                    int numberTreatments = 0;
+                    if(treatment.BenefitCostRatio >= 0)
+                    {
+                        numberTreatments = (int) Math.Ceiling(treatment.SelectionWeight / treatment.BenefitCostRatio);
+                    }
+                    reasonReportWriter.WriteLine(MakeReasonReportLine(treatment.SectionID, sTreatment, "Selected", strBudget, budgetHash, nYear, 0,numberTreatments , benefitOrder, treatment.SelectionWeight));
+
                     //Spend budget.
                     Investment.SpendBudget(fAmount, strBudget, nYear.ToString());
 
@@ -5942,6 +6015,7 @@ namespace Simulation
                 throw e;
             }
             tw.Close();
+            reasonReportWriter.Close();
             _spanAnalysis += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
             try
@@ -5976,6 +6050,22 @@ namespace Simulation
                 }
                 throw e;
             }
+
+
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    DBMgr.SQLBulkLoad(SimulationMessaging.ReasonsTable, sReasonOutfile, ',');
+                    break;
+
+                case "ORACLE":
+                    break;
+
+                default:
+                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                    //break;
+            }
+
 
             _spanReport += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
@@ -6235,7 +6325,7 @@ namespace Simulation
                         sRLHash = appliedTreatment.RemainingLifeHash;
                         nYear = appliedTreatment.Year;
                         String strTreatmentID = sConsequenceID;
-
+                        string budgetHash = "";
                         if (!priority.IsAllYears)
                         {
                             if (priority.Years != nYear) continue;
@@ -6260,7 +6350,7 @@ namespace Simulation
                         if (!section.IsTreatmentAllowed(sTreatment, sAny, sSame, nYear)) continue;
 
                         float fAmount = section.Area * float.Parse(sCost) * fInflationMultiplier;
-                        string budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority);
+                        string budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), section.m_hashNextAttributeValue, priority, out budgetHash);
                         if (string.IsNullOrWhiteSpace(budgetSelected)) continue;
                         appliedTreatment.Budget = budgetSelected;
 
@@ -6362,7 +6452,7 @@ namespace Simulation
             int nInflationYear = nYear - Investment.StartYear;
             float inflationMultiplier = (float)Math.Pow(1 + Investment.Inflation, (double)nInflationYear);
             m_listApplyTreatment.Sort(delegate (AppliedTreatment t1, AppliedTreatment t2) { return t2.TotalBenefitCostRatio.CompareTo(t1.TotalBenefitCostRatio); });
-
+            string budgetHash = "";
             for (int i = 0; i < m_listApplyTreatment.Count; i++)
             {
                 Sections sectionCommit = m_listSections.Find(delegate (Sections s) { return s.SectionID == m_listApplyTreatment[i].SectionID; });    // Get the section for this treatment
@@ -6437,7 +6527,7 @@ namespace Simulation
                                 {
                                     if (Method.IsOMSUnlimited == false)
                                     {
-                                        budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), hashOutput, priority);
+                                        budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(), hashOutput, priority,out budgetHash);
                                     }
                                     else
                                     {
@@ -6740,22 +6830,25 @@ namespace Simulation
             double dRate = Investment.Inflation;
             float fInflationMultiplier = (float)Math.Pow(1 + dRate, (double)nInflationYear);
 
-            String strSelect;
             String sSectionID;
             String sTreatment;
             String sCost;
             String sConsequenceID;
             String sOutFile;
+            String sReasonOutFile;
             String sRemaining;
             String sBenefit;
             String sBC;
             String sRLHash;
+            string budgetHash = "";
 
             TextWriter tw = SimulationMessaging.CreateTextWriter("report_" + m_strSimulationID + ".csv", out sOutFile);
+            var reasonReportWriter = SimulationMessaging.CreateTextWriter("reason_" + m_strSimulationID + ".csv", out sReasonOutFile);
             //List of Section with treatment
             // Retrieve Treatments from BC BENEFITCOST_networkid_simulationid
             // in BC ORDER desending.
             int nCommitOrder = 1;
+            int nBenefitOrder = 0;
 
             if (strBudgetLimit != "None")
             {
@@ -6774,6 +6867,7 @@ namespace Simulation
                         var treatmentsWithBudget = m_listApplyTreatment.Where(t => t.Budget.Contains(strBudget));
                         foreach (var treatment in treatmentsWithBudget)
                         {
+                            nBenefitOrder++;
                             sSectionID = treatment.SectionID;
                             sTreatment = treatment.Treatment;
                             var nAny = treatment.Any;
@@ -6805,25 +6899,32 @@ namespace Simulation
                                 //May 16, 2014.  No need to remove this from list.  A continue will work properly here since iterating list.
                                 //All subsequent treatments in this budget should have negative benefit, so can be ignored.
                                 //Consider replacing with a break;
+                                reasonReportWriter.WriteLine(MakeReasonReportLine(section.SectionID, sTreatment, "Negative benefit/cost", strBudget, "", nYear, priority.PriorityLevel, 1, nBenefitOrder, treatment.BenefitCostRatio));
                                 continue;
                             }
 
                             if (!section.IsTreatmentAllowed(sTreatment, nAny.ToString(), nSame.ToString(), nYear))
+                            {
+                                reasonReportWriter.WriteLine(MakeReasonReportLine(section.SectionID, sTreatment, "Any/Same shadow", strBudget, "", nYear, priority.PriorityLevel, 1, nBenefitOrder, treatment.BenefitCostRatio));
                                 continue;
-
+                            }
                             float fAmount = section.Area * float.Parse(sCost) * fInflationMultiplier;
                             string budgetSelected = "";
                             //Checks budget and priorities
                             if (strBudgetLimit == "None") //No treatments can be spent
                             {
+                                reasonReportWriter.WriteLine(MakeReasonReportLine(section.SectionID, sTreatment, "None selected for analysis budget", strBudget, "", nYear, priority.PriorityLevel, 1, nBenefitOrder, treatment.BenefitCostRatio));
                                 continue;
                             }
                             else if (strBudgetLimit == "") // Check and see if money is available
                             {
                                 budgetSelected = Investment.IsBudgetAvailable(fAmount, strBudget, nYear.ToString(),
-                                    section.m_hashNextAttributeValue, priority);
+                                    section.m_hashNextAttributeValue, priority, out budgetHash);
                                 if (string.IsNullOrWhiteSpace(budgetSelected))
+                                {
+                                    reasonReportWriter.WriteLine(MakeReasonReportLine(section.SectionID, sTreatment, "Inadequate budget", strBudget, budgetHash, nYear, priority.PriorityLevel, 1, nBenefitOrder, treatment.BenefitCostRatio));
                                     continue;
+                                }
                             }
                             else //if strBudgetLimit == "Unlimited" there is always budget.
                             {
@@ -6831,6 +6932,8 @@ namespace Simulation
                                 if (budgets.Length == 0) continue;
                                 budgetSelected = budgets[0].Trim();
                             }
+
+                            reasonReportWriter.WriteLine(MakeReasonReportLine(section.SectionID, sTreatment, "Selected", strBudget, budgetHash, nYear, priority.PriorityLevel,1, nBenefitOrder, treatment.BenefitCostRatio));
 
                             //Spend budget.
                             Investment.SpendBudget(fAmount, budgetSelected, nYear.ToString());
@@ -7002,7 +7105,7 @@ namespace Simulation
                 }
             }
             tw.Close();
-
+            reasonReportWriter.Close();
             _spanAnalysis += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
 
@@ -7024,8 +7127,39 @@ namespace Simulation
                     //break;
             }
 
+            switch (DBMgr.NativeConnectionParameters.Provider)
+            {
+                case "MSSQL":
+                    DBMgr.SQLBulkLoad(SimulationMessaging.ReasonsTable, sReasonOutFile, ',');
+                    break;
+
+                case "ORACLE":
+                    break;
+
+                default:
+                    throw new NotImplementedException("TODO: Create ANSI implementation for XXXXXXXXXXXX");
+                    //break;
+            }
+
             _spanReport += DateTime.Now - _dateTimeLast;
             _dateTimeLast = DateTime.Now;
+        }
+
+        private string MakeReasonReportLine(string sectionId, string treatmentName, string reason, string budget, string budgetHash, int year, int priority, int numberTarget, int benefitOrder, double benefitCost )
+        {
+            var reasonReportLine = sectionId + ","
+                + year + ","
+                + treatmentName + "," 
+                + reason + ","
+                + budget + ","
+                + benefitOrder + ","
+                + priority + ","
+                + benefitCost + ","
+                + numberTarget + ","
+                + budgetHash;
+
+
+            return reasonReportLine;
         }
 
         /// <summary>
