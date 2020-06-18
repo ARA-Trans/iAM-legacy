@@ -1,3 +1,10 @@
+# PLEASE NOTE THE FOLLOWING
+This repository has been moved to a public Azure DevOps project which can be found here:
+
+https://ara-cu.visualstudio.com/Infrastructure%20Asset%20Management
+
+If you have any questions regarding the project, please feel free to email us at iam-support@ara.com
+
 # Interactive Asset Management
 **A tool for capital asset management in the transportation industry**
 
